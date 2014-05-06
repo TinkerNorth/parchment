@@ -21,7 +21,7 @@ Include the Parchment library in your pom.xml file as follows:
     <groupId>mobi.parchment</groupId>
     <artifactId>parchment</artifactId>
     <version>1.6.6</version>
-    <type>apklib</type>
+    <type>aar</type>
 </dependency>
 ```
 
@@ -38,7 +38,7 @@ dependencies {
 Add one of the AdapterView classes (GridView, ListView, GridPatternView), don't forget to choose an orientation:
 
 ```xml
-<mobi.parchment.widget.listview.ListView
+<mobi.parchment.widget.adapterview.listview.ListView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:parchment="http://schemas.android.com/apk/res/<YOUR PACKAGE NAME>"
     android:id="@+id/horizontal_list_view"
