@@ -10,8 +10,8 @@ import android.widget.LinearLayout;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import androidx.test.core.app.ApplicationProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefiniti
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Emir Hasanbegovic
@@ -35,7 +35,7 @@ public class GridPatternLayoutManagerOverScrollTest {
     public static final int VIEW_GROUP_HEIGHT = 100;
     public static final int VIEW_SIZE = 110;
     public static final int CELL_SPACING = 10;
-    final MyViewGroup mViewGroup = new MyViewGroup(Robolectric.application);
+    final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
     GridPatternLayoutManagerAttributes attributes;
@@ -211,12 +211,12 @@ public class GridPatternLayoutManagerOverScrollTest {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout outer = new FrameLayout(Robolectric.application);
+            FrameLayout outer = new FrameLayout(ApplicationProvider.getApplicationContext());
             outer.setTag(position);
             outer.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
 
             // TODO: necessary to have an outer and an inner?
-            final FrameLayout inner = new FrameLayout(Robolectric.application);
+            final FrameLayout inner = new FrameLayout(ApplicationProvider.getApplicationContext());
             inner.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
             outer.addView(inner);
             return outer;

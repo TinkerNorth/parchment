@@ -13,10 +13,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.util.ActivityController;
+import org.robolectric.android.controller.ActivityController;
 
-import static org.fest.assertions.api.ANDROID.assertThat;
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(RobolectricTestRunner.class)
 public class HorizontalListViewTest {
@@ -37,7 +36,7 @@ public class HorizontalListViewTest {
         horizontalListView.measure(measureSpec, measureSpec);
         horizontalListView.layout(0, 0, HORIZONTAL_LIST_VIEW_WIDTH, HORIZONTAL_LIST_VIEW_WIDTH);
 
-        assertThat(horizontalListView).isVisible();
+        assertThat(horizontalListView.getVisibility()).isEqualTo(View.VISIBLE);
 
         final int childCount = horizontalListView.getChildCount();
         assertThat(childCount).isGreaterThan(0);

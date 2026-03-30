@@ -13,15 +13,15 @@ import mobi.parchment.widget.adapterview.gridview.GridLayoutManagerAttributes;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import androidx.test.core.app.ApplicationProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Emir Hasanbegovic
@@ -33,7 +33,7 @@ public class GridLayoutManagerTest {
     public static final int VIEW_SIZE = 100;
     public static final int CELL_SPACING = 10;
     public static final int NUMBER_OF_COLUMNS = 2;
-    final MyViewGroup mViewGroup = new MyViewGroup(Robolectric.application);
+    final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
     GridLayoutManagerAttributes attributes;
@@ -487,12 +487,12 @@ public class GridLayoutManagerTest {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout outer = new FrameLayout(Robolectric.application);
+            FrameLayout outer = new FrameLayout(ApplicationProvider.getApplicationContext());
             outer.setTag(position);
             outer.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
 
             // TODO: necessary to have an outer and an inner?
-            final FrameLayout inner = new FrameLayout(Robolectric.application);
+            final FrameLayout inner = new FrameLayout(ApplicationProvider.getApplicationContext());
             inner.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
             outer.addView(inner);
             return outer;

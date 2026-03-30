@@ -10,8 +10,8 @@ import android.widget.LinearLayout;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import androidx.test.core.app.ApplicationProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,7 +23,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefiniti
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Emir Hasanbegovic on 07/05/14.
@@ -45,7 +45,7 @@ public class GridPatternOverScrollTest {
     public static final boolean SELECT_WHILE_SCROLLING = false;
     public static final int ADAPTER_SIZE = 7;
 
-    final MyViewGroup mViewGroup = new MyViewGroup(Robolectric.application);
+    final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
     GridPatternLayoutManagerAttributes attributes;
@@ -190,7 +190,7 @@ public class GridPatternOverScrollTest {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout frameLayout = new FrameLayout(Robolectric.application);
+            FrameLayout frameLayout = new FrameLayout(ApplicationProvider.getApplicationContext());
             frameLayout.setTag(position);
             frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 

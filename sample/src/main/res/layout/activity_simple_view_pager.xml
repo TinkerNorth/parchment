@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mobi.parchment.widget.adapterview.listview.ListView
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:parchment="http://schemas.android.com/apk/res/mobi.parchment"
+        xmlns:parchment="http://schemas.android.com/apk/res-auto"
         android:background="@color/activity_background"
         android:id="@+id/parchment_view"
         parchment:cellSpacing="20dp"

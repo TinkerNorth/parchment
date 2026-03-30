@@ -11,12 +11,12 @@ import android.widget.ImageView;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import androidx.test.core.app.ApplicationProvider;
 
 import mobi.parchment.R;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by emir on 22/03/14.
@@ -32,7 +32,7 @@ public class AbstractAdapterViewManagerTest {
     public void setup(){
         mAdapterViewManager = new AdapterViewManager();
         mAdapterViewManager.setAdapter(mAdapter);
-        final Context context = Robolectric.getShadowApplication().getApplicationContext();
+        final Context context = ApplicationProvider.getApplicationContext();
         mViewGroup = new ViewGroup(context) {
             @Override
             protected void onLayout(boolean changed, int l, int t, int r, int b) {
@@ -61,7 +61,7 @@ public class AbstractAdapterViewManagerTest {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            final Context context = Robolectric.getShadowApplication().getApplicationContext();
+            final Context context = ApplicationProvider.getApplicationContext();
             final ImageView imageView = new ImageView(context);
             imageView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             return imageView;

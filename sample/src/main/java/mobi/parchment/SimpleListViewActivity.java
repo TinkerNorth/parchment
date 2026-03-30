@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 
+import mobi.parchment.sample.R;
 import mobi.parchment.widget.adapterview.listview.ListView;
 
 public class SimpleListViewActivity extends BaseActivity {

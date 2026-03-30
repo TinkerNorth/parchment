@@ -3,6 +3,7 @@ package mobi.parchment;
 import android.os.Bundle;
 import android.widget.BaseAdapter;
 
+import mobi.parchment.sample.R;
 import mobi.parchment.widget.adapterview.listview.ListView;
 
 public class SimpleViewPagerActivity extends BaseActivity{

@@ -5,13 +5,15 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import mobi.parchment.sample.R;
+
 /**
  * Created by emir on 15/03/14.
  */
 public class MenuActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
-        setContentView(R.layout.activity_menu);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_menu);
     }
 
     public void startActivity(Class<?> activityClass){

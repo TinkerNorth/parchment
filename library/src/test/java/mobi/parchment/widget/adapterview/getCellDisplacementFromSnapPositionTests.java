@@ -6,8 +6,8 @@ import android.view.ViewGroup;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import androidx.test.core.app.ApplicationProvider;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import mobi.parchment.widget.adapterview.snapposition.EndSnapPosition;
 import mobi.parchment.widget.adapterview.snapposition.OnScreenSnapPosition;
 import mobi.parchment.widget.adapterview.snapposition.StartSnapPosition;
 
-import static org.fest.assertions.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Emir Hasanbegovic on 2014-03-18.
@@ -28,7 +28,7 @@ public class getCellDisplacementFromSnapPositionTests {
 
     @Before
     public void setup() {
-        final ViewGroup viewGroup = new ViewGroup(Robolectric.application.getApplicationContext()) {
+        final ViewGroup viewGroup = new ViewGroup(ApplicationProvider.getApplicationContext()) {
             @Override
             protected void onLayout(boolean changed, int l, int t, int r, int b) {
 

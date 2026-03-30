@@ -10,6 +10,8 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import mobi.parchment.sample.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +95,7 @@ public class ProductsAdapter extends BaseAdapter {
 
         final ImageView imageView = (ImageView) view.findViewById(R.id.list_item_picture_image_view);
         imageView.setImageBitmap(null);
-        Picasso.with(context).load(picture.mUrl).into(imageView);
+        Picasso.get().load(picture.mUrl).into(imageView);
 
         final TextView textView = (TextView) view.findViewById(R.id.list_item_picture_text_view);
         textView.setText(picture.mCaption);

@@ -1,24 +1,27 @@
-# Platform files
-.DS_Store
+# Gradle
+.gradle/
+build/
+local.properties
 
-# IDE directories
+# IDE
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+
+# Android
+captures/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Legacy (no longer used)
 bin/
 out/
 gen/
 gen-external-apklibs/
 target/
-build/
 classes/
 libs/
-.idea/
-.settings/
-
-# IDE files
-*.iml
-.gradle/
-local.properties
-.classpath
-.project
-lint.xml
-project.properties
-.orig
