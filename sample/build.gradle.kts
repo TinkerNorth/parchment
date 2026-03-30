@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace = "mobi.parchment.sample"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "mobi.parchment.sample"
-        minSdk = 21
-        targetSdk = 35
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0.0"
     }
@@ -26,18 +26,19 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
 
     lint {
-        abortOnError = false
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
     }
 }
 
 dependencies {
     implementation(project(":library"))
-    implementation("com.squareup.picasso:picasso:2.71828")
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation(libs.picasso)
+    implementation(libs.gson)
 }
 

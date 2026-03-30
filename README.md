@@ -1,8 +1,8 @@
 # Parchment
 
-Horizontal/Vertical **ListView**, **GridView**, **ViewPager**, and **GridPatternView** for Android.
+[![Build & Test](https://github.com/EmirWeb/parchment/actions/workflows/build.yml/badge.svg)](https://github.com/EmirWeb/parchment/actions/workflows/build.yml)
 
-![Parchment Screenshot](https://i.imgur.com/2ArOltz.png)
+Horizontal/Vertical **ListView**, **GridView**, **ViewPager**, and **GridPatternView** for Android.
 
 ## Overview
 
@@ -13,18 +13,55 @@ Parchment provides horizontal and vertical scrolling AdapterViews with snap posi
 - **GridPatternView** — user-defined grid patterns
 - **ViewPager** — page-based scrolling via ListView configuration
 
+### Why Parchment over RecyclerView?
+
+RecyclerView is the standard for most list/grid use cases. Parchment is useful when you need:
+
+- **Built-in snap positioning** (`center`, `start`, `end`, `onScreen`) without a `SnapHelper`
+- **Circular (infinite) scrolling** with a single boolean attribute
+- **Grid pattern layouts** — define arbitrary grid cell patterns declaratively
+- **ViewPager behavior** on a ListView — no separate adapter type needed
+
+If your use case is a straightforward vertical/horizontal list or grid, RecyclerView with `LinearLayoutManager` or `GridLayoutManager` is the better choice.
+
 ## Requirements
 
 - Android 5.0+ (API 21)
 - Java 17+
 
+## Installation
+
+### JitPack
+
+Add JitPack to your project-level `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+Then add the dependency:
+
+```kotlin
+dependencies {
+    implementation("com.github.EmirWeb:parchment:2.0.0")
+}
+```
+
+### Local build
+
+```bash
+git clone https://github.com/EmirWeb/parchment.git
+cd parchment
+./gradlew :library:assembleRelease
+```
+
 ## Building
 
 ```bash
-# Clone the repository
-git clone https://github.com/EmirWeb/parchment.git
-cd parchment
-
 # Build the library
 ./gradlew :library:assembleDebug
 
@@ -46,13 +83,7 @@ cd parchment
 
 ### Step 1: Add Dependency
 
-Add the library module to your project, or reference it as a dependency:
-
-```kotlin
-dependencies {
-    implementation(project(":library"))
-}
-```
+See [Installation](#installation) above.
 
 ### Step 2: XML Layout
 

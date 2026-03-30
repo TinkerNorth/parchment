@@ -17,6 +17,9 @@ captures/
 .DS_Store
 Thumbs.db
 
+# Heap dumps
+*.hprof
+
 # Legacy (no longer used)
 bin/
 out/

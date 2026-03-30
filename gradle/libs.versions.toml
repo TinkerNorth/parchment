@@ -1,0 +1,29 @@
+[versions]
+agp = "8.13.2"
+compileSdk = "35"
+minSdk = "21"
+targetSdk = "35"
+java = "17"
+
+# Test
+junit = "4.13.2"
+robolectric = "4.14.1"
+assertj = "3.27.3"
+androidxTestCore = "1.6.1"
+
+# Sample
+picasso = "2.71828"
+gson = "2.11.0"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+

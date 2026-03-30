@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.library") version "8.7.3" apply false
-    id("com.android.application") version "8.7.3" apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.android.application) apply false
 }
 

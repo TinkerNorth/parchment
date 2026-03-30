@@ -1,13 +1,14 @@
 plugins {
     id("com.android.library")
+    `maven-publish`
 }
 
 android {
     namespace = "mobi.parchment"
-    compileSdk = 35
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 21
+        minSdk = libs.versions.minSdk.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -23,8 +24,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
 
     testOptions {
@@ -34,14 +35,61 @@ android {
     }
 
     lint {
-        abortOnError = false
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.14.1")
-    testImplementation("org.assertj:assertj-core:3.27.3")
-    testImplementation("androidx.test:core:1.6.1")
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.androidx.test.core)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+
+                groupId = property("GROUP").toString()
+                artifactId = property("POM_ARTIFACT_ID").toString()
+                version = property("VERSION_NAME").toString()
+
+                pom {
+                    name.set(property("POM_NAME").toString())
+                    description.set(property("POM_DESCRIPTION").toString())
+                    url.set(property("POM_URL").toString())
+
+                    licenses {
+                        license {
+                            name.set(property("POM_LICENCE_NAME").toString())
+                            url.set(property("POM_LICENCE_URL").toString())
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set(property("POM_DEVELOPER_ID").toString())
+                            name.set(property("POM_DEVELOPER_NAME").toString())
+                        }
+                    }
+
+                    scm {
+                        url.set(property("POM_SCM_URL").toString())
+                        connection.set(property("POM_SCM_CONNECTION").toString())
+                        developerConnection.set(property("POM_SCM_DEV_CONNECTION").toString())
+                    }
+                }
+            }
+        }
+    }
 }
 
