@@ -73,10 +73,18 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             mScrollAnimator.snapTo(viewPageDistance);
         } else {
             mScrollAnimator.flingBy(velocityX, velocityY);
+            endTheFlingOnASnapPosition();
         }
 
         mFrameScheduler.requestAnimationFrame();
         return true;
+    }
+
+    private void endTheFlingOnASnapPosition() {
+        final int finalOffset = mScrollAnimator.getFinalOffset();
+        final int adjustment = mLayoutManagerBridge.getFlingSnapAdjustment(mViewGroup, finalOffset);
+        if (adjustment == 0) return;
+        mScrollAnimator.setFinalOffset(finalOffset + adjustment);
     }
 
     @Override

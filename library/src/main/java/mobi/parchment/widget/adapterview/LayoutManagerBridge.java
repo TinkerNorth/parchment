@@ -35,6 +35,12 @@ public class LayoutManagerBridge {
         return mLayoutManager.snapTo(viewGroup);
     }
 
+    public int getFlingSnapAdjustment(final ViewGroup viewGroup, final int displacement) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getFlingSnapAdjustment(viewGroup, displacement);
+    }
+
     public int getViewPagerScrollDistance(final float velocityX, final float velocityY) {
         if (mLayoutManager == null) return 0;
         final Move move = getMove(mLayoutManager.isVerticalScroll() ? velocityY : velocityX);

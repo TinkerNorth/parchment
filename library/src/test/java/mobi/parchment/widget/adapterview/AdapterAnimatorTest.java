@@ -48,15 +48,30 @@ public class AdapterAnimatorTest {
     }
 
     private void setup(final boolean snapToPosition, final SnapPosition snapPosition) {
+        setup(snapToPosition, snapPosition, false);
+    }
+
+    private void setup(
+            final boolean snapToPosition,
+            final SnapPosition snapPosition,
+            final boolean isViewPager) {
         final LayoutManagerAttributes attributes =
                 new LayoutManagerAttributes(
-                        false, snapToPosition, false, 0, snapPosition, 0, false, false, false);
+                        false,
+                        snapToPosition,
+                        isViewPager,
+                        0,
+                        snapPosition,
+                        0,
+                        false,
+                        false,
+                        false);
         mLayoutManager = new ListLayoutManager(mViewGroup, null, mAdapterViewManager, attributes);
         mAdapterAnimator =
                 new AdapterAnimator(
                         mViewGroup,
                         mFrameScheduler,
-                        false,
+                        isViewPager,
                         false,
                         new LayoutManagerBridge(mLayoutManager),
                         ViewConfiguration.get(mContext));
@@ -68,7 +83,14 @@ public class AdapterAnimatorTest {
     }
 
     private void layOutCenterSnappingList() {
-        setup(true, SnapPosition.center);
+        layOutList(true, SnapPosition.center, false);
+    }
+
+    private void layOutList(
+            final boolean snapToPosition,
+            final SnapPosition snapPosition,
+            final boolean isViewPager) {
+        setup(snapToPosition, snapPosition, isViewPager);
         final TestAdapter adapter = new TestAdapter();
         mAdapterViewManager.setAdapter(adapter);
         adapter.setAdapterSize(ADAPTER_SIZE);
@@ -93,15 +115,14 @@ public class AdapterAnimatorTest {
     }
 
     @Test
-    public void aFlingThatEndsThisFrame_handsOffToItsSnapInTheSameFrame() {
+    public void anAnimationThatEndsThisFrameOffTheSnapPosition_handsOffToItsSnapInTheSameFrame() {
         layOutCenterSnappingList();
-        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
-        mAdapterAnimator.onUp();
-        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        mAdapterAnimator.setAnimateToDistance(-45);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
         mFrameScheduler.mRequests = 0;
 
         layout();
-        assertThat(mLayoutManager.getViewForPosition(0).getLeft()).isEqualTo(100 + FLING_DISTANCE);
+        assertThat(mLayoutManager.getViewForPosition(0).getLeft()).isEqualTo(55);
         mAdapterAnimator.onFrameLaidOut();
 
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
@@ -110,6 +131,50 @@ public class AdapterAnimatorTest {
         ShadowSystemClock.advanceBy(Duration.ofMillis(16));
         assertThat(nextFrameDisplacement()).isNotEqualTo(0);
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+    }
+
+    @Test
+    public void onFling_withSnapping_endsTheFlingOnTheNearestSnapPosition() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        mFrameScheduler.mRequests = 0;
+
+        layout();
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mLayoutManager.getViewForPosition(2).getLeft()).isEqualTo(100);
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
+    @Test
+    public void onFling_withoutSnapping_keepsTheNaturalFlingEnd() {
+        layOutList(false, SnapPosition.onScreen, false);
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+
+        layout();
+
+        assertThat(mLayoutManager.getViewForPosition(0)).isNull();
+        assertThat(mLayoutManager.getViewForPosition(1).getLeft())
+                .isEqualTo(VIEW_SIZE + FLING_DISTANCE);
+    }
+
+    @Test
+    public void onFling_asAViewPager_movesExactlyOnePage() {
+        layOutList(true, SnapPosition.start, true);
+        layout();
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
+
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(nextFrameDisplacement()).isEqualTo(-VIEW_GROUP_SIZE);
     }
 
     @Test
@@ -166,9 +231,8 @@ public class AdapterAnimatorTest {
     @Test
     public void computeScrollOffset_afterTheScrollerEndedInAnEarlierFrame_stillHandsOff() {
         layOutCenterSnappingList();
-        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
-        mAdapterAnimator.onUp();
-        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        mAdapterAnimator.setAnimateToDistance(-45);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
         layout();
 
         assertThat(nextFrameDisplacement()).isEqualTo(0);

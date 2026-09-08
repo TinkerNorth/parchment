@@ -191,14 +191,29 @@ public class AnimationFrameSchedulingTest {
     }
 
     @Test
-    public void aFlingThatEndsInsideOnLayout_handsOffToItsSnapInThatFrame() {
+    public void aFlingThatEndsInsideOnLayout_comesToRestOnTheSnapPosition() {
         fling();
         ShadowSystemClock.advanceBy(Duration.ofSeconds(5));
         mListView.reset();
 
         measureAndLayout();
 
-        assertThat(firstChild().getLeft()).isNotEqualTo(100);
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.getChildAt(2).getLeft()).isEqualTo(100);
+        assertThat(mListView.mLayoutRequestsDuringLayout).isEqualTo(0);
+        assertThat(mListView.mLayoutRequests).isEqualTo(0);
+    }
+
+    @Test
+    public void anAnimationThatEndsInsideOnLayoutOffTheSnapPosition_handsOffToItsSnapInThatFrame() {
+        mListView.mGestureListener.setAnimateToDistance(-45);
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(5));
+        mListView.reset();
+
+        measureAndLayout();
+
+        assertThat(firstChild().getLeft()).isEqualTo(55);
         assertThat(mListView.mGestureListener.getState())
                 .isEqualTo(AdapterAnimator.State.snapingTo);
         assertThat(mListView.mFramesRun).isEqualTo(0);
@@ -211,7 +226,7 @@ public class AnimationFrameSchedulingTest {
                 .isEqualTo(AdapterAnimator.State.notMoving);
         assertThat(mListView.mFramesRun).isGreaterThan(1);
         assertThat(mListView.mLayoutRequestsDuringLayout).isEqualTo(0);
-        assertThat(mListView.getChildAt(2).getLeft()).isEqualTo(100);
+        assertThat(firstChild().getLeft()).isEqualTo(100);
     }
 
     private void fling() {
