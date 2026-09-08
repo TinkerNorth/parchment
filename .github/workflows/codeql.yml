@@ -1,0 +1,62 @@
+name: CodeQL
+
+# Source-level static analysis for parchment. `java-kotlin` covers the Java
+# library, the sample app, and the test sources.
+#
+# Pin map (verify with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`):
+#   actions/checkout              @ v7.0.1  → 3d3c42e5aac5ba805825da76410c181273ba90b1
+#   actions/setup-java            @ v6.0.0  → dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+#   gradle/actions/setup-gradle   @ v6.3.0  → 9c971963bec38e04b3d30dcc455b5382be2fdbfb
+#   github/codeql-action/*        @ v4.37.9 → cdf488f595d80d6e07e03d4674febd5ab45fa938
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (java-kotlin)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          languages: java-kotlin
+          queries: security-extended,security-and-quality
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew :library:assembleDebug :sample:assembleDebug
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          category: "/language:java-kotlin"

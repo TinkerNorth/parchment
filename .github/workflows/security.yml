@@ -1,0 +1,37 @@
+name: Security
+
+# PR-time security gates for parchment. Pulls the shared jobs from this
+# repo's local copy of `_security.yml` (action-pin lint, allowlist-expiry,
+# OSV-Scanner, dependency-review, gitleaks). CodeQL lives in codeql.yml.
+#
+# Known-vulnerable-dependency coverage: OSV-Scanner and dependency-review
+# here (GitHub/OSV advisory data, exact Maven coordinates), plus Dependabot
+# updates.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  shared:
+    uses: ./.github/workflows/_security.yml
+    with:
+      # OSV recognises Gradle build files; let it scan the worktree.
+      osv_scan_paths: |
+        .
+      gitleaks_enabled: true
+      dependency_review_enabled: true
+      action_pin_lint_enabled: true
+      allowlist_expiry_enabled: true
