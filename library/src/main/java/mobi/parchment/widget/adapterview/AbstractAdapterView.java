@@ -168,7 +168,9 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
 
     @Override
     protected void onMeasure(final int widthMeasureSpec, final int heightMeasureSpec) {
-        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+        final int width = MeasureSpec.getSize(widthMeasureSpec);
+        final int height = MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(width, height);
 
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         if (layoutManager != null) {
@@ -197,13 +199,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         childTouchListener.computeScrollOffset();
         final Animation animation = childTouchListener.getAnimation();
 
-        final int leftSize = MeasureSpec.getSize(left);
-        final int rightSize = MeasureSpec.getSize(right);
-        final int topSize = MeasureSpec.getSize(top);
-        final int bottomSize = MeasureSpec.getSize(bottom);
-
         if (layoutManager != null) {
-            layoutManager.layout(this, animation, leftSize, topSize, rightSize, bottomSize);
+            layoutManager.layout(this, animation, left, top, right, bottom);
         }
         final AdapterAnimator.State state = childTouchListener.getState();
         switch (state) {
