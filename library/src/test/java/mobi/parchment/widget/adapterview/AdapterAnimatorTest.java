@@ -7,9 +7,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import androidx.test.core.app.ApplicationProvider;
+import java.util.ArrayList;
+import java.util.List;
 import mobi.parchment.widget.adapterview.listview.ListLayoutManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,24 +24,54 @@ import org.robolectric.RobolectricTestRunner;
 @RunWith(RobolectricTestRunner.class)
 public class AdapterAnimatorTest {
 
+    private static final int VIEW_GROUP_SIZE = 300;
+    private static final int VIEW_SIZE = 100;
+    private static final int ADAPTER_SIZE = 10;
+
+    private final Context mContext = ApplicationProvider.getApplicationContext();
+    private final RecordingFrameScheduler mFrameScheduler = new RecordingFrameScheduler();
+    private final MyViewGroup mViewGroup = new MyViewGroup(mContext);
+    private final AdapterViewManager mAdapterViewManager = new AdapterViewManager();
+    private ListLayoutManager mLayoutManager;
     private AdapterAnimator mAdapterAnimator;
 
     @Before
     public void setup() {
-        final Context context = ApplicationProvider.getApplicationContext();
-        final FrameLayout viewGroup = new FrameLayout(context);
+        setup(false, SnapPosition.onScreen);
+    }
+
+    private void setup(final boolean snapToPosition, final SnapPosition snapPosition) {
         final LayoutManagerAttributes attributes =
                 new LayoutManagerAttributes(
-                        false, false, false, 0, SnapPosition.onScreen, 0, false, false, false);
-        final ListLayoutManager layoutManager =
-                new ListLayoutManager(viewGroup, null, new AdapterViewManager(), attributes);
+                        false, snapToPosition, false, 0, snapPosition, 0, false, false, false);
+        mLayoutManager = new ListLayoutManager(mViewGroup, null, mAdapterViewManager, attributes);
         mAdapterAnimator =
                 new AdapterAnimator(
-                        viewGroup,
+                        mViewGroup,
+                        mFrameScheduler,
                         false,
                         false,
-                        new LayoutManagerBridge(layoutManager),
-                        ViewConfiguration.get(context));
+                        new LayoutManagerBridge(mLayoutManager),
+                        ViewConfiguration.get(mContext));
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+        mViewGroup.measure(measureSpec, measureSpec);
+        mViewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    private void layOutCenterSnappingList() {
+        setup(true, SnapPosition.center);
+        final TestAdapter adapter = new TestAdapter();
+        mAdapterViewManager.setAdapter(adapter);
+        adapter.setAdapterSize(ADAPTER_SIZE);
+        layout();
+    }
+
+    private void layout() {
+        mAdapterAnimator.computeScrollOffset();
+        final Animation animation = mAdapterAnimator.getAnimation();
+        mLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     @Test
@@ -113,6 +148,68 @@ public class AdapterAnimatorTest {
         assertThat(nextFrameDisplacement()).isEqualTo(5);
     }
 
+    @Test
+    public void onFling_requestsAnAnimationFrameInsteadOfALayout() {
+        mAdapterAnimator.onFling(down(), up(), 1000f, 0f);
+
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void onScroll_requestsAnAnimationFrameInsteadOfALayout() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void onSingleTapUp_onAView_requestsAnAnimationFrameInsteadOfALayout() {
+        mAdapterAnimator.onSingleTapUp(up(), new View(mContext));
+
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void setAnimateToDistance_requestsAnAnimationFrameInsteadOfALayout() {
+        mAdapterAnimator.setAnimateToDistance(50);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.animatingTo);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void onUp_afterADragThatNeedsASnap_requestsAnAnimationFrameInsteadOfALayout() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(45f), 45f, 0f);
+        layout();
+        assertThat(mLayoutManager.getViewForPosition(0).getLeft()).isEqualTo(55);
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(mViewGroup.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void onUp_afterADragThatEndsOnTheSnapPosition_doesNotRequestAFrame() {
+        layOutCenterSnappingList();
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
     private int nextFrameDisplacement() {
         mAdapterAnimator.computeScrollOffset();
         return mAdapterAnimator.getAnimation().getDisplacement();
@@ -128,5 +225,67 @@ public class AdapterAnimatorTest {
 
     private static MotionEvent up() {
         return MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, 200f, 0f, 0);
+    }
+
+    private static final class RecordingFrameScheduler implements AnimationFrameScheduler {
+        private int mRequests;
+
+        @Override
+        public void requestAnimationFrame() {
+            mRequests++;
+        }
+    }
+
+    public static final class MyViewGroup extends FrameLayout implements AdapterViewHandler {
+        public final List<View> mViews = new ArrayList<View>();
+
+        public MyViewGroup(final Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean addViewInAdapterView(
+                final View view, final int index, final ViewGroup.LayoutParams layoutParams) {
+            mViews.add(index, view);
+            return true;
+        }
+
+        @Override
+        public void removeViewInAdapterView(final View view) {
+            mViews.remove(view);
+        }
+    }
+
+    public static final class TestAdapter extends BaseAdapter {
+        private int mAdapterSize;
+
+        public void setAdapterSize(final int adapterSize) {
+            mAdapterSize = adapterSize;
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return mAdapterSize;
+        }
+
+        @Override
+        public Object getItem(final int position) {
+            return position;
+        }
+
+        @Override
+        public long getItemId(final int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final FrameLayout view = new FrameLayout(ApplicationProvider.getApplicationContext());
+            view.setTag(position);
+            view.setLayoutParams(
+                    new ViewGroup.LayoutParams(VIEW_SIZE, ViewGroup.LayoutParams.MATCH_PARENT));
+            return view;
+        }
     }
 }

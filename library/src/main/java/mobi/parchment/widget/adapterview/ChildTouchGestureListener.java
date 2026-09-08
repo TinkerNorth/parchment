@@ -21,13 +21,20 @@ public class ChildTouchGestureListener extends AdapterAnimator {
 
     public ChildTouchGestureListener(
             final ViewGroup viewGroup,
+            final AnimationFrameScheduler frameScheduler,
             final boolean isViewPager,
             final boolean isVertical,
             final OnClickListener onClickListener,
             final OnLongClickListener onLongClickListener,
             final LayoutManagerBridge layoutManagerBridge,
             final ViewConfiguration viewConfiguration) {
-        super(viewGroup, isViewPager, isVertical, layoutManagerBridge, viewConfiguration);
+        super(
+                viewGroup,
+                frameScheduler,
+                isViewPager,
+                isVertical,
+                layoutManagerBridge,
+                viewConfiguration);
         mOnClickListener = onClickListener;
         mOnLongClickListener = onLongClickListener;
         mScaledTouchSlop = viewConfiguration.getScaledTouchSlop();

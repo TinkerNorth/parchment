@@ -17,19 +17,18 @@ import android.widget.Adapter;
 
 public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         extends android.widget.AdapterView<ADAPTER>
-        implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
+        implements OnLongClickListener,
+                OnClickListener,
+                OnSelectedListener,
+                AdapterViewHandler,
+                AnimationFrameScheduler {
 
     private OnItemSelectedListener mOnItemSelectedListener;
     private ADAPTER mAdapter;
     private AdapterViewInitializer<Cell> mAdapterViewInitializer;
 
-    private Runnable mRequestLayout =
-            new Runnable() {
-                @Override
-                public void run() {
-                    requestLayout();
-                }
-            };
+    private final AnimationFrameRunnable mAnimationFrameRunnable = new AnimationFrameRunnable(this);
+    private boolean mAnimationFrameRequested;
 
     private final DataSetObserver mDataSetObserver =
             new DataSetObserver() {
@@ -77,6 +76,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
         final ChildTouchGestureListener childTouchGestureListener =
                 new ChildTouchGestureListener(
+                        this,
                         this,
                         isViewPager,
                         isVerticalScroll,
@@ -152,6 +152,20 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         adapterViewManager.unregisterDataSetObserver(mDataSetObserver);
         layoutManager.destroy();
+        removeCallbacks(mAnimationFrameRunnable);
+        mAnimationFrameRequested = false;
+    }
+
+    @Override
+    public void requestAnimationFrame() {
+        if (mAnimationFrameRequested) return;
+        mAnimationFrameRequested = true;
+        post(mAnimationFrameRunnable);
+    }
+
+    protected void onAnimationFrame() {
+        mAnimationFrameRequested = false;
+        requestLayout();
     }
 
     @Override
@@ -208,7 +222,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             case flinging:
             case jumpingTo:
             case snapingTo:
-                post(mRequestLayout);
+                requestAnimationFrame();
                 awakenScrollBars();
                 break;
             case scrolling:
@@ -404,5 +418,18 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
     public boolean isVerticalScrollBarEnabled() {
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         return layoutManager.isVerticalScroll();
+    }
+
+    private static final class AnimationFrameRunnable implements Runnable {
+        private final AbstractAdapterView<?, ?> mView;
+
+        AnimationFrameRunnable(final AbstractAdapterView<?, ?> view) {
+            mView = view;
+        }
+
+        @Override
+        public void run() {
+            mView.onAnimationFrame();
+        }
     }
 }

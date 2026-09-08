@@ -44,6 +44,11 @@ everything around them is new.
 
 ### Fixed
 
+- Animations no longer call `requestLayout()` from inside the layout pass.
+  `AdapterAnimator` asks an `AnimationFrameScheduler` (implemented by the
+  view) for the next frame, and the view posts a single coalesced request,
+  so starting a snap or fling while laying out no longer triggers the
+  framework's "requestLayout() improperly called during layout" second pass.
 - `AbstractAdapterView.onMeasure` reports the size from the measure spec
   instead of the raw spec (which leaked the spec mode into
   `getMeasuredState()`), and `onLayout` no longer runs `MeasureSpec.getSize`
