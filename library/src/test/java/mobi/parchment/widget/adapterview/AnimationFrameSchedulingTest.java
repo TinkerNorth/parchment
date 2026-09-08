@@ -191,18 +191,17 @@ public class AnimationFrameSchedulingTest {
     }
 
     @Test
-    public void aSnapThatStartsInsideOnLayout_isScheduledNotRequestedDuringLayout() {
+    public void aFlingThatEndsInsideOnLayout_handsOffToItsSnapInThatFrame() {
         fling();
         ShadowSystemClock.advanceBy(Duration.ofSeconds(5));
-        measureAndLayout();
-        assertThat(firstChild().getLeft()).isNotEqualTo(100);
         mListView.reset();
 
         measureAndLayout();
 
+        assertThat(firstChild().getLeft()).isNotEqualTo(100);
         assertThat(mListView.mGestureListener.getState())
                 .isEqualTo(AdapterAnimator.State.snapingTo);
-        assertThat(mListView.mFrameRequests).isGreaterThanOrEqualTo(1);
+        assertThat(mListView.mFramesRun).isEqualTo(0);
         assertThat(mListView.mLayoutRequestsDuringLayout).isEqualTo(0);
         assertThat(mListView.mLayoutRequests).isEqualTo(0);
 

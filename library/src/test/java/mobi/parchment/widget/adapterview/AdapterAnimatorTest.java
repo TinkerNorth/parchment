@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import androidx.test.core.app.ApplicationProvider;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import mobi.parchment.widget.adapterview.listview.ListLayoutManager;
@@ -20,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowSystemClock;
 
 @RunWith(RobolectricTestRunner.class)
 public class AdapterAnimatorTest {
@@ -27,11 +29,16 @@ public class AdapterAnimatorTest {
     private static final int VIEW_GROUP_SIZE = 300;
     private static final int VIEW_SIZE = 100;
     private static final int ADAPTER_SIZE = 10;
+    private static final float FLING_VELOCITY = -1000f;
+    private static final int FLING_DISTANCE = -194;
+    private static final long FLING_DURATION = 555;
+    private static final long MAX_SNAP_DURATION = 500;
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private final RecordingFrameScheduler mFrameScheduler = new RecordingFrameScheduler();
     private final MyViewGroup mViewGroup = new MyViewGroup(mContext);
     private final AdapterViewManager mAdapterViewManager = new AdapterViewManager();
+    private final Animation mAnimation = new Animation();
     private ListLayoutManager mLayoutManager;
     private AdapterAnimator mAdapterAnimator;
 
@@ -75,14 +82,111 @@ public class AdapterAnimatorTest {
     }
 
     @Test
-    public void getAnimation_beforeAnyScrollOffsetIsComputed_stopsTheFling() {
+    public void getAnimation_beforeAnyScrollOffsetIsComputed_appliesNothingAndKeepsFlinging() {
         mAdapterAnimator.onFling(down(), up(), 1000f, 0f);
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.flinging);
 
         final Animation animation = mAdapterAnimator.getAnimation();
 
-        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.flinging);
         assertThat(animation.getDisplacement()).isEqualTo(0);
+    }
+
+    @Test
+    public void aFlingThatEndsThisFrame_handsOffToItsSnapInTheSameFrame() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        mFrameScheduler.mRequests = 0;
+
+        layout();
+        assertThat(mLayoutManager.getViewForPosition(0).getLeft()).isEqualTo(100 + FLING_DISTANCE);
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+
+        ShadowSystemClock.advanceBy(Duration.ofMillis(16));
+        assertThat(nextFrameDisplacement()).isNotEqualTo(0);
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+    }
+
+    @Test
+    public void anAnimationThatEndsOnTheSnapPosition_comesToRestWithoutASnap() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.setAnimateToDistance(-VIEW_GROUP_SIZE);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
+        mFrameScheduler.mRequests = 0;
+
+        layout();
+        assertThat(mLayoutManager.getViewForPosition(3).getLeft()).isEqualTo(100);
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
+    @Test
+    public void onFrameLaidOut_whileStillAnimating_keepsTheAnimationGoing() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(16));
+        layout();
+
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.flinging);
+    }
+
+    @Test
+    public void onFrameLaidOut_whileDragging_keepsScrolling() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(45f), 45f, 0f);
+        layout();
+
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.scrolling);
+    }
+
+    @Test
+    public void onFrameLaidOut_atRest_staysAtRest() {
+        layOutCenterSnappingList();
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
+    @Test
+    public void computeScrollOffset_afterTheScrollerEndedInAnEarlierFrame_stillHandsOff() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        layout();
+
+        assertThat(nextFrameDisplacement()).isEqualTo(0);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+    }
+
+    @Test
+    public void computeScrollOffset_atRestAwayFromTheSnapPosition_startsTheSnap() {
+        layOutCenterSnappingList();
+        mAnimation.newAnimation();
+        mAnimation.setDisplacement(-45);
+        mLayoutManager.layout(mViewGroup, mAnimation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(0);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
     }
 
     @Test

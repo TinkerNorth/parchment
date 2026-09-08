@@ -56,6 +56,11 @@ everything around them is new.
 
 ### Fixed
 
+- A fling, page, or programmatic scroll that ends hands off to its snap in
+  the same frame, after that frame's layout. The snap used to start one frame
+  later and was started twice, which left a frame with no motion at the
+  handoff. A layout pass while the view is at rest away from a snap position
+  still starts the snap, as before.
 - Animations no longer call `requestLayout()` from inside the layout pass.
   `AdapterAnimator` asks an `AnimationFrameScheduler` (implemented by the
   view) for the next frame, and the view posts a single coalesced request,
