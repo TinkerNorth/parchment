@@ -44,6 +44,11 @@ everything around them is new.
 
 ### Fixed
 
+- Snapping (after a drag or fling, on tap, on `setSelection`, and after a
+  data set change) now measures against the size inside the view's padding,
+  the same size the layout pass uses. With padding set, `center` and `end`
+  snaps used to target a point shifted by the padding, so the snap target
+  could disagree with where the content is allowed to stop.
 - Drag distance is accumulated between layout passes and consumed by the pass
   that applies it. Two move events before one layout used to lose the first
   delta, and an extra layout pass during a drag (an image loading into a
