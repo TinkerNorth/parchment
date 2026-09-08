@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Picasso bundles a RemoteViews notification path the sample never calls. Declaring
+         POST_NOTIFICATIONS to satisfy this check would grant a permission nothing uses. -->
+    <issue id="NotificationPermission" severity="ignore" />
+</lint>

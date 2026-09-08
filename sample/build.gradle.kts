@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application")
+    alias(libs.plugins.android.application)
 }
 
 android {
@@ -11,7 +11,7 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "2.0.0-SNAPSHOT"
     }
 
     buildTypes {
@@ -20,7 +20,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -32,13 +32,18 @@ android {
 
     lint {
         abortOnError = true
-        baseline = file("lint-baseline.xml")
+        warningsAsErrors = true
+        checkReleaseBuilds = true
+        xmlReport = true
+        htmlReport = true
     }
 }
 
 dependencies {
     implementation(project(":library"))
     implementation(libs.picasso)
-    implementation(libs.gson)
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("-Xlint:all,-options,-this-escape", "-Werror"))
+}

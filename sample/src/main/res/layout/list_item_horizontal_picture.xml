@@ -7,6 +7,7 @@
 
     <ImageView
         android:id="@+id/list_item_picture_image_view"
+        android:importantForAccessibility="no"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"/>
@@ -16,8 +17,8 @@
         android:id="@+id/list_item_picture_text_view"
         android:paddingTop="@dimen/list_item_picture_text_view_padding_vertical"
         android:paddingBottom="@dimen/list_item_picture_text_view_padding_vertical"
-        android:paddingLeft="@dimen/list_item_picture_text_view_padding_horizontal"
-        android:paddingRight="@dimen/list_item_picture_text_view_padding_horizontal"
+        android:paddingStart="@dimen/list_item_picture_text_view_padding_horizontal"
+        android:paddingEnd="@dimen/list_item_picture_text_view_padding_horizontal"
         android:background="@drawable/bordered_background"
         android:textColor="@color/list_item_product_text_view_font_color"
         android:layout_width="match_parent"

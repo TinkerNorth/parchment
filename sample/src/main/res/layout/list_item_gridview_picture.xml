@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<!-- UselessParent: the FrameLayout stays because android:foreground on a non-FrameLayout needs
+     API 23, and the selector must draw above both the image and the caption. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/list_item_picture_border"
@@ -9,12 +11,14 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
 
         <ImageView
             android:id="@+id/list_item_picture_image_view"
             android:layout_width="match_parent"
             android:layout_height="@dimen/list_item_gridview_picture_height"
+            android:importantForAccessibility="no"
             android:scaleType="centerCrop" />
 
         <TextView
@@ -22,10 +26,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bordered_background"
-            android:paddingBottom="@dimen/list_item_picture_text_view_padding_vertical"
-            android:paddingLeft="@dimen/list_item_picture_text_view_padding_horizontal"
-            android:paddingRight="@dimen/list_item_picture_text_view_padding_horizontal"
+            android:paddingStart="@dimen/list_item_picture_text_view_padding_horizontal"
             android:paddingTop="@dimen/list_item_picture_text_view_padding_vertical"
+            android:paddingEnd="@dimen/list_item_picture_text_view_padding_horizontal"
+            android:paddingBottom="@dimen/list_item_picture_text_view_padding_vertical"
             android:textColor="@color/list_item_product_text_view_font_color" />
     </LinearLayout>
 </FrameLayout>

@@ -17,4 +17,3 @@
 -keepclassmembers class **.R$styleable {
     public static <fields>;
 }
-
