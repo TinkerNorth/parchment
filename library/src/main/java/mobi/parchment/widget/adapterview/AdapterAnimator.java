@@ -28,6 +28,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     private final Animation mAnimation = new Animation();
     private final ScrollAnimator mScrollAnimator;
     private final ViewGroup mViewGroup;
+    private final AnimationFrameScheduler mFrameScheduler;
     private final LayoutManagerBridge mLayoutManagerBridge;
     private final boolean mIsViewPager;
     private boolean mTouchSlopExceeded = false;
@@ -40,13 +41,15 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
 
     public AdapterAnimator(
             final ViewGroup view,
+            final AnimationFrameScheduler frameScheduler,
             final boolean isViewPager,
             final boolean isVerticalScroll,
             final LayoutManagerBridge layoutManagerBridge,
-            ViewConfiguration viewConfiguration) {
+            final ViewConfiguration viewConfiguration) {
         mLayoutManagerBridge = layoutManagerBridge;
         mLayoutManagerBridge.setAnimationStoppedListener(this);
         mViewGroup = view;
+        mFrameScheduler = frameScheduler;
         mIsViewPager = isViewPager;
         mIsVerticalScroll = isVerticalScroll;
         mScrollAnimator = new ScrollAnimator(view.getContext(), isVerticalScroll);
@@ -75,7 +78,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             mScrollAnimator.flingBy(velocityX, velocityY);
         }
 
-        mViewGroup.requestLayout();
+        mFrameScheduler.requestAnimationFrame();
         return true;
     }
 
@@ -104,7 +107,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         final int displacement =
                 (int) mLayoutManagerBridge.getScrollDisplacement(distanceX, distanceY);
         mPendingScrollDisplacement += displacement;
-        mViewGroup.requestLayout();
+        mFrameScheduler.requestAnimationFrame();
         return true;
     }
 
@@ -120,7 +123,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         setState(State.flinging);
 
         mScrollAnimator.startScroll(scrollDistance, ANIMATION_DURATION);
-        mViewGroup.requestLayout();
+        mFrameScheduler.requestAnimationFrame();
 
         return true;
     }
@@ -158,7 +161,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             if (scrollDistance == 0) return;
             setState(State.snapingTo);
             mScrollAnimator.startScroll(scrollDistance, ANIMATION_DURATION);
-            mViewGroup.requestLayout();
+            mFrameScheduler.requestAnimationFrame();
         }
     }
 
@@ -203,7 +206,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     public void setAnimateToDistance(final int animate) {
         setState(State.animatingTo);
         mScrollAnimator.startScroll(animate, FINAL_ANIMATE_TO_DURATION_IN_MILLISECONDS);
-        mViewGroup.requestLayout();
+        mFrameScheduler.requestAnimationFrame();
     }
 
     protected ViewGroup getViewGroup() {
