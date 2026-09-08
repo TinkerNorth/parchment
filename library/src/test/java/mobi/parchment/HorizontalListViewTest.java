@@ -74,6 +74,62 @@ public class HorizontalListViewTest {
         assertThat(horizontalListView.getChildAt(0).getLeft()).isEqualTo(0);
     }
 
+    @Test
+    public void onMeasure_withAnExactSpec_reportsTheSizeWithoutStateBits() {
+        final ListView<?> horizontalListView = inflateBasicListView();
+
+        final int widthSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
+        final int heightSpec = View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.EXACTLY);
+        horizontalListView.measure(widthSpec, heightSpec);
+
+        assertThat(horizontalListView.getMeasuredWidth()).isEqualTo(HORIZONTAL_LIST_VIEW_WIDTH);
+        assertThat(horizontalListView.getMeasuredHeight()).isEqualTo(300);
+        assertThat(horizontalListView.getMeasuredState()).isEqualTo(0);
+    }
+
+    @Test
+    public void onMeasure_withAnAtMostSpec_takesTheAvailableSizeWithoutStateBits() {
+        final ListView<?> horizontalListView = inflateBasicListView();
+
+        final int widthSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.AT_MOST);
+        final int heightSpec = View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.AT_MOST);
+        horizontalListView.measure(widthSpec, heightSpec);
+
+        assertThat(horizontalListView.getMeasuredWidth()).isEqualTo(HORIZONTAL_LIST_VIEW_WIDTH);
+        assertThat(horizontalListView.getMeasuredHeight()).isEqualTo(300);
+        assertThat(horizontalListView.getMeasuredState()).isEqualTo(0);
+    }
+
+    @Test
+    public void onLayout_atANegativeOffsetInsideItsParent_laysOutTheChildren() {
+        final ListView<?> horizontalListView = inflateBasicListView();
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
+        horizontalListView.measure(measureSpec, measureSpec);
+
+        horizontalListView.layout(
+                -50, -50, HORIZONTAL_LIST_VIEW_WIDTH - 50, HORIZONTAL_LIST_VIEW_WIDTH - 50);
+
+        assertThat(horizontalListView.getChildCount()).isGreaterThan(0);
+        assertThat(horizontalListView.getChildAt(0).getLeft()).isEqualTo(0);
+        assertThat(horizontalListView.getChildAt(0).getRight())
+                .isEqualTo(HORIZONTAL_LIST_VIEW_WIDTH);
+    }
+
+    private static ListView<?> inflateBasicListView() {
+        final ActivityController<TestActivity> controller =
+                Robolectric.buildActivity(TestActivity.class);
+        final TestActivity testActivity = controller.get();
+        testActivity.setLayoutId(R.layout.basic);
+        controller.create();
+        return testActivity.findViewById(R.id.horizontal_list_view);
+    }
+
     public static class TestActivity extends Activity {
 
         private int layoutId;

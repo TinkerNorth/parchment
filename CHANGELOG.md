@@ -44,6 +44,11 @@ everything around them is new.
 
 ### Fixed
 
+- `AbstractAdapterView.onMeasure` reports the size from the measure spec
+  instead of the raw spec (which leaked the spec mode into
+  `getMeasuredState()`), and `onLayout` no longer runs `MeasureSpec.getSize`
+  on its layout coordinates, which laid out nothing when the view sat at a
+  negative offset inside its parent.
 - Snapping (after a drag or fling, on tap, on `setSelection`, and after a
   data set change) now measures against the size inside the view's padding,
   the same size the layout pass uses. With padding set, `center` and `end`
