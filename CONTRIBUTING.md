@@ -63,6 +63,40 @@ different license: the project is Apache-2.0 end-to-end.
   is an implementation detail even when it is `public` for historical
   reasons; don't widen it without a reason.
 
+### Shape of the code
+
+These rules are older than the tooling and are enforced in review, not by
+a gate.
+
+- **As immutable and as static as possible.** Every field, local, and
+  parameter is `final` unless it must change; a field that must change is
+  the exception that needs a reason. Nested classes are `static` unless
+  they need the outer instance, and a class that has no reason to be
+  extended is `final`. Values that never change are `static final`
+  constants with a name, not literals in the middle of a method.
+- **Member variables start with `m`.** `mOffset`, `mCells`,
+  `mScrollAnimator`. Constants are `UPPER_SNAKE_CASE`; parameters and locals
+  have no prefix. This is how you tell, at the point of use, whether a value
+  is state or scratch.
+- **No anonymous methods.** No anonymous inner classes and no lambdas, in
+  library, sample, or test code. A callback is a named class (usually a
+  `private static final` nested class that takes what it needs through its
+  constructor), so it can be found, tested, and read on its own.
+  `AnimationFrameRunnable` in `AbstractAdapterView` is the pattern.
+- **Split values into simple, named steps.** One operation per line, with
+  the result in a `final` local named for what it is, even when that looks
+  verbose:
+
+  ```java
+  final int cellSize = getCellSize(cell);
+  final int cellEnd = cellStart + cellSize;
+  final boolean cellIsOffScreenBehind = cellEnd < 0;
+  ```
+
+  not `if (cellStart + getCellSize(cell) < 0)`. The names are the
+  documentation; the debugger can show each value; and a test can pin each
+  step.
+
 ### Layout engine
 
 `LayoutManager` and its subclasses are the hot path: they run on every
@@ -92,6 +126,32 @@ scroll frame.
 - A layout-engine change needs a unit test in the matching
   `*LayoutManagerTest`; a change to attribute parsing or inflation needs
   coverage in `HorizontalListViewTest` or the instrumented test.
+
+### Test-driven, every flow
+
+- **Write the test first and watch it fail.** A fix starts with a test that
+  reproduces the bug on the current code; a feature starts with a test that
+  describes the behaviour. Red, then green. Say in the PR which tests failed
+  before the change; a test that never failed has not proven anything.
+- **Cover every flow, not every line.** Line coverage is not the target.
+  Each branch of each new condition, each early return, each end of a clamp
+  or a loop, and each state a state machine can be in when the new code runs
+  gets its own case, named for the behaviour
+  (`centerSnap_lastCellPulledPastTheCenter_isHeldAtTheCenter`). If a branch
+  has no test, either it is dead and goes, or it needs one.
+- **Assume nothing; validate with a test.** A claim about how the framework
+  behaves (`Scroller.setFinalX` after a fling, what `measure` skips, what a
+  posted runnable does on a detached view) or about what an existing method
+  returns is confirmed by a test, not by reading a comment or a docstring.
+  Keep the test if it pins a dependency; delete it if it was only a probe.
+- **Test at the level where the behaviour lives.** Layout maths in the
+  `*LayoutManagerTest` harnesses (a `LinearLayout` implementing
+  `AdapterViewHandler` and a named adapter class), animator state in
+  `AdapterAnimatorTest`, frame scheduling on an attached view in
+  `AnimationFrameSchedulingTest`, and anything that depends on the real
+  framework in `library/src/androidTest`.
+- **Tests follow the same shape rules as the code.** Named nested classes
+  instead of lambdas, `final` locals, one asserted step at a time.
 
 Windows note: Robolectric cannot load its native runtime when the home
 directory contains a space. The library build detects that and points the
