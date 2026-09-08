@@ -16,6 +16,7 @@ import android.widget.TextView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import java.util.concurrent.atomic.AtomicReference;
 import mobi.parchment.test.R;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,16 +38,18 @@ public class ListViewInstrumentedTest {
     @Test
     public void inflatedHorizontalListView_laysOutOnlyVisibleChildren() {
         final Context context = ApplicationProvider.getApplicationContext();
-        final View inflated =
-                LayoutInflater.from(context).inflate(R.layout.list_view_horizontal, null);
-        assertNotNull(inflated);
+        final AtomicReference<ListView<BaseAdapter>> holder = new AtomicReference<>();
 
-        @SuppressWarnings("unchecked")
-        final ListView<BaseAdapter> listView = (ListView<BaseAdapter>) inflated;
-
+        // Inflation has to happen on the main thread too: the view's GestureDetector creates a
+        // Handler in its constructor, which needs a Looper the instrumentation thread lacks.
         InstrumentationRegistry.getInstrumentation()
                 .runOnMainSync(
                         () -> {
+                            final View inflated =
+                                    LayoutInflater.from(context)
+                                            .inflate(R.layout.list_view_horizontal, null);
+                            @SuppressWarnings("unchecked")
+                            final ListView<BaseAdapter> listView = (ListView<BaseAdapter>) inflated;
                             listView.setAdapter(new FixedWidthAdapter(context));
                             final int widthSpec =
                                     View.MeasureSpec.makeMeasureSpec(
@@ -56,8 +59,11 @@ public class ListViewInstrumentedTest {
                                             HEIGHT, View.MeasureSpec.EXACTLY);
                             listView.measure(widthSpec, heightSpec);
                             listView.layout(0, 0, WIDTH, HEIGHT);
+                            holder.set(listView);
                         });
 
+        final ListView<BaseAdapter> listView = holder.get();
+        assertNotNull(listView);
         final int childCount = listView.getChildCount();
         assertTrue("expected some children, got " + childCount, childCount > 0);
         assertTrue(

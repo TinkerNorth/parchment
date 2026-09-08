@@ -34,12 +34,14 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
 
     private final DataSetObserver mDataSetObserver =
             new DataSetObserver() {
+                @Override
                 public void onChanged() {
                     removeAllViewsInLayout();
                     requestLayout();
                     invalidate();
                 }
 
+                @Override
                 public void onInvalidated() {
                     removeAllViewsInLayout();
                     requestLayout();
