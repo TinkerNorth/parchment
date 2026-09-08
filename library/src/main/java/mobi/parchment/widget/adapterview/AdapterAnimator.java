@@ -20,9 +20,6 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         notMoving
     }
 
-    private static final int FINAL_ANIMATE_TO_DURATION_IN_MILLISECONDS = 500;
-
-    private static final int ANIMATION_DURATION = 500;
     private final int mScaledTouchSlop;
     private final boolean mIsVerticalScroll;
     private final Animation mAnimation = new Animation();
@@ -73,7 +70,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         if (mIsViewPager) {
             final int viewPageDistance =
                     mLayoutManagerBridge.getViewPagerScrollDistance(velocityX, velocityY);
-            mScrollAnimator.startScroll(viewPageDistance, ANIMATION_DURATION);
+            mScrollAnimator.snapTo(viewPageDistance);
         } else {
             mScrollAnimator.flingBy(velocityX, velocityY);
         }
@@ -122,7 +119,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         final int scrollDistance = mLayoutManagerBridge.onSingleTapUp(mViewGroup, view);
         setState(State.flinging);
 
-        mScrollAnimator.startScroll(scrollDistance, ANIMATION_DURATION);
+        mScrollAnimator.snapTo(scrollDistance);
         mFrameScheduler.requestAnimationFrame();
 
         return true;
@@ -160,7 +157,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             final int scrollDistance = mLayoutManagerBridge.snapTo(mViewGroup);
             if (scrollDistance == 0) return;
             setState(State.snapingTo);
-            mScrollAnimator.startScroll(scrollDistance, ANIMATION_DURATION);
+            mScrollAnimator.snapTo(scrollDistance);
             mFrameScheduler.requestAnimationFrame();
         }
     }
@@ -205,7 +202,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     // Is this used at all?
     public void setAnimateToDistance(final int animate) {
         setState(State.animatingTo);
-        mScrollAnimator.startScroll(animate, FINAL_ANIMATE_TO_DURATION_IN_MILLISECONDS);
+        mScrollAnimator.snapTo(animate);
         mFrameScheduler.requestAnimationFrame();
     }
 
