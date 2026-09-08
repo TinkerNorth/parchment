@@ -76,9 +76,9 @@ public class ListViewInstrumentedTest {
     @Test
     public void animationFrames_moveTheChildrenWithoutALayoutPass() throws InterruptedException {
         final Context context = ApplicationProvider.getApplicationContext();
-        final FrameListView listView = new FrameListView(context);
-        final LayOutVertically layOut = new LayOutVertically(listView, context);
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(layOut);
+        final CreateAndLayOutVertically create = new CreateAndLayOutVertically(context);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(create);
+        final FrameListView listView = create.listView();
         assertEquals(0, listView.getChildAt(0).getTop());
         assertFalse(listView.isLayoutRequested());
 
@@ -135,17 +135,21 @@ public class ListViewInstrumentedTest {
         }
     }
 
-    private static final class LayOutVertically implements Runnable {
-        private final FrameListView mListView;
+    private static final class CreateAndLayOutVertically implements Runnable {
         private final Context mContext;
+        private FrameListView mListView;
 
-        LayOutVertically(final FrameListView listView, final Context context) {
-            mListView = listView;
+        CreateAndLayOutVertically(final Context context) {
             mContext = context;
+        }
+
+        FrameListView listView() {
+            return mListView;
         }
 
         @Override
         public void run() {
+            mListView = new FrameListView(mContext);
             mListView.setAdapter(new FixedHeightAdapter(mContext));
             final int widthSpec = View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY);
             final int heightSpec =
