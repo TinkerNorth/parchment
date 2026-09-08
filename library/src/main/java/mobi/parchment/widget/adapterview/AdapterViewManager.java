@@ -1,13 +1,13 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.database.DataSetObserver;
 import android.view.View;
-import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Adapter;
-
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-/**
- * Created by Emir Hasanbegovic
- * Handles the creating new views from the adapter, recycling them and , dataset updating and
- */
 public class AdapterViewManager {
 
     private final DataSetObserverManager mDataSetObserverManager = new DataSetObserverManager();
@@ -35,7 +31,11 @@ public class AdapterViewManager {
         views.add(removedView);
     }
 
-    public View getView(final ViewGroup viewGroup, final int position, final int widthMeasureSpec, final int heightMeasureSpec) {
+    public View getView(
+            final ViewGroup viewGroup,
+            final int position,
+            final int widthMeasureSpec,
+            final int heightMeasureSpec) {
         final int type = mAdapter.getItemViewType(position);
 
         final View view = getView(viewGroup, position, type, widthMeasureSpec, heightMeasureSpec);
@@ -44,13 +44,18 @@ public class AdapterViewManager {
         return view;
     }
 
-    private View getView(final ViewGroup viewGroup, final int position, final int type,  final int widthMeasureSpec, final int heightMeasureSpec) {
+    private View getView(
+            final ViewGroup viewGroup,
+            final int position,
+            final int type,
+            final int widthMeasureSpec,
+            final int heightMeasureSpec) {
         final Queue<View> views = mViews.get(type);
         final View convertView = views.poll();
         final View view = mAdapter.getView(position, convertView, viewGroup);
-        final boolean isRecycled =  view == convertView;
-        if (!isRecycled || view.isLayoutRequested()){
-            measureView(viewGroup, view, widthMeasureSpec, heightMeasureSpec);
+        final boolean isRecycled = view == convertView;
+        if (!isRecycled || view.isLayoutRequested()) {
+            measureView(view, widthMeasureSpec, heightMeasureSpec);
         }
 
         return view;
@@ -82,7 +87,8 @@ public class AdapterViewManager {
         return null;
     }
 
-    public LayoutParams measureView(final ViewGroup viewGroup, final View view, final int widthMeasureSpec, final int heightMeasureSpec) {
+    public LayoutParams measureView(
+            final View view, final int widthMeasureSpec, final int heightMeasureSpec) {
         LayoutParams layoutParams = view.getLayoutParams();
 
         if (layoutParams == null) {
@@ -90,8 +96,10 @@ public class AdapterViewManager {
             view.setLayoutParams(layoutParams);
         }
 
-        final int childWidthMeasureSpec = ViewGroup.getChildMeasureSpec(widthMeasureSpec, 0, layoutParams.width);
-        final int childHeightMeasureSpec = ViewGroup.getChildMeasureSpec(heightMeasureSpec, 0, layoutParams.height);
+        final int childWidthMeasureSpec =
+                ViewGroup.getChildMeasureSpec(widthMeasureSpec, 0, layoutParams.width);
+        final int childHeightMeasureSpec =
+                ViewGroup.getChildMeasureSpec(heightMeasureSpec, 0, layoutParams.height);
 
         view.measure(childWidthMeasureSpec, childHeightMeasureSpec);
 
@@ -114,11 +122,9 @@ public class AdapterViewManager {
         final int typeCount = adapter.getViewTypeCount();
 
         mViews = new ArrayList<Queue<View>>(typeCount);
-        for (int index = 0; index < typeCount; index++)
-            mViews.add(new LinkedList<View>());
+        for (int index = 0; index < typeCount; index++) mViews.add(new LinkedList<View>());
 
         mViewTypeMap.clear();
-
     }
 
     public void registerDataSetObserver(final DataSetObserver dataSetObserver) {
@@ -128,6 +134,4 @@ public class AdapterViewManager {
     public void unregisterDataSetObserver(final DataSetObserver dataSetObserver) {
         mDataSetObserverManager.unregisterDataSetObserver(dataSetObserver);
     }
-
-
 }

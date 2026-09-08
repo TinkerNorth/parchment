@@ -1,32 +1,34 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.listview;
 
 import android.view.View;
 import android.view.ViewGroup;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.AdapterViewManager;
 import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/**
- * Created by Emir Hasanbegovic on 2014-02-28.
- */
 public class ListLayoutManager extends LayoutManager<View> {
 
-    public ListLayoutManager(final ViewGroup viewGroup, final OnSelectedListener onSelectedListener, final AdapterViewManager adapterViewManager, final LayoutManagerAttributes attributes) {
+    public ListLayoutManager(
+            final ViewGroup viewGroup,
+            final OnSelectedListener onSelectedListener,
+            final AdapterViewManager adapterViewManager,
+            final LayoutManagerAttributes attributes) {
         super(viewGroup, onSelectedListener, adapterViewManager, attributes);
     }
 
     @Override
-    public void measure(final View view, final ViewGroup viewGroup ) {
+    public void measure(final View view, final ViewGroup viewGroup) {
         final int heightMeasureSpec = getChildHeightMeasureSpec(0);
         final int widthMeasureSpec = getChildWidthMeasureSpec(0);
 
-        mAdapterViewManager.measureView(viewGroup, view, widthMeasureSpec, heightMeasureSpec);
+        mAdapterViewManager.measureView(view, widthMeasureSpec, heightMeasureSpec);
     }
 
     @Override
@@ -60,7 +62,7 @@ public class ListLayoutManager extends LayoutManager<View> {
 
     @Override
     protected int getChildHeightMeasureSpecMode() {
-        if (isVerticalScroll()){
+        if (isVerticalScroll()) {
             return View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         }
         final int widthMeasureSpec = getWidthMeasureSpec();
@@ -86,7 +88,8 @@ public class ListLayoutManager extends LayoutManager<View> {
 
     private int getMaxMeasureHeight() {
         final ViewGroup viewGroup = getViewGroup();
-        final int viewGroupMeasuredHeight = ViewGroupUtilities.getViewGroupMeasuredHeightPadding(viewGroup);
+        final int viewGroupMeasuredHeight =
+                ViewGroupUtilities.getViewGroupMeasuredHeightPadding(viewGroup);
         final int maxHeight = viewGroupMeasuredHeight;
         return maxHeight;
     }
@@ -98,7 +101,8 @@ public class ListLayoutManager extends LayoutManager<View> {
 
     private int getMaxMeasureWidth() {
         final ViewGroup viewGroup = getViewGroup();
-        final int viewGroupMeasuredWidth = ViewGroupUtilities.getViewGroupMeasuredWidthPadding(viewGroup);
+        final int viewGroupMeasuredWidth =
+                ViewGroupUtilities.getViewGroupMeasuredWidthPadding(viewGroup);
         final int maxWidth = viewGroupMeasuredWidth;
         return maxWidth;
     }
@@ -128,7 +132,6 @@ public class ListLayoutManager extends LayoutManager<View> {
         return getViewSize(view);
     }
 
-
     @Override
     public View getLastView(final View view) {
         return view;
@@ -152,13 +155,20 @@ public class ListLayoutManager extends LayoutManager<View> {
         final int widthMeasureSpec = getChildWidthMeasureSpec(0);
         final int heightMeasureSpec = getChildHeightMeasureSpec(0);
 
-        final View view = adapterViewManager.getView(mViewGroup, adapterPosition, widthMeasureSpec, heightMeasureSpec);
+        final View view =
+                adapterViewManager.getView(
+                        mViewGroup, adapterPosition, widthMeasureSpec, heightMeasureSpec);
         return view;
     }
 
-
     @Override
-    public void layoutCell(final View view, final int cellStart, final int cellEnd, final int firstAdapterPositionInCell, final int breadth, final int cellSpacing) {
+    public void layoutCell(
+            final View view,
+            final int cellStart,
+            final int cellEnd,
+            final int firstAdapterPositionInCell,
+            final int breadth,
+            final int cellSpacing) {
         final boolean isSelected = isViewSelected(firstAdapterPositionInCell);
         view.setSelected(isSelected);
 

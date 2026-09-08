@@ -1,13 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.gridview;
 
 import android.view.View;
-
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Emir Hasanbegovic on 2014-02-25.
- */
 public class Group {
 
     private List<View> mViews = new ArrayList<View>();
@@ -30,7 +29,6 @@ public class Group {
             if (lowestPixel == null || top < lowestPixel) {
                 lowestPixel = top;
             }
-
         }
         return lowestPixel;
     }

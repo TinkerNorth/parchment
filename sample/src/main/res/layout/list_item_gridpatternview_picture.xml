@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/list_item_picture_border"
+    android:foreground="@drawable/view_selector"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/list_item_picture_image_view"
+        android:importantForAccessibility="no"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
+
+    <TextView
+        android:id="@+id/list_item_picture_text_view"
+        android:layout_gravity="bottom"
+        android:paddingTop="@dimen/list_item_gridpatternview_padding_vertical"
+        android:paddingBottom="@dimen/list_item_gridpatternview_padding_vertical"
+        android:paddingStart="@dimen/list_item_picture_text_view_padding_horizontal"
+        android:paddingEnd="@dimen/list_item_picture_text_view_padding_horizontal"
+        android:background="@drawable/bordered_background"
+        android:textColor="@color/list_item_product_text_view_font_color"
+        android:maxLines="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</FrameLayout>

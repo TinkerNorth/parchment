@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.gridview;
 
 import android.content.Context;
@@ -5,7 +8,6 @@ import android.util.AttributeSet;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.Adapter;
-
 import mobi.parchment.widget.adapterview.AbstractAdapterView;
 import mobi.parchment.widget.adapterview.AdapterViewHandler;
 import mobi.parchment.widget.adapterview.AdapterViewInitializer;
@@ -13,10 +15,8 @@ import mobi.parchment.widget.adapterview.AdapterViewManager;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.SnapPosition;
 
-/**
- * Created by Emir Hasanbegovic
- */
-public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPTER, Group> implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
+public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPTER, Group>
+        implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
 
     public GridView(Context context) {
         super(context);
@@ -31,7 +31,8 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
     }
 
     @Override
-    protected AdapterViewInitializer<Group> getAdapterViewInitializer(Context context, AttributeSet attributeSet) {
+    protected AdapterViewInitializer<Group> getAdapterViewInitializer(
+            Context context, AttributeSet attributeSet) {
         final GridAttributes gridAttributes = new GridAttributes(context, attributeSet);
 
         final int numberOfViewsPerCell = gridAttributes.getNumberOfViewsPerCell();
@@ -48,13 +49,30 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
         final boolean isBottom = gridAttributes.isBottom();
         final boolean isLeft = gridAttributes.isLeft();
         final boolean isRight = gridAttributes.isRight();
-        final GridLayoutManagerAttributes gridLayoutManagerAttributes = new GridLayoutManagerAttributes(numberOfViewsPerCell, isCircularScroll, snapToPosition, isViewPager, viewPagerInterval, snapPosition, cellSpacing, selectOnSnap, selectWhileScrolling, isVertical, isTop, isBottom, isLeft, isRight);
+        final GridLayoutManagerAttributes gridLayoutManagerAttributes =
+                new GridLayoutManagerAttributes(
+                        numberOfViewsPerCell,
+                        isCircularScroll,
+                        snapToPosition,
+                        isViewPager,
+                        viewPagerInterval,
+                        snapPosition,
+                        cellSpacing,
+                        selectOnSnap,
+                        selectWhileScrolling,
+                        isVertical,
+                        isTop,
+                        isBottom,
+                        isLeft,
+                        isRight);
 
         final AdapterViewManager adapterViewManager = new AdapterViewManager();
-        final GridLayoutManager gridLayoutManager = new GridLayoutManager(this, this, adapterViewManager, gridLayoutManagerAttributes);
+        final GridLayoutManager gridLayoutManager =
+                new GridLayoutManager(this, this, adapterViewManager, gridLayoutManagerAttributes);
 
-        final AdapterViewInitializer<Group> adapterViewAdapterViewInitializer = createAdapterViewInitializer(context, isViewPager, adapterViewManager, gridLayoutManager, isVertical);
+        final AdapterViewInitializer<Group> adapterViewAdapterViewInitializer =
+                createAdapterViewInitializer(
+                        context, isViewPager, adapterViewManager, gridLayoutManager, isVertical);
         return adapterViewAdapterViewInitializer;
     }
-
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.content.Context;
@@ -5,23 +8,28 @@ import android.os.Handler;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-/**
- * Created by Emir Hasanbegovic
- */
 public class AdapterViewGestureDetector extends GestureDetector {
     private ChildTouchGestureListener mChildTouchGestureListener;
 
-    public AdapterViewGestureDetector(final Context context, final ChildTouchGestureListener listener) {
+    public AdapterViewGestureDetector(
+            final Context context, final ChildTouchGestureListener listener) {
         super(context, listener);
         initialize(listener);
     }
 
-    public AdapterViewGestureDetector(final Context context, final ChildTouchGestureListener listener, final Handler handler) {
+    public AdapterViewGestureDetector(
+            final Context context,
+            final ChildTouchGestureListener listener,
+            final Handler handler) {
         super(context, listener, handler);
         initialize(listener);
     }
 
-    public AdapterViewGestureDetector(final Context context, final ChildTouchGestureListener listener, final Handler handler, final boolean unused) {
+    public AdapterViewGestureDetector(
+            final Context context,
+            final ChildTouchGestureListener listener,
+            final Handler handler,
+            final boolean unused) {
         super(context, listener, handler, unused);
         initialize(listener);
     }
@@ -35,7 +43,8 @@ public class AdapterViewGestureDetector extends GestureDetector {
 
     @java.lang.Deprecated()
     @SuppressWarnings("deprecation")
-    public AdapterViewGestureDetector(final ChildTouchGestureListener listener, final Handler handler) {
+    public AdapterViewGestureDetector(
+            final ChildTouchGestureListener listener, final Handler handler) {
         super(listener, handler);
         initialize(listener);
     }
@@ -58,5 +67,4 @@ public class AdapterViewGestureDetector extends GestureDetector {
 
         return isUsed;
     }
-
 }

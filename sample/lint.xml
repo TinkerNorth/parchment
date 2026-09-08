@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Picasso's unused RemoteViews path; the sample posts no notifications. -->
+    <issue id="NotificationPermission" severity="ignore" />
+</lint>

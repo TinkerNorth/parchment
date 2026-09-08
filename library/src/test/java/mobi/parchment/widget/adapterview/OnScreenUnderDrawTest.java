@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
 import android.view.View;
@@ -6,32 +11,24 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
-
+import androidx.test.core.app.ApplicationProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.listview.ListLayoutManager;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import static org.fest.assertions.api.Assertions.assertThat;
-
-/**
- * Created by dx168-xl on 2014-04-30.
- */
 @RunWith(RobolectricTestRunner.class)
 public class OnScreenUnderDrawTest {
 
     public static final int VIEW_GROUP_SIZE = 100;
     public static final int VIEW_SIZE = 10;
     public static final int CELL_SPACING = 10;
-    final MyViewGroup mViewGroup = new MyViewGroup(Robolectric.application);
+    final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
     LayoutManagerAttributes attributes;
@@ -39,7 +36,17 @@ public class OnScreenUnderDrawTest {
 
     @Before
     public void setup() {
-        attributes = new LayoutManagerAttributes(false, true, false, 0, SnapPosition.onScreen, CELL_SPACING, true, true, true);
+        attributes =
+                new LayoutManagerAttributes(
+                        false,
+                        true,
+                        false,
+                        0,
+                        SnapPosition.onScreen,
+                        CELL_SPACING,
+                        true,
+                        true,
+                        true);
         listLayoutManager = new ListLayoutManager(mViewGroup, null, adapterViewManager, attributes);
         mTestAdapter = new TestAdapter(VIEW_SIZE);
         adapterViewManager.setAdapter(mTestAdapter);
@@ -78,17 +85,17 @@ public class OnScreenUnderDrawTest {
         assertThat(secondView.getTop()).isEqualTo(55);
     }
 
-
     private void doLayout() {
         doLayout(new Animation());
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {
-        final int measureSpec = View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
         mViewGroup.measure(measureSpec, measureSpec);
         mViewGroup.layout(0, 0, viewGroupSize, viewGroupSize);
     }
@@ -101,18 +108,21 @@ public class OnScreenUnderDrawTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(mViews, new Comparator<View>() {
-                @Override
-                public int compare(View lhs, View rhs) {
-                    return lhs.getLeft() - rhs.getLeft();
-                }
-            });
+            Collections.sort(
+                    mViews,
+                    new Comparator<View>() {
+                        @Override
+                        public int compare(View lhs, View rhs) {
+                            return lhs.getLeft() - rhs.getLeft();
+                        }
+                    });
 
             return mViews.get(position);
         }
 
         @Override
-        public boolean addViewInAdapterView(View view, int index, ViewGroup.LayoutParams layoutParams) {
+        public boolean addViewInAdapterView(
+                View view, int index, ViewGroup.LayoutParams layoutParams) {
             mViews.add(index, view);
             return true;
         }
@@ -153,12 +163,12 @@ public class OnScreenUnderDrawTest {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout outer = new FrameLayout(Robolectric.application);
+            FrameLayout outer = new FrameLayout(ApplicationProvider.getApplicationContext());
             outer.setTag(position);
             outer.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
 
             // TODO: necessary to have an outer and an inner?
-            final FrameLayout inner = new FrameLayout(Robolectric.application);
+            final FrameLayout inner = new FrameLayout(ApplicationProvider.getApplicationContext());
             inner.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
             outer.addView(inner);
             return outer;

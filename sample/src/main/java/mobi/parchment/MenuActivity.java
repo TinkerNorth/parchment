@@ -1,38 +1,29 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import mobi.parchment.sample.R;
 
-/**
- * Created by emir on 15/03/14.
- */
 public class MenuActivity extends Activity {
+    @Override
     public void onCreate(Bundle savedInstanceState) {
-        setContentView(R.layout.activity_menu);
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_menu);
+        findViewById(R.id.menu_list_view)
+                .setOnClickListener(v -> start(SimpleListViewActivity.class));
+        findViewById(R.id.menu_grid_view)
+                .setOnClickListener(v -> start(SimpleGridViewActivity.class));
+        findViewById(R.id.menu_grid_pattern_view)
+                .setOnClickListener(v -> start(SimpleGridPatternViewActivity.class));
+        findViewById(R.id.menu_view_pager)
+                .setOnClickListener(v -> start(SimpleViewPagerActivity.class));
     }
 
-    public void startActivity(Class<?> activityClass){
-        final Intent intent = new Intent(this, activityClass);
-        startActivity(intent);
+    private void start(final Class<? extends Activity> activityClass) {
+        startActivity(new Intent(this, activityClass));
     }
-
-    public void onClickListView(final View view){
-        startActivity(SimpleListViewActivity.class);
-    }
-
-    public void onClickGridView(final View view){
-        startActivity(SimpleGridViewActivity.class);
-    }
-
-    public void onCLickGridPatternView(final View view){
-        startActivity(SimpleGridPatternViewActivity.class);
-    }
-
-    public void onClickViewPager(final View view){
-        startActivity(SimpleViewPagerActivity.class);
-    }
-
 }

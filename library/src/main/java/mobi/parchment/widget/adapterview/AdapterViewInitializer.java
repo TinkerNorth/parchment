@@ -1,10 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.view.GestureDetector;
 
-/**
- * Created by Emir Hasanbegovic on 2014-03-10.
- */
 public class AdapterViewInitializer<Cell> {
 
     private final ChildTouchGestureListener mChildTouchListener;
@@ -12,7 +12,11 @@ public class AdapterViewInitializer<Cell> {
     private final LayoutManager<Cell> mLayoutManager;
     private final AdapterViewManager mAdapterViewManager;
 
-    public AdapterViewInitializer(final ChildTouchGestureListener childTouchListener, final GestureDetector gestureDetector, final LayoutManager<Cell> layoutManager, final AdapterViewManager adapterViewManager) {
+    public AdapterViewInitializer(
+            final ChildTouchGestureListener childTouchListener,
+            final GestureDetector gestureDetector,
+            final LayoutManager<Cell> layoutManager,
+            final AdapterViewManager adapterViewManager) {
         mChildTouchListener = childTouchListener;
         mGestureDetector = gestureDetector;
         mLayoutManager = layoutManager;
@@ -34,6 +38,4 @@ public class AdapterViewInitializer<Cell> {
     public AdapterViewManager getAdapterViewManager() {
         return mAdapterViewManager;
     }
-
-
 }

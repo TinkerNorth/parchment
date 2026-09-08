@@ -1,24 +1,66 @@
-# Platform files
-.DS_Store
+# Built library and app files
+*.apk
+*.aar
+*.ap_
+*.aab
 
-# IDE directories
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
 bin/
-out/
 gen/
-gen-external-apklibs/
-target/
-build/
-classes/
-libs/
-.idea/
-.settings/
+out/
+release/
 
-# IDE files
-*.iml
+# Gradle files
 .gradle/
+build/
+.kotlin/
+
+# Local configuration file (sdk path, etc)
 local.properties
+
+# Log Files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Android Studio captures folder
+captures/
+
+# IntelliJ
+*.iml
+.idea/
+
+# Eclipse (legacy project files)
+.settings/
 .classpath
 .project
-lint.xml
-project.properties
-.orig
+
+# lint
+lint/intermediates/
+lint/generated/
+lint/outputs/
+lint/tmp/
+
+# Secrets
+*.jks
+*.keystore
+signing.properties
+keystore.properties
+
+# Misc
+*.hprof
+.DS_Store
+Thumbs.db
+*~
+
+.robolectric/
+
+# Gradle dependency verification metadata (locally generated)
+gradle/verification-metadata.xml

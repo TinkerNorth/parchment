@@ -1,25 +1,27 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment;
 
 import android.os.Bundle;
 import android.widget.BaseAdapter;
-
-import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
-import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
-
 import java.util.ArrayList;
 import java.util.List;
+import mobi.parchment.sample.R;
+import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
+import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 
 public class SimpleGridPatternViewActivity extends BaseActivity {
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_grid_pattern_view);
 
-        final GridPatternView<BaseAdapter> gridPatternView = (GridPatternView<BaseAdapter>) findViewById(R.id.parchment_view);
+        final GridPatternView<BaseAdapter> gridPatternView = findViewById(R.id.parchment_view);
 
-        final List<GridPatternItemDefinition> gridPatternItemDefinitions = new ArrayList<GridPatternItemDefinition>();
+        final List<GridPatternItemDefinition> gridPatternItemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
 
         gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 0, 6, 4));
         gridPatternView.addGridPatternGroupDefinition(gridPatternItemDefinitions);

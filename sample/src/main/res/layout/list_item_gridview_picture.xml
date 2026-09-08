@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android:foreground needs a FrameLayout below API 23. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/list_item_picture_border"
+    android:foreground="@drawable/view_selector">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:ignore="UselessParent">
+
+        <ImageView
+            android:id="@+id/list_item_picture_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/list_item_gridview_picture_height"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/list_item_picture_text_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bordered_background"
+            android:paddingStart="@dimen/list_item_picture_text_view_padding_horizontal"
+            android:paddingTop="@dimen/list_item_picture_text_view_padding_vertical"
+            android:paddingEnd="@dimen/list_item_picture_text_view_padding_horizontal"
+            android:paddingBottom="@dimen/list_item_picture_text_view_padding_vertical"
+            android:textColor="@color/list_item_product_text_view_font_color" />
+    </LinearLayout>
+</FrameLayout>

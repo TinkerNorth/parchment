@@ -1,16 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.gridview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-
 import mobi.parchment.R;
 import mobi.parchment.widget.adapterview.Attributes;
 
-
-/**
- * Created by Emir Hasanbegovic on 2014-02-25.
- */
 public class GridAttributes extends Attributes {
 
     private final int mNumberOfViewsPerCell;
@@ -27,13 +25,19 @@ public class GridAttributes extends Attributes {
     public GridAttributes(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
         if (attributeSet != null) {
-            final TypedArray typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.GridView, 0, 0);
+            final TypedArray typedArray =
+                    context.obtainStyledAttributes(attributeSet, R.styleable.GridView, 0, 0);
 
             try {
-                final int numberOfColumns = typedArray.getInteger(R.styleable.GridView_numberOfViewsPerCell, DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
-                mNumberOfViewsPerCell = Math.max(numberOfColumns, DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
+                final int numberOfColumns =
+                        typedArray.getInteger(
+                                R.styleable.GridView_numberOfViewsPerCell,
+                                DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
+                mNumberOfViewsPerCell =
+                        Math.max(numberOfColumns, DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
 
-                final int gravity = typedArray.getInt(R.styleable.GridView_gravity, DefaultValues.GRAVITY);
+                final int gravity =
+                        typedArray.getInt(R.styleable.GridView_gravity, DefaultValues.GRAVITY);
                 setGravityValues(gravity);
 
             } finally {
@@ -71,6 +75,4 @@ public class GridAttributes extends Attributes {
     public boolean isBottom() {
         return mIsBottom;
     }
-
-
 }

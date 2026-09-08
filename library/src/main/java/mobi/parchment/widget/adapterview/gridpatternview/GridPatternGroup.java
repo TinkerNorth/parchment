@@ -1,16 +1,14 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.gridpatternview;
 
 import android.view.View;
 import android.view.ViewGroup;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/**
- * Created by Emir Hasanbegovic on 2014-03-03.
- */
 public class GridPatternGroup {
 
     private final GridPatternGroupDefinition mGridPatternGroupDefinition;
@@ -22,7 +20,12 @@ public class GridPatternGroup {
 
     private final List<View> mViews = new ArrayList<View>();
 
-    public GridPatternGroup(final GridPatternGroupDefinition gridPatternGroupDefinition, final ViewGroup viewGroup, final boolean isVerticalScroll, final float stretchRatio, final int cellSpacing) {
+    public GridPatternGroup(
+            final GridPatternGroupDefinition gridPatternGroupDefinition,
+            final ViewGroup viewGroup,
+            final boolean isVerticalScroll,
+            final float stretchRatio,
+            final int cellSpacing) {
         mGridPatternGroupDefinition = gridPatternGroupDefinition;
         mViewGroup = viewGroup;
         mIsVerticalScroll = isVerticalScroll;
@@ -71,17 +74,18 @@ public class GridPatternGroup {
         return right;
     }
 
-
     public View getLastView() {
         final int numberOfItems = getNumberOfItems();
-        final int lastGridGroupPosition = mGridPatternGroupDefinition.getLastGridGroupPosition(numberOfItems);
+        final int lastGridGroupPosition =
+                mGridPatternGroupDefinition.getLastGridGroupPosition(numberOfItems);
         final View lastView = mViews.get(lastGridGroupPosition);
         return lastView;
     }
 
     public View getFirstView() {
         final int numberOfItems = getNumberOfItems();
-        final int firstGridGroupPosition = mGridPatternGroupDefinition.getFirstGridGroupPosition(numberOfItems);
+        final int firstGridGroupPosition =
+                mGridPatternGroupDefinition.getFirstGridGroupPosition(numberOfItems);
         final View firstView = mViews.get(firstGridGroupPosition);
         return firstView;
     }
@@ -100,7 +104,8 @@ public class GridPatternGroup {
 
     public int getBreadth() {
         if (!mIsVerticalScroll) {
-            return mGridPatternGroupDefinition.getGroupHeight(mViewGroup, mCellSpacing, mStretchRatio);
+            return mGridPatternGroupDefinition.getGroupHeight(
+                    mViewGroup, mCellSpacing, mStretchRatio);
         }
 
         return mGridPatternGroupDefinition.getGroupWidth(mViewGroup, mCellSpacing, mStretchRatio);
@@ -122,8 +127,12 @@ public class GridPatternGroup {
         int right = 0;
 
         for (int index = 0; index < mViews.size(); index++) {
-            final int currentLeft = mGridPatternGroupDefinition.getLeftOffset(mViewGroup, mCellSpacing, mStretchRatio, index);
-            final int width = mGridPatternGroupDefinition.getItemWidth(mViewGroup, mCellSpacing, mStretchRatio, index);
+            final int currentLeft =
+                    mGridPatternGroupDefinition.getLeftOffset(
+                            mViewGroup, mCellSpacing, mStretchRatio, index);
+            final int width =
+                    mGridPatternGroupDefinition.getItemWidth(
+                            mViewGroup, mCellSpacing, mStretchRatio, index);
             final int currentRight = currentLeft + width;
 
             if (left > currentLeft) {
@@ -146,8 +155,12 @@ public class GridPatternGroup {
         int bottom = 0;
 
         for (int index = 0; index < mViews.size(); index++) {
-            final int currentTop = mGridPatternGroupDefinition.getTopOffset(mViewGroup, mCellSpacing, mStretchRatio, index);
-            final int height = mGridPatternGroupDefinition.getItemHeight(mViewGroup, mCellSpacing, mStretchRatio, index);
+            final int currentTop =
+                    mGridPatternGroupDefinition.getTopOffset(
+                            mViewGroup, mCellSpacing, mStretchRatio, index);
+            final int height =
+                    mGridPatternGroupDefinition.getItemHeight(
+                            mViewGroup, mCellSpacing, mStretchRatio, index);
             final int currentBottom = currentTop + height;
 
             if (top > currentTop) {
@@ -160,6 +173,5 @@ public class GridPatternGroup {
 
         final int height = bottom - top;
         return height;
-
     }
 }

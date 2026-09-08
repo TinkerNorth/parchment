@@ -1,0 +1,46 @@
+#!/bin/bash
+# Parchment pre-commit hook.
+#
+# Two fast checks, each gated on what's actually staged:
+#   1. google-java-format (AOSP style, autofix) on staged Java files, when the
+#      binary is installed. CI runs the same formatter through Spotless
+#      (`./gradlew spotlessCheck`); this just saves the round trip.
+#   2. SPDX license header presence on staged Java files. Spotless adds the
+#      header on `spotlessApply`, so a missing one usually means the file was
+#      written by hand and never formatted.
+#
+# The formatter gracefully skips if its binary is missing so devs who haven't
+# installed it aren't blocked locally. CI enforces the same checks definitively.
+set -euo pipefail
+
+staged_java=$(git diff --cached --name-only --diff-filter=ACM -z -- '*.java' \
+    | tr '\0' '\n' | sed '/^$/d')
+
+[ -n "$staged_java" ] || exit 0
+
+# ── google-java-format ───────────────────────────────────────────────────
+if command -v google-java-format >/dev/null 2>&1; then
+    echo "▶ google-java-format --aosp (staged Java files)"
+    echo "$staged_java" | while IFS= read -r file; do
+        google-java-format --aosp -i "$file"
+        git add "$file"
+    done
+else
+    echo "⚠  google-java-format not installed, skipping (run ./gradlew spotlessApply before pushing)"
+fi
+
+# ── SPDX header ──────────────────────────────────────────────────────────
+missing=0
+while IFS= read -r file; do
+    if ! head -n 1 "$file" | grep -q '^// SPDX-License-Identifier: Apache-2.0$'; then
+        echo "✗ $file: missing SPDX license header"
+        missing=1
+    fi
+done <<< "$staged_java"
+
+if [ "$missing" -ne 0 ]; then
+    echo
+    echo "✗ commit blocked: run ./gradlew spotlessApply to add the header"
+    echo "  (config/spotless/license-header.java), then re-stage."
+    exit 1
+fi

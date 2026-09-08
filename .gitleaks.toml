@@ -1,0 +1,31 @@
+# gitleaks configuration for parchment.
+#
+# Default rule set is inherited from gitleaks 8.x. Each `[[allowlists]]` block
+# is a separate OR'd exemption; criteria WITHIN a block combine per its
+# `condition` (gitleaks defaults to "OR"). Paths are anchored regexes: gitleaks
+# treats them as unanchored otherwise, so a bare `LICENSE` would also exempt
+# anything with LICENSE anywhere in its path.
+#
+# Reference: https://github.com/gitleaks/gitleaks#configuration
+
+title = "parchment gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "License text (boilerplate scans as key material)."
+paths = [
+    '''^LICENSE$''',
+]
+
+[[allowlists]]
+description = "Pinned content digests, not secrets."
+paths = [
+    # Gradle wrapper SHA-256 in gradle-wrapper.properties is a content
+    # hash, not a secret.
+    '''^gradle/wrapper/gradle-wrapper\.properties$''',
+    # The verification metadata file is intentionally a list of pinned
+    # JAR digests.
+    '''^gradle/verification-metadata\.xml$''',
+]

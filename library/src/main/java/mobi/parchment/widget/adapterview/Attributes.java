@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.content.Context;
@@ -5,9 +8,6 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import mobi.parchment.R;
 
-/**
- * Created by Emir Hasanbegovic
- */
 public class Attributes {
 
     private static class DefaultValues {
@@ -20,7 +20,6 @@ public class Attributes {
         private static final boolean SELECT_ON_SNAP = false;
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
         private static final boolean SELECT_WHILE_SCROLLING = false;
-
     }
 
     private Orientation mOrientation;
@@ -41,23 +40,45 @@ public class Attributes {
 
     private void initialize(Context context, AttributeSet attributeSet) {
         if (attributeSet != null) {
-            final TypedArray typedArray = context.getTheme().obtainStyledAttributes(attributeSet, R.styleable.ListView, 0, 0);
+            final TypedArray typedArray =
+                    context.getTheme()
+                            .obtainStyledAttributes(attributeSet, R.styleable.ListView, 0, 0);
 
             try {
-                final int snapPositionOrdinal = typedArray.getInteger(R.styleable.ListView_snapPosition, SnapPosition.onScreen.ordinal());
+                final int snapPositionOrdinal =
+                        typedArray.getInteger(
+                                R.styleable.ListView_snapPosition, SnapPosition.onScreen.ordinal());
                 final SnapPosition[] snapPositionValues = SnapPosition.values();
                 if (snapPositionValues.length > snapPositionOrdinal && snapPositionOrdinal >= 0)
                     mSnapPosition = SnapPosition.values()[snapPositionOrdinal];
                 else mSnapPosition = DefaultValues.SNAP_POSITION;
 
-                mIsViewPager = typedArray.getBoolean(R.styleable.ListView_isViewPager, DefaultValues.IS_VIEW_PAGER);
-                mIsCircularScroll = typedArray.getBoolean(R.styleable.ListView_isCircularScroll, DefaultValues.IS_CIRCULAR_SCROLL);
-                mSnapToPosition = typedArray.getBoolean(R.styleable.ListView_snapToPosition, DefaultValues.SNAP_TO_POSITION);
-                mCellSpacing = typedArray.getDimensionPixelSize(R.styleable.ListView_cellSpacing, DefaultValues.CELL_SPACING);
-                mSelectOnSnap = typedArray.getBoolean(R.styleable.ListView_selectOnSnap, DefaultValues.SELECT_ON_SNAP);
-                mSelectWhileScrolling = typedArray.getBoolean(R.styleable.ListView_selectWhileScrolling, DefaultValues.SELECT_WHILE_SCROLLING);
+                mIsViewPager =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_isViewPager, DefaultValues.IS_VIEW_PAGER);
+                mIsCircularScroll =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_isCircularScroll,
+                                DefaultValues.IS_CIRCULAR_SCROLL);
+                mSnapToPosition =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_snapToPosition,
+                                DefaultValues.SNAP_TO_POSITION);
+                mCellSpacing =
+                        typedArray.getDimensionPixelSize(
+                                R.styleable.ListView_cellSpacing, DefaultValues.CELL_SPACING);
+                mSelectOnSnap =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_selectOnSnap, DefaultValues.SELECT_ON_SNAP);
+                mSelectWhileScrolling =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_selectWhileScrolling,
+                                DefaultValues.SELECT_WHILE_SCROLLING);
 
-                final int orientationOrdinal = typedArray.getInteger(R.styleable.ListView_orientation, DefaultValues.ORIENTATION.ordinal());
+                final int orientationOrdinal =
+                        typedArray.getInteger(
+                                R.styleable.ListView_orientation,
+                                DefaultValues.ORIENTATION.ordinal());
                 final Orientation[] orientationValues = Orientation.values();
                 if (orientationValues.length > orientationOrdinal && orientationOrdinal >= 0) {
                     mOrientation = Orientation.values()[orientationOrdinal];
@@ -67,7 +88,6 @@ public class Attributes {
 
             } finally {
                 typedArray.recycle();
-
             }
         } else {
             mViewPagerInterval = DefaultValues.VIEW_PAGER_INTERVAL;
