@@ -44,6 +44,13 @@ everything around them is new.
 
 ### Fixed
 
+- The post-layout over-scroll check now reuses the draw-limit clamp in both
+  directions. `center` and `end` snap positions no longer stop a fling (and
+  start a snap) while the first or last cell is merely visible, a frame that
+  overshoots either end of the content is pulled back in the same frame
+  instead of one frame later, circular scrolling is never "corrected", and
+  the first visible cell index is no longer overwritten by the check (which
+  broke the scrollbar offset and refilling when scrolling back).
 - Restoring saved state into a freshly created view (rotation) kept the
   first visible cell but lost the scroll offset inside it: the first layout
   pass snapped back to the cell start. The restored offset now survives.

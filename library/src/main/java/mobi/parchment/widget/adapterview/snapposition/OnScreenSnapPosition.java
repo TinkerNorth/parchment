@@ -85,84 +85,8 @@ public class OnScreenSnapPosition<Cell> implements SnapPositionInterface<Cell> {
         return drawLimit;
     }
 
-    private Integer getCellDisplacementFromStartSnapPosition(
-            final LayoutManager<Cell> layoutManager, final Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        final int startSizePadding = layoutManager.getStartSizePadding();
-        final int currentCellStart = layoutManager.getCellStart(cell);
-        return startSizePadding - currentCellStart;
-    }
-
-    private Integer getCellDisplacementFromEndSnapPosition(
+    private int getCellDisplacementFromSnapPosition(
             LayoutManager<Cell> layoutManager, int size, Cell cell) {
-        if (cell == null) {
-            return null;
-        }
-        final int currentCellEnd = layoutManager.getCellEnd(cell);
-        final int startSizePadding = layoutManager.getStartSizePadding();
-        final int displacement = startSizePadding + size - currentCellEnd;
-        return displacement;
-    }
-
-    @Override
-    public int getDisplacementFromSnapPosition(
-            LayoutManager<Cell> layoutManager, int size, Cell firstPosition, Cell lastPosition) {
-        final Integer firstDisplacement =
-                getCellDisplacementFromSnapPosition(layoutManager, size, firstPosition);
-        final Integer lastDisplacement =
-                getCellDisplacementFromSnapPosition(layoutManager, size, lastPosition);
-
-        if (firstDisplacement != null && lastDisplacement != null) {
-            if (firstDisplacement > 0 && lastDisplacement > 0) { // Both to the left
-                final int cellSizeTotal = layoutManager.getCellSizeTotal();
-                if (cellSizeTotal > size) {
-                    return getCellDisplacementFromEndSnapPosition(
-                            layoutManager, size, lastPosition);
-                } else {
-                    return firstDisplacement;
-                }
-            }
-
-            if (firstDisplacement > 0 && lastDisplacement < 0) { // Both are off screen
-                return 0;
-            }
-
-            if (firstDisplacement <= 0 && lastDisplacement >= 0) { // Both are fully on screen
-                final int cellSizeTotal = layoutManager.getCellSizeTotal();
-                final int startSizePadding = layoutManager.getStartSizePadding();
-                final int endSizePadding = layoutManager.getEndSizePadding();
-                final int sizeTotal = size + startSizePadding + endSizePadding;
-                final int sizeStartPosition = (sizeTotal - cellSizeTotal) / 2;
-                final int firstSizeStartPosition = layoutManager.getCellStart(firstPosition);
-                return sizeStartPosition - firstSizeStartPosition;
-            }
-
-            if (firstDisplacement <= 0 && lastDisplacement <= 0) { // Both to the right
-                final int cellSizeTotal = layoutManager.getCellSizeTotal();
-                if (cellSizeTotal > size) {
-                    return getCellDisplacementFromStartSnapPosition(layoutManager, firstPosition);
-                } else {
-                    return lastDisplacement;
-                }
-            }
-        }
-
-        if (firstDisplacement != null && firstDisplacement < 0) {
-            return firstDisplacement;
-        } else if (lastDisplacement != null && lastDisplacement > 0) {
-            return lastDisplacement;
-        }
-
-        return 0;
-    }
-
-    private Integer getCellDisplacementFromSnapPosition(
-            LayoutManager<Cell> layoutManager, int size, Cell cell) {
-        if (cell == null) {
-            return null;
-        }
         final int startSizePadding = layoutManager.getStartSizePadding();
         final int currentCellStart = layoutManager.getCellStart(cell);
         final int currentCellEnd = layoutManager.getCellEnd(cell);
