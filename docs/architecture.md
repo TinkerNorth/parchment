@@ -1,0 +1,125 @@
+# Architecture
+
+A map of the library aimed at people working in it. The public surface is
+the three views and their XML attributes (see the README); everything
+below is how they are built.
+
+## Pipeline
+
+```
+Adapter (any android.widget.Adapter)
+        │
+        ▼
+  AdapterViewManager        recycled-view pool keyed by getItemViewType()
+        │  getView(position) / recycle(view)
+        ▼
+  LayoutManager<Cell>       owns the visible cells, offset, snap, circular wrap
+   ├── ListLayoutManager        Cell = View
+   ├── GridLayoutManager        Cell = Group (a wrapping row or column)
+   └── GridPatternLayoutManager Cell = GridPatternGroup (one repeat of the pattern)
+        │  add/remove views, position them
+        ▼
+  AbstractAdapterView       the ViewGroup: onMeasure/onLayout, touch, saved state
+        ▲
+        │  scroll / fling / snap displacement per frame
+  ChildTouchGestureListener → AdapterAnimator → ScrollAnimator (android.widget.Scroller)
+```
+
+## The layout pass
+
+`AbstractAdapterView.onLayout` runs on every frame while anything moves:
+
+1. `ChildTouchGestureListener.computeScrollOffset()` advances the active
+   animation (fling, snap, page, or programmatic jump) and produces an
+   `Animation` holding this frame's displacement.
+2. `LayoutManager.layout(...)` applies the displacement to `mOffset`, then
+   walks cells from `mStartCellPosition`: cells that scrolled off the start
+   are recycled and the start position advances; new cells are pulled from
+   the adapter at the end until the viewport is covered (and symmetrically
+   in the other direction).
+3. Each cell's views are added through `AdapterViewHandler.addViewInAdapterView`
+   (which is `addViewInLayout`, so no re-layout storm) and positioned with
+   `ScrollDirectionManager`, which maps start/end/size onto left/right/width
+   or top/bottom/height depending on orientation.
+4. If the animation is still running, the view posts another
+   `requestLayout()`; when it settles with `snapToPosition` on, the
+   `SnapPositionInterface` computes the displacement to the nearest cell
+   and a snap animation starts.
+
+The layout managers never call `getLeft()`/`getTop()` directly; that is
+the rule that keeps one engine working for both orientations.
+
+## Recycling
+
+`AdapterViewManager` keeps a `Queue<View>` per adapter view type plus a
+`Map<View, Integer>` from live view to its type. `getView` polls the queue
+for the type, hands the view to `Adapter.getView` as `convertView`, and
+re-measures only when the adapter returned a different view or the view
+asked for layout. `recycle` puts a removed view back on its type's queue.
+There is no `ViewHolder`: the adapter's `getView` is the whole contract, as
+with the platform `ListView`.
+
+`DataSetObserverManager` forwards `notifyDataSetChanged` to the
+`LayoutManager`, which invalidates all cells; there is no diffing.
+
+## Cells
+
+The `Cell` type parameter is what differs between the three views:
+
+| View | Cell | Cell size |
+|---|---|---|
+| `ListView` | `View` | the view's measured size along the scroll axis |
+| `GridView` | `Group` | `numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `gravity` places the rest |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(left, top, width, height)` in grid units; `ratio` fixes the unit's aspect |
+
+`GridPatternLayoutManager` walks the adapter through the group
+definitions in order, so a pattern of "one hero, two small" followed by
+"three small" repeats every five items. With no definitions it degrades to
+a plain list (`GridPatternLayoutManagerNoDefinitionTest`).
+
+## Snapping
+
+`snapposition/` holds one strategy per `snapPosition` value. Each answers
+two questions for a cell: where it should sit when snapped, and how far
+the content must move to get it there. `LayoutManager` picks the strategy
+once from the attributes; `onScreen` is the default and never moves
+content on its own.
+
+## Circular scrolling
+
+`isCircularScroll` is handled entirely in `LayoutManager`: adapter positions
+are wrapped modulo `getCount()` when cells are fetched, and the start/end
+bounds that stop a normal scroll are disabled. The adapter sees only real
+positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
+
+## ViewPager mode
+
+`isViewPager` changes the gesture interpretation, not the layout: a
+completed gesture advances exactly one cell in the fling direction
+(`AdapterAnimator` with the `mViewPageDistance`), and the snap position is
+forced to `start` so pages align. It composes with `isCircularScroll`.
+
+## Touch
+
+`AdapterViewGestureDetector` wraps `GestureDetector` and forwards the
+`ACTION_UP`/`ACTION_CANCEL` the platform detector swallows.
+`ChildTouchGestureListener` turns scrolls and flings into `AdapterAnimator`
+state (`scrolling`, `flinging`, `snapingTo`, `animatingTo`, `jumpingTo`,
+`notMoving`) and decides whether a child consumed the touch, so item
+clicks still reach `OnItemClickListener` through `AdapterView.performItemClick`.
+
+## Saved state
+
+`LayoutManagerState` (a `View.BaseSavedState`) persists the scroll offset
+and the first visible cell's adapter position, so rotation restores the
+same content position without the adapter's help.
+
+## Where to look
+
+| Question | File |
+|---|---|
+| Why did a view get re-measured? | `AdapterViewManager.getView` |
+| Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
+| Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
+| Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
+| Why does the ViewPager page twice? | `AdapterAnimator` + `ViewPagerTest` |
