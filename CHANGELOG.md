@@ -12,6 +12,13 @@ everything around them is new.
 
 ### Changed
 
+- Snap, page, tap-to-snap, and programmatic scrolls use a decelerate curve
+  with a duration proportional to the distance (100 ms per inch, stretched
+  for the deceleration, capped at 500 ms), the same numbers RecyclerView's
+  snap helper uses. The old fixed 500 ms viscous-fluid curve covered 97% of
+  the distance in its first half and crawled the last few pixels one at a
+  time over the second half, which read as stutter at the end of a scroll.
+  Fling physics are unchanged.
 - Animation frames (fling, snap, page, drag) run the layout step directly
   from a `postOnAnimation` callback and invalidate, instead of posting a
   `requestLayout()` that re-measured and re-laid out the whole ancestor
