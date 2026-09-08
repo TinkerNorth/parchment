@@ -44,6 +44,10 @@ everything around them is new.
 
 ### Fixed
 
+- Drag distance is accumulated between layout passes and consumed by the pass
+  that applies it. Two move events before one layout used to lose the first
+  delta, and an extra layout pass during a drag (an image loading into a
+  child, for instance) applied the last delta a second time.
 - The post-layout over-scroll check now reuses the draw-limit clamp in both
   directions. `center` and `end` snap positions no longer stop a fling (and
   start a snap) while the first or last cell is merely visible, a frame that

@@ -60,8 +60,70 @@ public class AdapterAnimatorTest {
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.flinging);
     }
 
+    @Test
+    public void onScroll_twiceBeforeALayout_accumulatesTheDisplacement() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+        mAdapterAnimator.onScroll(down(), moveTo(130f), -30f, 0f);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(130);
+    }
+
+    @Test
+    public void getAnimation_whileScrolling_consumesTheDisplacement() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+        assertThat(nextFrameDisplacement()).isEqualTo(100);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(0);
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.scrolling);
+    }
+
+    @Test
+    public void onScroll_afterTheDisplacementWasConsumed_startsFromZero() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+        nextFrameDisplacement();
+
+        mAdapterAnimator.onScroll(down(), moveTo(120f), -20f, 0f);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(20);
+    }
+
+    @Test
+    public void onDown_dropsAScrollDisplacementThatWasNeverLaidOut() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(105f), -5f, 0f);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(5);
+    }
+
+    @Test
+    public void onFling_dropsAScrollDisplacementThatWasNeverLaidOut() {
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(100f), -100f, 0f);
+        mAdapterAnimator.onFling(down(), up(), 1000f, 0f);
+
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(105f), -5f, 0f);
+
+        assertThat(nextFrameDisplacement()).isEqualTo(5);
+    }
+
+    private int nextFrameDisplacement() {
+        mAdapterAnimator.computeScrollOffset();
+        return mAdapterAnimator.getAnimation().getDisplacement();
+    }
+
     private static MotionEvent down() {
         return MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0f, 0f, 0);
+    }
+
+    private static MotionEvent moveTo(final float x) {
+        return MotionEvent.obtain(0, 10, MotionEvent.ACTION_MOVE, x, 0f, 0);
     }
 
     private static MotionEvent up() {
