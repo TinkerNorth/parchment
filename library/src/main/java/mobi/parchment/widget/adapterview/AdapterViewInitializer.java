@@ -5,7 +5,6 @@ package mobi.parchment.widget.adapterview;
 
 import android.view.GestureDetector;
 
-/** Created by Emir Hasanbegovic on 2014-03-10. */
 public class AdapterViewInitializer<Cell> {
 
     private final ChildTouchGestureListener mChildTouchListener;

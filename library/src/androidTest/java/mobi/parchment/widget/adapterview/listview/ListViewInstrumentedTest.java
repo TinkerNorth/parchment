@@ -21,12 +21,6 @@ import mobi.parchment.test.R;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-/**
- * Smoke test on a real framework: inflates a Parchment ListView from XML (so the custom attribute
- * parsing runs for real), measures and lays it out on the main thread, and checks that views were
- * pulled from the adapter and positioned. Robolectric covers the layout maths; this guards the
- * device-side inflation and measurement path that Robolectric cannot fully reproduce.
- */
 @RunWith(AndroidJUnit4.class)
 public class ListViewInstrumentedTest {
 
@@ -40,8 +34,6 @@ public class ListViewInstrumentedTest {
         final Context context = ApplicationProvider.getApplicationContext();
         final AtomicReference<ListView<BaseAdapter>> holder = new AtomicReference<>();
 
-        // Inflation has to happen on the main thread too: the view's GestureDetector creates a
-        // Handler in its constructor, which needs a Looper the instrumentation thread lacks.
         InstrumentationRegistry.getInstrumentation()
                 .runOnMainSync(
                         () -> {
@@ -74,7 +66,6 @@ public class ListViewInstrumentedTest {
         assertEquals(0, listView.getPositionForView(listView.getChildAt(0)));
     }
 
-    /** Fifty fixed-width items so the viewport can only ever show a handful of them. */
     private static final class FixedWidthAdapter extends BaseAdapter {
         private final Context context;
 

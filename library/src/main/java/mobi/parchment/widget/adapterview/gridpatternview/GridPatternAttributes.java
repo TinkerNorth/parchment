@@ -9,7 +9,6 @@ import android.util.AttributeSet;
 import mobi.parchment.R;
 import mobi.parchment.widget.adapterview.Attributes;
 
-/** Created by Emir Hasanbegovic on 2014-02-25. */
 public class GridPatternAttributes extends Attributes {
 
     private final float mRatio;

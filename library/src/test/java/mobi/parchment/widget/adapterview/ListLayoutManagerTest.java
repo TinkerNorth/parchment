@@ -6,6 +6,7 @@ package mobi.parchment.widget.adapterview;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
+import android.os.Parcelable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -22,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class ListLayoutManagerTest {
 
@@ -172,13 +172,55 @@ public class ListLayoutManagerTest {
         assertThat(firstView.getLeft()).isEqualTo(0);
     }
 
+    @Test
+    public void onRestoreInstanceState_resumesFromTheSavedScrollPosition() {
+        mTestAdapter.setAdapterSize(10);
+        final Animation animation = new Animation();
+        animation.newAnimation();
+        doLayout(animation);
+        animation.newAnimation();
+        animation.setDisplacement(-120);
+        doLayout(animation);
+        final Parcelable state =
+                listLayoutManager.onSaveInstanceState(View.BaseSavedState.EMPTY_STATE);
+
+        final MyViewGroup restoredViewGroup =
+                new MyViewGroup(ApplicationProvider.getApplicationContext());
+        final AdapterViewManager restoredAdapterViewManager = new AdapterViewManager();
+        restoredAdapterViewManager.setAdapter(mTestAdapter);
+        final ListLayoutManager restoredLayoutManager =
+                new ListLayoutManager(
+                        restoredViewGroup, null, restoredAdapterViewManager, attributes);
+        restoredLayoutManager.onRestoreInstanceState(state);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+        restoredViewGroup.measure(measureSpec, measureSpec);
+        restoredViewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        restoredLayoutManager.layout(
+                restoredViewGroup, new Animation(), 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+        assertThat(mViewGroup.forPosition(0).getLeft()).isLessThan(0);
+        assertThat(restoredViewGroup.mViews.size()).isEqualTo(mViewGroup.mViews.size());
+        assertThat(restoredViewGroup.forPosition(0).getLeft())
+                .isEqualTo(mViewGroup.forPosition(0).getLeft());
+    }
+
+    @Test
+    public void onRestoreInstanceState_ignoresForeignState() {
+        mTestAdapter.setAdapterSize(3);
+        doLayout();
+        listLayoutManager.onRestoreInstanceState(View.BaseSavedState.EMPTY_STATE);
+        doLayout();
+
+        assertThat(mViewGroup.forPosition(0).getLeft()).isEqualTo(0);
+    }
+
     private void doLayout() {
         doLayout(new Animation());
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

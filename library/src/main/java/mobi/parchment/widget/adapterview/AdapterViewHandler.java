@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
-/** Created by Emir Hasanbegovic */
 public interface AdapterViewHandler {
 
     public boolean addViewInAdapterView(

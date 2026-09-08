@@ -3,7 +3,6 @@
 
 package mobi.parchment.widget.adapterview.gridpatternview;
 
-/** Created by Emir Hasanbegovic on 2014-03-03. */
 public class GridPatternItemDefinition {
 
     private final int mTop;

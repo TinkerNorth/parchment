@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview;
 import android.content.Context;
 import android.widget.Scroller;
 
-/** Created by Emir Hasanbegovic */
 public class ScrollAnimator {
     private final boolean mIsVertical;
     private final Scroller mScroller;

@@ -3,7 +3,6 @@
 
 package mobi.parchment.widget.adapterview;
 
-/** Created by Emir Hasanbegovic Keeps track of Animation states between layouts. */
 public class Animation {
     private static final int ANIMATION_ID_LIMIT = 100;
     private int mId;

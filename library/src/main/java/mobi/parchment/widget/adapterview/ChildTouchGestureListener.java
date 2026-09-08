@@ -10,7 +10,6 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-/** Created by Emir Hasanbegovic */
 public class ChildTouchGestureListener extends AdapterAnimator {
 
     private final OnClickListener mOnClickListener;

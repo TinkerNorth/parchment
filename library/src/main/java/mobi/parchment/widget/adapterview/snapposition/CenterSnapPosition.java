@@ -9,7 +9,6 @@ import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.Move;
 import mobi.parchment.widget.adapterview.ScrollDirectionManager;
 
-/** Created by Emir Hasanbegovic on 2014-03-11. */
 public class CenterSnapPosition<Cell> implements SnapPositionInterface<Cell> {
 
     @Override
@@ -33,11 +32,7 @@ public class CenterSnapPosition<Cell> implements SnapPositionInterface<Cell> {
 
     @Override
     public int getDisplacementFromSnapPosition(
-            LayoutManager<Cell> layoutManager,
-            int size,
-            Cell firstPosition,
-            Cell lastPosition,
-            Move move) {
+            LayoutManager<Cell> layoutManager, int size, Cell firstPosition, Cell lastPosition) {
         final Integer firstDisplacement =
                 getCellDisplacementFromSnapPosition(layoutManager, size, firstPosition);
         final Integer lastDisplacement =

@@ -18,7 +18,6 @@ import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.SnapPosition;
 
-/** Created by Emir Hasanbegovic */
 public class ListView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPTER, View>
         implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
 

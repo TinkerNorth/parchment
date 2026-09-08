@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview;
 import android.view.View;
 import java.util.Map;
 
-/** Created by Emir Hasanbegovic */
 public class SelectedPositionManager {
     private final OnSelectedListener mOnSelectedListener;
 

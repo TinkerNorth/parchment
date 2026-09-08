@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerTest {
 
@@ -306,8 +305,7 @@ public class GridPatternLayoutManagerTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

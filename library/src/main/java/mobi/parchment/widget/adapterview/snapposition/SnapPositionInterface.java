@@ -9,7 +9,6 @@ import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.Move;
 import mobi.parchment.widget.adapterview.ScrollDirectionManager;
 
-/** Created by Emir Hasanbegovic on 2014-03-11. */
 public interface SnapPositionInterface<Cell> {
 
     public int getDrawLimitMoveForwardOverDrawAdjust(
@@ -28,8 +27,7 @@ public interface SnapPositionInterface<Cell> {
             final LayoutManager<Cell> layoutManager,
             final int size,
             final Cell firstPosition,
-            Cell lastPosition,
-            Move move);
+            Cell lastPosition);
 
     public int getCellDistanceFromSnapPosition(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell);

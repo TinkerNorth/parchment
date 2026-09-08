@@ -7,7 +7,7 @@ java = "17"
 spotless = "8.10.2"
 googleJavaFormat = "1.36.1"
 
-# Library (compile-time only; Parchment ships with no runtime dependencies)
+# Library
 androidxAnnotation = "1.10.0"
 
 # Test

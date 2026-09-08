@@ -42,6 +42,12 @@ everything around them is new.
   `docs/architecture.md`, issue and PR templates, a pre-commit hook, and
   `scripts/ci_local.sh` mirroring CI.
 
+### Fixed
+
+- Restoring saved state into a freshly created view (rotation) kept the
+  first visible cell but lost the scroll offset inside it: the first layout
+  pass snapped back to the cell start. The restored offset now survives.
+
 ### Removed
 
 - Travis CI configuration, the `integration` module, lint baselines, and a

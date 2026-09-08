@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-/**
- * Created by Emir Hasanbegovic Handles the creating new views from the adapter, recycling them and
- * , dataset updating and
- */
 public class AdapterViewManager {
 
     private final DataSetObserverManager mDataSetObserverManager = new DataSetObserverManager();
@@ -59,7 +55,7 @@ public class AdapterViewManager {
         final View view = mAdapter.getView(position, convertView, viewGroup);
         final boolean isRecycled = view == convertView;
         if (!isRecycled || view.isLayoutRequested()) {
-            measureView(viewGroup, view, widthMeasureSpec, heightMeasureSpec);
+            measureView(view, widthMeasureSpec, heightMeasureSpec);
         }
 
         return view;
@@ -92,10 +88,7 @@ public class AdapterViewManager {
     }
 
     public LayoutParams measureView(
-            final ViewGroup viewGroup,
-            final View view,
-            final int widthMeasureSpec,
-            final int heightMeasureSpec) {
+            final View view, final int widthMeasureSpec, final int heightMeasureSpec) {
         LayoutParams layoutParams = view.getLayoutParams();
 
         if (layoutParams == null) {

@@ -9,7 +9,6 @@ import android.util.AttributeSet;
 import mobi.parchment.R;
 import mobi.parchment.widget.adapterview.Attributes;
 
-/** Created by Emir Hasanbegovic on 2014-02-25. */
 public class GridAttributes extends Attributes {
 
     private final int mNumberOfViewsPerCell;

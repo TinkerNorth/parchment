@@ -15,7 +15,6 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.widget.Adapter;
 
-/** Created by Emir Hasanbegovic */
 public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         extends android.widget.AdapterView<ADAPTER>
         implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
@@ -204,8 +203,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         final int bottomSize = MeasureSpec.getSize(bottom);
 
         if (layoutManager != null) {
-            layoutManager.layout(
-                    this, animation, changed, leftSize, topSize, rightSize, bottomSize);
+            layoutManager.layout(this, animation, leftSize, topSize, rightSize, bottomSize);
         }
         final AdapterAnimator.State state = childTouchListener.getState();
         switch (state) {

@@ -12,7 +12,6 @@ import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 
-/** Created by Emir Hasanbegovic on 2014-03-03. */
 public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     private List<GridPatternGroupDefinition> mGridPatternGroupDefinitions =
@@ -401,7 +400,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
                     View.MeasureSpec.makeMeasureSpec(
                             maxMeasureHeight, getChildHeightMeasureSpecMode());
 
-            adapterViewManager.measureView(viewGroup, view, widthMeasureSpec, heightMeasureSpec);
+            adapterViewManager.measureView(view, widthMeasureSpec, heightMeasureSpec);
         }
     }
 

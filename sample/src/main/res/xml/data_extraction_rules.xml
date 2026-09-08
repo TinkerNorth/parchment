@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The sample keeps no user data; opt out of cloud backup and device transfer explicitly. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" />

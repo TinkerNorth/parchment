@@ -8,7 +8,6 @@ import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import mobi.parchment.R;
 
-/** Created by Emir Hasanbegovic */
 public class Attributes {
 
     private static class DefaultValues {

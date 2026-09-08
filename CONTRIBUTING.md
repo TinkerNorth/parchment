@@ -54,10 +54,10 @@ different license: the project is Apache-2.0 end-to-end.
   a comment explaining what makes it inapplicable.
 - The library has no runtime dependencies and must stay that way.
   `androidx.annotation` is `compileOnly`.
-- Comments state non-obvious constraints only (why a measure pass is
-  skipped, what a magic value encodes). No narration of what the next line
-  does. Older files are denser; new code follows this rule, not their
-  example.
+- Prefer a test to a comment. Behaviour that needs explaining gets a test
+  named for the behaviour; a comment is the last resort for a constraint
+  that cannot be tested (a platform quirk, a build-tool limitation), states
+  why in one or two lines, and never narrates what the next line does.
 - Public API is the three custom views, their XML attributes, and the
   `GridPatternItemDefinition` types. Anything else in `mobi.parchment.widget.adapterview`
   is an implementation detail even when it is `public` for historical

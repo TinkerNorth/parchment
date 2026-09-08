@@ -16,7 +16,6 @@ import mobi.parchment.widget.adapterview.AdapterViewManager;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.SnapPosition;
 
-/** Created by Emir Hasanbegovic */
 public class GridPatternView<ADAPTER extends Adapter>
         extends AbstractAdapterView<ADAPTER, GridPatternGroup>
         implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {

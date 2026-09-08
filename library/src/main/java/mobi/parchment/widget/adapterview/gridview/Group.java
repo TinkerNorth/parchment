@@ -7,7 +7,6 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Created by Emir Hasanbegovic on 2014-02-25. */
 public class Group {
 
     private List<View> mViews = new ArrayList<View>();

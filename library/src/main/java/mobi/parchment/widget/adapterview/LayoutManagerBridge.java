@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview;
 import android.view.View;
 import android.view.ViewGroup;
 
-/** Created by Emir Hasanbegovic */
 public class LayoutManagerBridge {
 
     private final LayoutManager<?> mLayoutManager;
@@ -15,10 +14,6 @@ public class LayoutManagerBridge {
         mLayoutManager = layoutManager;
     }
 
-    /**
-     * @param view
-     * @return scroll distance and direction in pixels
-     */
     public int onSingleTapUp(final ViewGroup viewGroup, final View view) {
         if (mLayoutManager == null) return 0;
 

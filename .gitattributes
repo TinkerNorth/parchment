@@ -1,7 +1,5 @@
-# Normalise line endings so Windows checkouts do not churn the diff.
 * text=auto eol=lf
 
-# Gradle wrapper scripts keep their native endings and the POSIX one stays executable.
 gradlew text eol=lf
 gradlew.bat text eol=crlf
 *.jar binary

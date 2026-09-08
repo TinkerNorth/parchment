@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
-// Java formatting is enforced repo-wide from the root so the library, the sample, and every
-// test source set share one ruleset: `./gradlew spotlessApply` to fix, `spotlessCheck` in CI.
 spotless {
     java {
         target("library/src/**/*.java", "sample/src/**/*.java")

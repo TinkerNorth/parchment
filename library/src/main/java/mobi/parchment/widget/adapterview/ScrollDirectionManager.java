@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/** Created by Emir Hasanbegovic on 2014-03-03. */
 public class ScrollDirectionManager {
 
     private final boolean mIsVerticalScroll;

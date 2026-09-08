@@ -8,7 +8,6 @@ import android.widget.Adapter;
 import java.util.Collection;
 import java.util.HashSet;
 
-/** Created by Emir Hasanbegovic */
 public class DataSetObserverManager {
     private final Collection<DataSetObserver> mDataSetObservers = new HashSet<DataSetObserver>();
     private Adapter mAdapter;

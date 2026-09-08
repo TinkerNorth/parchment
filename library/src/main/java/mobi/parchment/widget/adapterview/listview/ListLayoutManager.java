@@ -13,7 +13,6 @@ import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/** Created by Emir Hasanbegovic on 2014-02-28. */
 public class ListLayoutManager extends LayoutManager<View> {
 
     public ListLayoutManager(
@@ -29,7 +28,7 @@ public class ListLayoutManager extends LayoutManager<View> {
         final int heightMeasureSpec = getChildHeightMeasureSpec(0);
         final int widthMeasureSpec = getChildWidthMeasureSpec(0);
 
-        mAdapterViewManager.measureView(viewGroup, view, widthMeasureSpec, heightMeasureSpec);
+        mAdapterViewManager.measureView(view, widthMeasureSpec, heightMeasureSpec);
     }
 
     @Override

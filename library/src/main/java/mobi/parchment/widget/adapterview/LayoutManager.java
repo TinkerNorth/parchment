@@ -174,18 +174,9 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     protected abstract int getChildHeightMeasureSpecMode();
 
-    /**
-     * @param animation Positive displacement moves the screen to the right and vice versa
-     * @param changed
-     * @param left
-     * @param top
-     * @param right
-     * @param bottom
-     */
     public void layout(
             final AdapterViewHandler adapterViewHandler,
             final Animation animation,
-            final boolean changed,
             final int left,
             final int top,
             final int right,
@@ -330,12 +321,11 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         final int displacement =
                 mSnapPositionInterface.getDisplacementFromSnapPosition(
-                        this, size, firstPosition, lastPosition, direction);
+                        this, size, firstPosition, lastPosition);
         if (displacement == 0) {
             return false;
         }
 
-        //        mOffset += displacement;
         if (firstPositionOnScreen) {
             mStartCellPosition = 0;
         } else if (lastPositionOnScreen) {
@@ -981,7 +971,6 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return layoutManagerState;
     }
 
-    // The saved state carries only ints, so the Cell type parameter cannot mismatch at runtime.
     @SuppressWarnings("unchecked")
     public void onRestoreInstanceState(final Parcelable parcelable) {
         if (!(parcelable instanceof LayoutManagerState)) {
@@ -991,6 +980,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final LayoutManagerState<Cell> layoutManagerState = (LayoutManagerState<Cell>) parcelable;
         mOffset = layoutManagerState.getOffset();
         mStartCellPosition = layoutManagerState.getStartCellPosition();
+        mIsFirstLayout = false;
     }
 
     public void onItemClick(final View view, final int position, final long id) {

@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by dx168-xl on 2014-04-30. */
 @RunWith(RobolectricTestRunner.class)
 public class OnScreenUnderDrawTest {
 
@@ -91,8 +90,7 @@ public class OnScreenUnderDrawTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

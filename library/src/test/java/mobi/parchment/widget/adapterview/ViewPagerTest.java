@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic on 2014-04-03. */
 @RunWith(RobolectricTestRunner.class)
 public class ViewPagerTest {
 
@@ -87,9 +86,6 @@ public class ViewPagerTest {
         doLayout(animation);
 
         final View currentView = mViewGroup.mViews.get(0);
-        //        assertThat(currentView.getTop()).isEqualTo(0);
-        //        assertThat(currentView.getBottom()).isEqualTo(100);
-        //        assertThat(currentView.getTag()).isEqualTo(9);
     }
 
     @Test
@@ -115,8 +111,7 @@ public class ViewPagerTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

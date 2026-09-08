@@ -60,7 +60,6 @@ keystore.properties
 Thumbs.db
 *~
 
-# Robolectric jar cache used only when the home directory contains a space (see library/build.gradle.kts)
 .robolectric/
 
 # Gradle dependency verification metadata (locally generated)

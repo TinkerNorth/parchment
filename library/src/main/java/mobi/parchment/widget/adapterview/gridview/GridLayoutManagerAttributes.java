@@ -7,7 +7,6 @@ import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.Orientation;
 import mobi.parchment.widget.adapterview.SnapPosition;
 
-/** Created by Emir Hasanbegovic on 2014-02-25. */
 public class GridLayoutManagerAttributes extends LayoutManagerAttributes {
     private final int mNumberOfViewsPerCell;
     private final Orientation mOrientation;

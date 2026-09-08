@@ -15,7 +15,6 @@ android {
 
     buildTypes {
         release {
-            // Libraries ship unobfuscated; consumers shrink with consumer-rules.pro applied.
             isMinifyEnabled = false
         }
     }
@@ -63,29 +62,23 @@ dependencies {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    // -options: javac warns that the Android bootclasspath is not a system-modules path, which is
-    // inherent to AGP. -this-escape: every custom View reads its AttributeSet from the constructor
-    // through an overridable hook; that is the Android pattern, not a defect.
+    // -options: AGP's bootclasspath is not a system-modules path. -this-escape: View constructors
+    // must call the overridable AttributeSet hook. -classfile: Robolectric's jar references an
+    // android.annotation type that is not on the unit-test classpath.
     val lint = mutableListOf("all", "-options", "-this-escape")
-    // Robolectric's jar references android.annotation.RequiresApi, which is absent from the
-    // unit-test classpath; javac reports that as a classfile warning nothing here can act on.
     if (name.contains("UnitTest")) lint += "-classfile"
     options.compilerArgs.addAll(listOf("-Xlint:" + lint.joinToString(","), "-Werror"))
 }
 
 tasks.withType<Test>().configureEach {
     maxHeapSize = "1g"
-    // An OOM in a test worker must kill the worker loudly, not wedge the JVM mid-run.
     jvmArgs("-XX:+ExitOnOutOfMemoryError")
-    // Robolectric turns the android-all jar location into a URL and back, so a home directory
-    // with a space ("C:\Users\First Last") becomes "First%20Last" and the native runtime cannot
-    // load. Give the test JVM a space-free home (gitignored) so the jar cache lands somewhere
-    // readable; machines without a space in the path keep the default ~/.m2 cache.
+    // Robolectric URL-encodes the android-all jar path, so a home directory with a space breaks
+    // its native runtime; the gitignored .robolectric/ stands in for ~ on those machines.
     val home = System.getProperty("user.home")
     if (home.contains(' ')) {
         val robolectricHome = rootProject.layout.projectDirectory.dir(".robolectric").asFile
         systemProperty("user.home", robolectricHome.absolutePath)
-        // Robolectric writes its download lock straight into the home directory without creating it.
         doFirst { robolectricHome.mkdirs() }
     }
 }

@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview.gridpatternview;
 import mobi.parchment.widget.adapterview.LayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.SnapPosition;
 
-/** Created by Emir Hasanbegovic on 2014-02-25. */
 public class GridPatternLayoutManagerAttributes extends LayoutManagerAttributes {
     private final float mRatio;
 

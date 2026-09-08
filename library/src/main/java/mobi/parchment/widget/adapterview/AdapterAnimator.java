@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-/** Created by Emir Hasanbegovic */
 public class AdapterAnimator implements OnGestureListener, AnimationStoppedListener {
 
     public static enum State {
@@ -186,7 +185,6 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             case snapingTo:
             case flinging:
                 if (mComputedOffsetReady) return mAnimation;
-                // An animation whose offset is not ready yet is treated as stopped.
                 setState(State.notMoving);
                 mAnimation.newAnimation();
                 return mAnimation;

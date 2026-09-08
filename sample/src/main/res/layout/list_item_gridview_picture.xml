@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- UselessParent: the FrameLayout stays because android:foreground on a non-FrameLayout needs
-     API 23, and the selector must draw above both the image and the caption. -->
+<!-- android:foreground needs a FrameLayout below API 23. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"

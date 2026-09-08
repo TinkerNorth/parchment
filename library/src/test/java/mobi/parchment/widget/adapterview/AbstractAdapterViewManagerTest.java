@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by emir on 22/03/14. */
 @RunWith(RobolectricTestRunner.class)
 public class AbstractAdapterViewManagerTest {
 
@@ -68,10 +67,6 @@ public class AbstractAdapterViewManagerTest {
     @Test
     public void MeasuringTest() {
         final View view = mAdapterViewManager.getView(mViewGroup, 0, 100, 100);
-
-        //        assertThat(view.getGroupHeight()).isEqualTo(100);
-        //        assertThat(view.getGroupWidth()).isEqualTo(100);
-
     }
 
     private void doFirstLayout(int viewGroupWidth, int viewGroupHeight) {

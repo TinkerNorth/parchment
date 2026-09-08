@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/** Created by Emir Hasanbegovic on 2014-03-03. */
 public class GridPatternGroupDefinition {
 
     private final boolean mIsVerticalScroll;

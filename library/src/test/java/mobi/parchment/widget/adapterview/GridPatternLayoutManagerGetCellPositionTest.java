@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerGetCellPositionTest {
 
@@ -111,7 +110,7 @@ public class GridPatternLayoutManagerGetCellPositionTest {
 
     private void doLayout(Animation animation) {
         gridPatternLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+                mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

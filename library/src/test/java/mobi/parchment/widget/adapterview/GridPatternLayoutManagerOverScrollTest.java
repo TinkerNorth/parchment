@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerOverScrollTest {
 
@@ -154,8 +153,7 @@ public class GridPatternLayoutManagerOverScrollTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
     }
 
     private void doFirstLayout(int viewGroupWidth, int viewGroupHeight) {

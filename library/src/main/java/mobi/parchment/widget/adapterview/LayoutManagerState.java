@@ -7,7 +7,6 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.view.View;
 
-/** Created by Emir Hasanbegovic on 2014-03-31. */
 public class LayoutManagerState<Cell> extends View.BaseSavedState {
 
     private final int mOffset;
@@ -32,7 +31,6 @@ public class LayoutManagerState<Cell> extends View.BaseSavedState {
         out.writeInt(mStartCellPosition);
     }
 
-    // The Cell type parameter is erased in a Parcel, so the creator is deliberately wildcarded.
     public static final Parcelable.Creator<LayoutManagerState<?>> CREATOR =
             new Parcelable.Creator<LayoutManagerState<?>>() {
                 @Override

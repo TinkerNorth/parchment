@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-/** Created by Emir Hasanbegovic */
 public class AdapterViewGestureDetector extends GestureDetector {
     private ChildTouchGestureListener mChildTouchGestureListener;
 

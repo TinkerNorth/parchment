@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
-/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridLayoutManagerTest {
 
@@ -154,23 +153,6 @@ public class GridLayoutManagerTest {
         assertThat(secondView.getBottom()).isEqualTo(200);
     }
 
-    /**
-     * 02-28 11:44:17.499 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [
-     * mid: 2 mDisplacement: 0 ] 02-28 11:44:17.509 D/SimpleHLV( 7924): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 4 mDisplacement: 0 ] 02-28 11:44:18.670
-     * D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 6
-     * mDisplacement: 0 ] 02-28 11:44:19.411 D/SimpleHLV( 7924): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: 0 ] 02-28 11:44:20.062
-     * D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
-     * mDisplacement: -62 ] 02-28 11:44:20.102 D/SimpleHLV( 7924): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -74 ] 02-28
-     * 11:44:20.122 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
-     * mDisplacement: -19 ] 02-28 11:44:20.152 D/SimpleHLV( 7924): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -14 ] 02-28
-     * 11:44:20.162 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
-     * mDisplacement: -9 ] 02-28 11:44:20.172 D/SimpleHLV( 7924): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -6 ]
-     */
     @Test
     public void layoutViewTestCorrectIndexIncrementationForGroups2() {
         mTestAdapter.setAdapterSize(0);
@@ -213,17 +195,6 @@ public class GridLayoutManagerTest {
         doLayout(animation);
     }
 
-    /**
-     * 02-28 11:27:30.464 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [
-     * mid: 2 mDisplacement: 0 ] 02-28 11:27:30.484 D/SimpleHLV( 6148): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 4 mDisplacement: 0 ] 02-28 11:27:35.300
-     * D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 6
-     * mDisplacement: 0 ] 02-28 11:27:35.900 D/SimpleHLV( 6148): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: -43 ] 02-28
-     * 11:27:35.920 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 8
-     * mDisplacement: -9 ] 02-28 11:27:35.950 D/SimpleHLV( 6148): *UI*
-     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: -132 ]
-     */
     @Test
     public void layoutViewTestCorrectIndexIncrementationForGroups() {
         mTestAdapter.setAdapterSize(0);
@@ -434,8 +405,7 @@ public class GridLayoutManagerTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(
-                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {

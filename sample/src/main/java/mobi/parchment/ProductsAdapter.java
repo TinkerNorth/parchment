@@ -16,7 +16,6 @@ import java.util.List;
 import mobi.parchment.models.Picture;
 import mobi.parchment.sample.R;
 
-/** Created by Emir Hasanbegovic on 2014-03-21. */
 public class ProductsAdapter extends BaseAdapter {
 
     private final int mLayoutResourceId;

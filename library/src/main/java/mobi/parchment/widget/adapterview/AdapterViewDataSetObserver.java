@@ -5,7 +5,6 @@ package mobi.parchment.widget.adapterview;
 
 import android.database.DataSetObserver;
 
-/** Created by Emir Hasanbegovic */
 public abstract class AdapterViewDataSetObserver extends DataSetObserver {
 
     protected final AdapterViewManager mAdapterViewManager;

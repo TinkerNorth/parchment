@@ -6,7 +6,6 @@ package mobi.parchment.widget.adapterview.utilities;
 import android.view.View;
 import android.view.ViewGroup;
 
-/** Created by Emir Hasanbegovic on 2014-03-27. */
 public class ViewGroupUtilities {
 
     public static int getViewGroupMeasuredHeight(final ViewGroup viewGroup) {

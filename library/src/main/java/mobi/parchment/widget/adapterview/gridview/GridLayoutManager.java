@@ -11,7 +11,6 @@ import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/** Created by Emir Hasanbegovic */
 public class GridLayoutManager extends LayoutManager<Group> {
     private final GridLayoutManagerAttributes mGridLayoutManagerAttributes;
 
@@ -78,8 +77,7 @@ public class GridLayoutManager extends LayoutManager<Group> {
         final int horizontalMeasureSpec = getChildWidthMeasureSpec();
         final List<View> views = group.getViews();
         for (final View view : views) {
-            mAdapterViewManager.measureView(
-                    viewGroup, view, horizontalMeasureSpec, verticalMeasureSpec);
+            mAdapterViewManager.measureView(view, horizontalMeasureSpec, verticalMeasureSpec);
         }
     }
 
