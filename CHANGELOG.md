@@ -12,6 +12,11 @@ everything around them is new.
 
 ### Changed
 
+- Animation frames (fling, snap, page, drag) run the layout step directly
+  from a `postOnAnimation` callback and invalidate, instead of posting a
+  `requestLayout()` that re-measured and re-laid out the whole ancestor
+  tree every frame. A full layout pass still happens whenever the framework
+  asks for one, and a frame that fires while one is pending yields to it.
 - **Breaking:** minimum SDK is 21 (was 8) and the library is compiled with
   Java 17 against SDK 37.
 - **Breaking:** the library is an AAR built by Gradle. The Maven `apklib`

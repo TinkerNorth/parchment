@@ -160,12 +160,14 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
     public void requestAnimationFrame() {
         if (mAnimationFrameRequested) return;
         mAnimationFrameRequested = true;
-        post(mAnimationFrameRunnable);
+        postOnAnimation(mAnimationFrameRunnable);
     }
 
     protected void onAnimationFrame() {
         mAnimationFrameRequested = false;
-        requestLayout();
+        if (isLayoutRequested()) return;
+        layoutFrame(getLeft(), getTop(), getRight(), getBottom());
+        invalidate();
     }
 
     @Override
@@ -205,7 +207,10 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             final int top,
             final int right,
             final int bottom) {
+        layoutFrame(left, top, right, bottom);
+    }
 
+    private void layoutFrame(final int left, final int top, final int right, final int bottom) {
         final ChildTouchGestureListener childTouchListener =
                 mAdapterViewInitializer.getChildTouchListener();
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
