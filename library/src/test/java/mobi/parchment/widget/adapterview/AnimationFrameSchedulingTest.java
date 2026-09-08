@@ -76,11 +76,54 @@ public class AnimationFrameSchedulingTest {
         mListView.requestAnimationFrame();
 
         assertThat(mListView.mFramesRun).isEqualTo(0);
-        assertThat(mListView.mLayoutRequests).isEqualTo(0);
 
         idleMainLooper();
 
         assertThat(mListView.mFramesRun).isEqualTo(1);
+        assertThat(mListView.mLayoutRequests).isEqualTo(0);
+        assertThat(mListView.mLayoutPasses).isEqualTo(0);
+    }
+
+    @Test
+    public void aFrame_movesTheCellsWithoutALayoutPass() {
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(155f), 45f, 0f);
+
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(55);
+        assertThat(mListView.mFramesRun).isEqualTo(1);
+        assertThat(mListView.mLayoutPasses).isEqualTo(0);
+        assertThat(mListView.mLayoutRequests).isEqualTo(0);
+        assertThat(mListView.isLayoutRequested()).isFalse();
+    }
+
+    @Test
+    public void aFling_runsToRestOnAnimationFramesWithoutLayoutPasses() {
+        fling();
+
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mFramesRun).isGreaterThan(1);
+        assertThat(mListView.mLayoutPasses).isEqualTo(0);
+        assertThat(mListView.mLayoutRequests).isEqualTo(0);
+        assertThat(mListView.getChildAt(2).getLeft()).isEqualTo(100);
+    }
+
+    @Test
+    public void aFrame_whileALayoutIsPending_leavesTheWorkToTheLayoutPass() {
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(155f), 45f, 0f);
+        mListView.requestLayout();
+        assertThat(mListView.mLayoutRequests).isEqualTo(1);
+
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(55);
+        assertThat(mListView.mFramesRun).isEqualTo(1);
+        assertThat(mListView.mLayoutPasses).isEqualTo(1);
         assertThat(mListView.mLayoutRequests).isEqualTo(1);
     }
 
@@ -192,6 +235,7 @@ public class AnimationFrameSchedulingTest {
         int mLayoutRequestsDuringLayout;
         int mFrameRequests;
         int mFramesRun;
+        int mLayoutPasses;
         ChildTouchGestureListener mGestureListener;
         private boolean mInLayout;
 
@@ -204,6 +248,7 @@ public class AnimationFrameSchedulingTest {
             mLayoutRequestsDuringLayout = 0;
             mFrameRequests = 0;
             mFramesRun = 0;
+            mLayoutPasses = 0;
         }
 
         @Override
@@ -250,6 +295,7 @@ public class AnimationFrameSchedulingTest {
                 final int top,
                 final int right,
                 final int bottom) {
+            mLayoutPasses++;
             mInLayout = true;
             super.onLayout(changed, left, top, right, bottom);
             mInLayout = false;

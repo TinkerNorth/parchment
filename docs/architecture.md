@@ -27,7 +27,17 @@ Adapter (any android.widget.Adapter)
 
 ## The layout pass
 
-`AbstractAdapterView.onLayout` runs on every frame while anything moves:
+`AbstractAdapterView` runs the same frame step from two places: `onLayout`
+when the framework lays the view out (size change, adapter change,
+`setSelection`), and `onAnimationFrame` on every Choreographer frame while
+anything moves. The animation path is scheduled with `postOnAnimation`
+through the `AnimationFrameScheduler` the animator holds, runs the step
+against the view's current bounds, and invalidates; it never calls
+`requestLayout()`, so a fling does not re-measure the ancestor tree once
+per frame. If a real layout is already pending when the frame fires, the
+frame yields and the layout pass carries the animation forward.
+
+The step itself:
 
 1. `ChildTouchGestureListener.computeScrollOffset()` advances the active
    animation (fling, snap, page, or programmatic jump) and produces an
@@ -41,8 +51,8 @@ Adapter (any android.widget.Adapter)
    (which is `addViewInLayout`, so no re-layout storm) and positioned with
    `ScrollDirectionManager`, which maps start/end/size onto left/right/width
    or top/bottom/height depending on orientation.
-4. If the animation is still running, the view posts another
-   `requestLayout()`; when it settles with `snapToPosition` on, the
+4. If the animation is still running, the view asks the scheduler for the
+   next frame; when it settles with `snapToPosition` on, the
    `SnapPositionInterface` computes the displacement to the nearest cell
    and a snap animation starts.
 
