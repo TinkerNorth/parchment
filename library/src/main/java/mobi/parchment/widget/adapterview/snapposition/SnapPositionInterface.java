@@ -23,12 +23,6 @@ public interface SnapPositionInterface<Cell> {
             final int size,
             final Cell cell);
 
-    public int getDisplacementFromSnapPosition(
-            final LayoutManager<Cell> layoutManager,
-            final int size,
-            final Cell firstPosition,
-            Cell lastPosition);
-
     public int getCellDistanceFromSnapPosition(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell);
 

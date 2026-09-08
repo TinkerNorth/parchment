@@ -29,24 +29,8 @@ public class EndSnapPosition<Cell> implements SnapPositionInterface<Cell> {
         return startSizePadding + size - cellSize;
     }
 
-    @Override
-    public int getDisplacementFromSnapPosition(
-            LayoutManager<Cell> layoutManager, int size, Cell firstPosition, Cell lastPosition) {
-        final Integer lastDisplacement =
-                getCellDisplacementFromSnapPosition(layoutManager, size, lastPosition);
-
-        if (lastDisplacement != null) {
-            return lastDisplacement;
-        }
-
-        return 0;
-    }
-
-    private Integer getCellDisplacementFromSnapPosition(
+    private int getCellDisplacementFromSnapPosition(
             LayoutManager<Cell> layoutManager, int size, Cell cell) {
-        if (cell == null) {
-            return null;
-        }
         final int currentCellEnd = layoutManager.getCellEnd(cell);
         final int startSizePadding = layoutManager.getStartSizePadding();
         final int displacement = startSizePadding + size - currentCellEnd;

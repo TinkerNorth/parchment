@@ -230,14 +230,13 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int breadth = mScrollDirectionManager.getDrawBreadth(left, top, right, bottom);
         layoutCells(adapterViewHandler, newSize, breadth);
 
-        if (needLayout(newSize, displacement)) {
-            if (mAnimationStoppedListener != null) {
-                mAnimationStoppedListener.onAnimationStopped();
-            }
+        if (resetWhenNoCellsAreDrawn(newSize, displacement)) {
+            onAnimationStopped();
             mAnimationDisplacement = 0;
-            setOffset(0, newSize);
             layoutCells(adapterViewHandler, newSize, breadth);
         }
+
+        correctOverScroll(adapterViewHandler, newSize, breadth);
 
         checkSelectWhileScrollingAttribute(newSize);
         mSelectedPositionManager.onViewsDrawn(mPositions);
@@ -271,95 +270,56 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return mViewGroup.getPaddingBottom();
     }
 
-    private boolean needLayout(final int size, final int scrollDisplacement) {
+    private boolean resetWhenNoCellsAreDrawn(final int size, final int scrollDisplacement) {
         final int adapterCount = mAdapterViewManager.getAdapterCount();
         final boolean haveCellsToDraw = adapterCount > 0;
         final boolean noCellsBeingDrawn = mCells.isEmpty();
-        Move direction = Move.none;
-
-        if (scrollDisplacement < 0) {
-            direction = Move.back;
-        } else if (scrollDisplacement > 0) {
-            direction = Move.forward;
-        }
-
-        if (haveCellsToDraw && noCellsBeingDrawn) {
-
-            if (scrollDisplacement > 0) { // too far to the right
-                final Cell cell = getCell(0);
-                final int cellSize = getCellSize(cell);
-                final int absoluteSnapPosition =
-                        mSnapPositionInterface.getAbsoluteSnapPosition(
-                                this, size, cellSize, direction);
-                mOffset = absoluteSnapPosition;
-                mStartCellPosition = 0;
-            } else if (scrollDisplacement < 0) { // too far to the left
-                final Cell cell = getCell(adapterCount - 1);
-                final int cellSize = getCellSize(cell);
-                final int absoluteSnapPosition =
-                        mSnapPositionInterface.getAbsoluteSnapPosition(
-                                this, size, cellSize, direction);
-                mOffset = absoluteSnapPosition;
-                mStartCellPosition = getCellCount() - 1;
-            }
-            return true;
-        }
-
-        final Cell firstPosition = getFirstCell();
-        final Cell lastPosition = getLastCell();
-
-        final boolean firstPositionOnScreen = firstPosition != null;
-        final boolean lastPositionOnScreen = lastPosition != null;
-        if (!firstPositionOnScreen && !lastPositionOnScreen) {
-            /**
-             * Assumption is that if first and last item are not on screen then the rest of the
-             * items have been layout out correctly. Note that we have already covered the case
-             * where there are no views on screen.
-             */
+        if (!haveCellsToDraw || !noCellsBeingDrawn) {
             return false;
         }
 
-        final int displacement =
-                mSnapPositionInterface.getDisplacementFromSnapPosition(
-                        this, size, firstPosition, lastPosition);
-        if (displacement == 0) {
-            return false;
-        }
-
-        if (firstPositionOnScreen) {
+        final Move direction = getMove(scrollDisplacement);
+        if (scrollDisplacement > 0) {
+            final Cell cell = getCell(0);
+            final int cellSize = getCellSize(cell);
+            mOffset =
+                    mSnapPositionInterface.getAbsoluteSnapPosition(this, size, cellSize, direction);
             mStartCellPosition = 0;
-        } else if (lastPositionOnScreen) {
+        } else if (scrollDisplacement < 0) {
+            final Cell cell = getCell(adapterCount - 1);
+            final int cellSize = getCellSize(cell);
+            mOffset =
+                    mSnapPositionInterface.getAbsoluteSnapPosition(this, size, cellSize, direction);
             mStartCellPosition = getCellCount() - 1;
-        } else {
-
         }
-
         return true;
     }
 
-    private Cell getFirstCell() {
-        if (mCells.isEmpty()) {
-            return null;
+    private void correctOverScroll(
+            final AdapterViewHandler adapterViewHandler, final int size, final int breadth) {
+        final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
+        if (mCells.isEmpty() || isCircularScroll) {
+            return;
         }
 
-        if (mStartCellPosition == 0) {
-            return mCells.get(0);
-        }
-        return null;
+        final int forwardCorrection = getMoveForwardOverDrawAdjust(size, 0);
+        applyOverScrollCorrection(adapterViewHandler, size, breadth, forwardCorrection);
+
+        final int backwardCorrection = getMoveBackwardOverDrawAdjust(size, 0);
+        applyOverScrollCorrection(adapterViewHandler, size, breadth, backwardCorrection);
     }
 
-    private Cell getLastCell() {
-        if (mCells.isEmpty()) {
-            return null;
+    private void applyOverScrollCorrection(
+            final AdapterViewHandler adapterViewHandler,
+            final int size,
+            final int breadth,
+            final int correction) {
+        if (correction == 0) {
+            return;
         }
-
-        final int size = mCells.size();
-        final int cellCount = getCellCount();
-        if (cellCount == -1 || mStartCellPosition + size != cellCount) {
-            return null;
-        }
-
-        return mCells.get(size - 1);
+        mAnimationDisplacement = 0;
+        mOffset += correction;
+        layoutCells(adapterViewHandler, size, breadth);
     }
 
     private void checkSelectWhileScrollingAttribute(final int newWidth) {
