@@ -12,6 +12,11 @@ everything around them is new.
 
 ### Changed
 
+- With `snapToPosition` on, a fling ends on the nearest snap position
+  instead of decelerating to a stop and then starting a separate snap. The
+  layout manager computes the adjustment when the fling starts, extrapolating
+  with the edge cell's size when the end lies beyond the visible cells, and
+  the fling's end point is moved there while its physics stay the same.
 - Snap, page, tap-to-snap, and programmatic scrolls use a decelerate curve
   with a duration proportional to the distance (100 ms per inch, stretched
   for the deceleration, capped at 500 ms), the same numbers RecyclerView's

@@ -95,6 +95,17 @@ the content must move to get it there. `LayoutManager` picks the strategy
 once from the attributes; `onScreen` is the default and never moves
 content on its own.
 
+With `snapToPosition` on, a fling is retargeted when it starts:
+`LayoutManager.getFlingSnapAdjustment` takes the distance the fling would
+travel, finds the cell that would land nearest the snap position (walking
+the visible cells, and extrapolating with the edge cell's size plus spacing
+when the end lies beyond them, never past the first or last cell unless
+scrolling is circular), and the animator moves the fling's end point there.
+The fling keeps its physics; only its end changes, so there is one motion
+from finger-up to rest. The snap that follows a stop still runs as a safety
+net for anything the extrapolation could not know, such as cells of
+different sizes.
+
 ## Circular scrolling
 
 `isCircularScroll` is handled entirely in `LayoutManager`: adapter positions

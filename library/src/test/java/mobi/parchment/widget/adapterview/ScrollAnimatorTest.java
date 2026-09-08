@@ -93,6 +93,43 @@ public class ScrollAnimatorTest {
     }
 
     @Test
+    public void getFinalOffset_reportsWhereTheFlingWillEnd() {
+        final ScrollAnimator animator = new ScrollAnimator(mContext, HORIZONTAL);
+
+        animator.flingBy(-1000f, 0f);
+
+        assertThat(animator.getFinalOffset()).isEqualTo(-194);
+    }
+
+    @Test
+    public void setFinalOffset_retargetsTheFlingAndKeepsItsDuration() {
+        final ScrollAnimator animator = new ScrollAnimator(mContext, HORIZONTAL);
+        animator.flingBy(-1000f, 0f);
+
+        animator.setFinalOffset(-231);
+
+        assertThat(animator.getFinalOffset()).isEqualTo(-231);
+        assertThat(animator.getDuration()).isEqualTo(555);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(555));
+        animator.computeScrollOffset();
+        assertThat(animator.getCurrrentOffset()).isEqualTo(-231);
+        assertThat(animator.isFinished()).isTrue();
+    }
+
+    @Test
+    public void setFinalOffset_vertical_retargetsTheVerticalFling() {
+        final ScrollAnimator animator = new ScrollAnimator(mContext, VERTICAL);
+        animator.flingBy(0f, -1000f);
+
+        animator.setFinalOffset(-231);
+
+        assertThat(animator.getFinalOffset()).isEqualTo(-231);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(555));
+        animator.computeScrollOffset();
+        assertThat(animator.getCurrrentOffset()).isEqualTo(-231);
+    }
+
+    @Test
     public void flingBy_vertical_movesTheVerticalOffset() {
         final ScrollAnimator animator = new ScrollAnimator(mContext, VERTICAL);
 

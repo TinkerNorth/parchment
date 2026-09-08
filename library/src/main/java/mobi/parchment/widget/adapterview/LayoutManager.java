@@ -754,6 +754,59 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
     }
 
+    public int getFlingSnapAdjustment(final ViewGroup viewGroup, final int displacement) {
+        final boolean isSnapToPosition = mLayoutManagerAttributes.isSnapToPosition();
+        final boolean isOnScreen = mLayoutManagerAttributes.isSnapPositionOnScreen();
+        if (!isSnapToPosition || isOnScreen || mCells.isEmpty()) return 0;
+
+        final int size = getSizeInsidePadding(viewGroup);
+        final int cellSpacing = getCellSpacing();
+        final Cell firstCell = mCells.get(0);
+        final Cell lastCell = mCells.get(mCells.size() - 1);
+        final int firstDistance = getSnapToPixelDistance(size, getView(firstCell));
+        final int lastDistance = getSnapToPixelDistance(size, getView(lastCell));
+
+        if (displacement > firstDistance) {
+            final int step = getCellSize(firstCell) + cellSpacing;
+            final int steps =
+                    getExtrapolationSteps(
+                            displacement - firstDistance, step, getCellsBeforeFirst());
+            return firstDistance + steps * step - displacement;
+        }
+
+        if (displacement < lastDistance) {
+            final int step = getCellSize(lastCell) + cellSpacing;
+            final int steps =
+                    getExtrapolationSteps(lastDistance - displacement, step, getCellsAfterLast());
+            return lastDistance - steps * step - displacement;
+        }
+
+        int nearestDistance = firstDistance;
+        for (final Cell cell : mCells) {
+            final int distance = getSnapToPixelDistance(size, getView(cell));
+            final boolean isNearer =
+                    Math.abs(distance - displacement) < Math.abs(nearestDistance - displacement);
+            if (isNearer) nearestDistance = distance;
+        }
+        return nearestDistance - displacement;
+    }
+
+    private int getExtrapolationSteps(final int distance, final int step, final int cellLimit) {
+        final int steps = Math.round(distance / (float) step);
+        return Math.min(steps, cellLimit);
+    }
+
+    private int getCellsBeforeFirst() {
+        if (mLayoutManagerAttributes.isCircularScroll()) return Integer.MAX_VALUE;
+        return mStartCellPosition;
+    }
+
+    private int getCellsAfterLast() {
+        if (mLayoutManagerAttributes.isCircularScroll()) return Integer.MAX_VALUE;
+        final int lastCellPosition = mStartCellPosition + mCells.size() - 1;
+        return getCellCount() - 1 - lastCellPosition;
+    }
+
     public int snapTo(final ViewGroup viewGroup) {
         final boolean isSnapToPosition = mLayoutManagerAttributes.isSnapToPosition();
         if (!isSnapToPosition) return 0;

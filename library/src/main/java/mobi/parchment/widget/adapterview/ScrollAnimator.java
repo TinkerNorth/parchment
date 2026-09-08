@@ -59,6 +59,16 @@ public class ScrollAnimator {
         else return mScroller.getCurrX();
     }
 
+    public int getFinalOffset() {
+        if (mIsVertical) return mScroller.getFinalY();
+        else return mScroller.getFinalX();
+    }
+
+    public void setFinalOffset(final int finalOffset) {
+        if (mIsVertical) mScroller.setFinalY(finalOffset);
+        else mScroller.setFinalX(finalOffset);
+    }
+
     public void flingBy(final float velocityX, final float velocityY) {
         if (mIsVertical)
             mScroller.fling(0, 0, 0, (int) velocityY, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE);
