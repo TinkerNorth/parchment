@@ -163,19 +163,23 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     public void computeScrollOffset() {
-        mComputedOffsetReady =
-                !mScrollAnimator.isFinished() && mScrollAnimator.computeScrollOffset();
+        mComputedOffsetReady = false;
+        if (mState == State.scrolling) return;
 
-        if (!mComputedOffsetReady) {
-            final boolean isScrolling = mState.equals(State.scrolling);
-            if (!isScrolling) setState(State.notMoving);
-            return;
-        }
+        if (mScrollAnimator.isFinished()) setState(State.notMoving);
+        if (mState == State.notMoving) return;
+
+        mComputedOffsetReady = mScrollAnimator.computeScrollOffset();
+        if (!mComputedOffsetReady) return;
 
         final int currentOffset = mScrollAnimator.getCurrrentOffset();
-
         mAnimation.setDisplacement(currentOffset - mPreviousDisplacement);
         mPreviousDisplacement = currentOffset;
+    }
+
+    public void onFrameLaidOut() {
+        if (mState == State.scrolling || mState == State.notMoving) return;
+        if (mScrollAnimator.isFinished()) setState(State.notMoving);
     }
 
     public Animation getAnimation() {
@@ -188,9 +192,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             case animatingTo:
             case snapingTo:
             case flinging:
-                if (mComputedOffsetReady) return mAnimation;
-                setState(State.notMoving);
-                mAnimation.newAnimation();
+                if (!mComputedOffsetReady) mAnimation.setDisplacement(0);
                 return mAnimation;
             case notMoving:
             default:

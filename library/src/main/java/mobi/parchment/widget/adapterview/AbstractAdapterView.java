@@ -221,6 +221,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         if (layoutManager != null) {
             layoutManager.layout(this, animation, left, top, right, bottom);
         }
+        childTouchListener.onFrameLaidOut();
         final AdapterAnimator.State state = childTouchListener.getState();
         switch (state) {
             case animatingTo:
