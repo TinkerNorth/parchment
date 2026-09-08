@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
 import android.view.View;
@@ -6,28 +11,21 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import androidx.test.core.app.ApplicationProvider;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroupDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerOverScrollTest {
 
@@ -43,35 +41,52 @@ public class GridPatternLayoutManagerOverScrollTest {
 
     @Before
     public void setup() {
-        attributes = new GridPatternLayoutManagerAttributes(false, true, false, 0, SnapPosition.onScreen, CELL_SPACING, true, true, true, 1f);
-        listLayoutManager = new GridPatternLayoutManager(mViewGroup, null, adapterViewManager, attributes);
+        attributes =
+                new GridPatternLayoutManagerAttributes(
+                        false,
+                        true,
+                        false,
+                        0,
+                        SnapPosition.onScreen,
+                        CELL_SPACING,
+                        true,
+                        true,
+                        true,
+                        1f);
+        listLayoutManager =
+                new GridPatternLayoutManager(mViewGroup, null, adapterViewManager, attributes);
         mTestAdapter = new TestAdapter(VIEW_SIZE);
         adapterViewManager.setAdapter(mTestAdapter);
         doFirstLayout(VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
 
         {
-            final List<GridPatternItemDefinition> gridPatternItemDefinitions = new ArrayList<GridPatternItemDefinition>();
+            final List<GridPatternItemDefinition> gridPatternItemDefinitions =
+                    new ArrayList<GridPatternItemDefinition>();
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 1));
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 1, 1, 1));
-            final GridPatternGroupDefinition gridPatternGroupDefinition = new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
+            final GridPatternGroupDefinition gridPatternGroupDefinition =
+                    new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
             listLayoutManager.addGridPatternGroupDefinition(gridPatternGroupDefinition);
         }
         {
-            final List<GridPatternItemDefinition> gridPatternItemDefinitions = new ArrayList<GridPatternItemDefinition>();
+            final List<GridPatternItemDefinition> gridPatternItemDefinitions =
+                    new ArrayList<GridPatternItemDefinition>();
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 2));
-            final GridPatternGroupDefinition gridPatternGroupDefinition = new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
+            final GridPatternGroupDefinition gridPatternGroupDefinition =
+                    new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
             listLayoutManager.addGridPatternGroupDefinition(gridPatternGroupDefinition);
         }
         {
-            final List<GridPatternItemDefinition> gridPatternItemDefinitions = new ArrayList<GridPatternItemDefinition>();
+            final List<GridPatternItemDefinition> gridPatternItemDefinitions =
+                    new ArrayList<GridPatternItemDefinition>();
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 1));
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 1, 1, 1));
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(1, 0, 1, 1));
             gridPatternItemDefinitions.add(new GridPatternItemDefinition(1, 1, 1, 1));
-            final GridPatternGroupDefinition gridPatternGroupDefinition = new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
+            final GridPatternGroupDefinition gridPatternGroupDefinition =
+                    new GridPatternGroupDefinition(true, gridPatternItemDefinitions);
             listLayoutManager.addGridPatternGroupDefinition(gridPatternGroupDefinition);
         }
-
     }
 
     @Test
@@ -86,7 +101,6 @@ public class GridPatternLayoutManagerOverScrollTest {
 
         View firstView = mViewGroup.mViews.get(0);
         assertThat(firstView.getTop()).isEqualTo(0);
-
 
         int displacement = -1300;
         animation.newAnimation();
@@ -119,7 +133,6 @@ public class GridPatternLayoutManagerOverScrollTest {
         animation.newAnimation();
         doLayout(animation);
 
-
         int displacement = -1300;
         animation.newAnimation();
         animation.setDisplacement(displacement);
@@ -141,12 +154,15 @@ public class GridPatternLayoutManagerOverScrollTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(mViewGroup, animation, false, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
+        listLayoutManager.layout(
+                mViewGroup, animation, false, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
     }
 
     private void doFirstLayout(int viewGroupWidth, int viewGroupHeight) {
-        final int widthMeasureSpec = View.MeasureSpec.makeMeasureSpec(viewGroupWidth, View.MeasureSpec.EXACTLY);
-        final int heightMeasureSpec = View.MeasureSpec.makeMeasureSpec(viewGroupHeight, View.MeasureSpec.EXACTLY);
+        final int widthMeasureSpec =
+                View.MeasureSpec.makeMeasureSpec(viewGroupWidth, View.MeasureSpec.EXACTLY);
+        final int heightMeasureSpec =
+                View.MeasureSpec.makeMeasureSpec(viewGroupHeight, View.MeasureSpec.EXACTLY);
         mViewGroup.measure(widthMeasureSpec, heightMeasureSpec);
         mViewGroup.layout(0, 0, viewGroupWidth, viewGroupHeight);
     }
@@ -159,18 +175,21 @@ public class GridPatternLayoutManagerOverScrollTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(mViews, new Comparator<View>() {
-                @Override
-                public int compare(View lhs, View rhs) {
-                    return lhs.getLeft() - rhs.getLeft();
-                }
-            });
+            Collections.sort(
+                    mViews,
+                    new Comparator<View>() {
+                        @Override
+                        public int compare(View lhs, View rhs) {
+                            return lhs.getLeft() - rhs.getLeft();
+                        }
+                    });
 
             return mViews.get(position);
         }
 
         @Override
-        public boolean addViewInAdapterView(View view, int index, ViewGroup.LayoutParams layoutParams) {
+        public boolean addViewInAdapterView(
+                View view, int index, ViewGroup.LayoutParams layoutParams) {
             mViews.add(index, view);
             return true;
         }
@@ -222,5 +241,4 @@ public class GridPatternLayoutManagerOverScrollTest {
             return outer;
         }
     }
-
 }

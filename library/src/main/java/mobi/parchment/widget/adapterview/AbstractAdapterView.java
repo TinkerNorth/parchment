@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.content.Context;
 import android.database.DataSetObserver;
-import android.graphics.Rect;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -13,35 +15,37 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.widget.Adapter;
 
-/**
- * Created by Emir Hasanbegovic
- */
-public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends android.widget.AdapterView<ADAPTER> implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
+/** Created by Emir Hasanbegovic */
+public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
+        extends android.widget.AdapterView<ADAPTER>
+        implements OnLongClickListener, OnClickListener, OnSelectedListener, AdapterViewHandler {
 
     private OnItemSelectedListener mOnItemSelectedListener;
     private ADAPTER mAdapter;
     private AdapterViewInitializer<Cell> mAdapterViewInitializer;
 
-    private Runnable mRequestLayout = new Runnable() {
-        @Override
-        public void run() {
-            requestLayout();
-        }
-    };
+    private Runnable mRequestLayout =
+            new Runnable() {
+                @Override
+                public void run() {
+                    requestLayout();
+                }
+            };
 
-    private final DataSetObserver mDataSetObserver = new DataSetObserver() {
-        public void onChanged() {
-            removeAllViewsInLayout();
-            requestLayout();
-            invalidate();
-        }
+    private final DataSetObserver mDataSetObserver =
+            new DataSetObserver() {
+                public void onChanged() {
+                    removeAllViewsInLayout();
+                    requestLayout();
+                    invalidate();
+                }
 
-        public void onInvalidated() {
-            removeAllViewsInLayout();
-            requestLayout();
-            invalidate();
-        }
-    };
+                public void onInvalidated() {
+                    removeAllViewsInLayout();
+                    requestLayout();
+                    invalidate();
+                }
+            };
 
     public AbstractAdapterView(Context context) {
         super(context);
@@ -62,16 +66,35 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
         mAdapterViewInitializer = getAdapterViewInitializer(context, attributeSet);
     }
 
-    protected AdapterViewInitializer<Cell> createAdapterViewInitializer(final Context context, final boolean isViewPager, final AdapterViewManager adapterViewManager, final LayoutManager<Cell> layoutManager, final boolean isVerticalScroll) {
+    protected AdapterViewInitializer<Cell> createAdapterViewInitializer(
+            final Context context,
+            final boolean isViewPager,
+            final AdapterViewManager adapterViewManager,
+            final LayoutManager<Cell> layoutManager,
+            final boolean isVerticalScroll) {
         final LayoutManagerBridge layoutManagerBridge = new LayoutManagerBridge(layoutManager);
         final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
-        final ChildTouchGestureListener childTouchGestureListener = new ChildTouchGestureListener(this, isViewPager, isVerticalScroll, this, this, layoutManagerBridge, viewConfiguration);
-        final AdapterViewGestureDetector adapterViewGestureDetector = new AdapterViewGestureDetector(context, childTouchGestureListener);
+        final ChildTouchGestureListener childTouchGestureListener =
+                new ChildTouchGestureListener(
+                        this,
+                        isViewPager,
+                        isVerticalScroll,
+                        this,
+                        this,
+                        layoutManagerBridge,
+                        viewConfiguration);
+        final AdapterViewGestureDetector adapterViewGestureDetector =
+                new AdapterViewGestureDetector(context, childTouchGestureListener);
 
-        return new AdapterViewInitializer<Cell>(childTouchGestureListener, adapterViewGestureDetector, layoutManager, adapterViewManager);
+        return new AdapterViewInitializer<Cell>(
+                childTouchGestureListener,
+                adapterViewGestureDetector,
+                layoutManager,
+                adapterViewManager);
     }
 
-    protected abstract AdapterViewInitializer<Cell> getAdapterViewInitializer(final Context context, final AttributeSet attributeSet);
+    protected abstract AdapterViewInitializer<Cell> getAdapterViewInitializer(
+            final Context context, final AttributeSet attributeSet);
 
     @Override
     public int getSelectedItemPosition() {
@@ -94,7 +117,6 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
         return layoutManager.getViewForPosition(selectedPosition);
     }
 
-
     @Override
     public long getSelectedItemId() {
         final Adapter adapter = getAdapter();
@@ -116,14 +138,16 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        final AdapterViewManager adapterViewManager = mAdapterViewInitializer.getAdapterViewManager();
+        final AdapterViewManager adapterViewManager =
+                mAdapterViewInitializer.getAdapterViewManager();
         adapterViewManager.registerDataSetObserver(mDataSetObserver);
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        final AdapterViewManager adapterViewManager = mAdapterViewInitializer.getAdapterViewManager();
+        final AdapterViewManager adapterViewManager =
+                mAdapterViewInitializer.getAdapterViewManager();
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         adapterViewManager.unregisterDataSetObserver(mDataSetObserver);
         layoutManager.destroy();
@@ -133,7 +157,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
     public void setAdapter(ADAPTER adapter) {
         mAdapter = adapter;
         if (mAdapter != null) {
-            final AdapterViewManager adapterViewManager = mAdapterViewInitializer.getAdapterViewManager();
+            final AdapterViewManager adapterViewManager =
+                    mAdapterViewInitializer.getAdapterViewManager();
             adapterViewManager.setAdapter(adapter);
         }
 
@@ -157,9 +182,15 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
     }
 
     @Override
-    protected void onLayout(final boolean changed, final int left, final int top, final int right, final int bottom) {
+    protected void onLayout(
+            final boolean changed,
+            final int left,
+            final int top,
+            final int right,
+            final int bottom) {
 
-        final ChildTouchGestureListener childTouchListener = mAdapterViewInitializer.getChildTouchListener();
+        final ChildTouchGestureListener childTouchListener =
+                mAdapterViewInitializer.getChildTouchListener();
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
 
         childTouchListener.computeScrollOffset();
@@ -171,7 +202,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
         final int bottomSize = MeasureSpec.getSize(bottom);
 
         if (layoutManager != null) {
-            layoutManager.layout(this, animation, changed, leftSize, topSize, rightSize, bottomSize);
+            layoutManager.layout(
+                    this, animation, changed, leftSize, topSize, rightSize, bottomSize);
         }
         final AdapterAnimator.State state = childTouchListener.getState();
         switch (state) {
@@ -184,17 +216,18 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
                 break;
             case scrolling:
                 awakenScrollBars();
+                break;
             case notMoving:
             default:
                 break;
         }
     }
 
-
     @Override
     public boolean dispatchTouchEvent(final MotionEvent motionEvent) {
         final boolean isChildConsumingTouch = super.dispatchTouchEvent(motionEvent);
-        final ChildTouchGestureListener childTouchListener = mAdapterViewInitializer.getChildTouchListener();
+        final ChildTouchGestureListener childTouchListener =
+                mAdapterViewInitializer.getChildTouchListener();
         childTouchListener.setIsChildConsumingTouch(isChildConsumingTouch);
 
         return true;
@@ -214,7 +247,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
         final boolean gestureConsumed = gestureDetector.onTouchEvent(motionEvent);
 
         if (gestureConsumed) {
-            final ChildTouchGestureListener childTouchListener = mAdapterViewInitializer.getChildTouchListener();
+            final ChildTouchGestureListener childTouchListener =
+                    mAdapterViewInitializer.getChildTouchListener();
             childTouchListener.setIsChildConsumingTouch(false);
         }
 
@@ -240,20 +274,19 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
     }
 
     @Override
-    public boolean addViewInAdapterView(final View child, final int index, final LayoutParams layoutParams) {
-        final Rect rect = new Rect(child.getLeft(), child.getTop(), child.getRight(), child.getBottom());
+    public boolean addViewInAdapterView(
+            final View child, final int index, final LayoutParams layoutParams) {
         final int childCount = getChildCount();
         final int drawPosition = Math.min(index, childCount);
         final boolean success = addViewInLayout(child, drawPosition, layoutParams, true);
-        invalidate(rect);
+        invalidate();
         return success;
     }
 
     @Override
     public void removeViewInAdapterView(final View view) {
-        final Rect rect = new Rect(view.getLeft(), view.getTop(), view.getRight(), view.getBottom());
         removeViewInLayout(view);
-        invalidate(rect);
+        invalidate();
     }
 
     @Override
@@ -297,7 +330,6 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell> extends
         } else {
             mOnItemSelectedListener.onNothingSelected(this);
         }
-
     }
 
     @Override

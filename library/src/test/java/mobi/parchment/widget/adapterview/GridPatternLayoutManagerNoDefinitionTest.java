@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
 import android.view.View;
@@ -6,26 +11,19 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import androidx.test.core.app.ApplicationProvider;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Anthony Tarantini
- */
+/** Created by Anthony Tarantini */
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerNoDefinitionTest {
 
@@ -41,8 +39,20 @@ public class GridPatternLayoutManagerNoDefinitionTest {
 
     @Before
     public void setup() {
-        attributes = new GridPatternLayoutManagerAttributes(false, true, false, 0, SnapPosition.onScreen, CELL_SPACING, true, true, true, 1f);
-        listLayoutManager = new GridPatternLayoutManager(mViewGroup, null, adapterViewManager, attributes);
+        attributes =
+                new GridPatternLayoutManagerAttributes(
+                        false,
+                        true,
+                        false,
+                        0,
+                        SnapPosition.onScreen,
+                        CELL_SPACING,
+                        true,
+                        true,
+                        true,
+                        1f);
+        listLayoutManager =
+                new GridPatternLayoutManager(mViewGroup, null, adapterViewManager, attributes);
         mTestAdapter = new TestAdapter(VIEW_SIZE);
         adapterViewManager.setAdapter(mTestAdapter);
         doFirstLayout();
@@ -70,12 +80,15 @@ public class GridPatternLayoutManagerNoDefinitionTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(mViewGroup, animation, false, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
+        listLayoutManager.layout(
+                mViewGroup, animation, false, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
     }
 
     private void doFirstLayout() {
-        final int measureSpec = View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_HEIGHT, View.MeasureSpec.EXACTLY);
-        final int measureSpec2 = View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_WIDTH, View.MeasureSpec.EXACTLY);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_HEIGHT, View.MeasureSpec.EXACTLY);
+        final int measureSpec2 =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_WIDTH, View.MeasureSpec.EXACTLY);
         mViewGroup.measure(measureSpec2, measureSpec);
         mViewGroup.layout(0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
     }
@@ -88,18 +101,21 @@ public class GridPatternLayoutManagerNoDefinitionTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(mViews, new Comparator<View>() {
-                @Override
-                public int compare(View lhs, View rhs) {
-                    return lhs.getLeft() - rhs.getLeft();
-                }
-            });
+            Collections.sort(
+                    mViews,
+                    new Comparator<View>() {
+                        @Override
+                        public int compare(View lhs, View rhs) {
+                            return lhs.getLeft() - rhs.getLeft();
+                        }
+                    });
 
             return mViews.get(position);
         }
 
         @Override
-        public boolean addViewInAdapterView(View view, int index, ViewGroup.LayoutParams layoutParams) {
+        public boolean addViewInAdapterView(
+                View view, int index, ViewGroup.LayoutParams layoutParams) {
             mViews.add(index, view);
             return true;
         }
@@ -151,5 +167,4 @@ public class GridPatternLayoutManagerNoDefinitionTest {
             return outer;
         }
     }
-
 }

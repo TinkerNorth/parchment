@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import android.content.Context;
 import android.view.View;
@@ -6,26 +11,19 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-
-import mobi.parchment.widget.adapterview.gridview.GridLayoutManager;
-import mobi.parchment.widget.adapterview.gridview.GridLayoutManagerAttributes;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
 import androidx.test.core.app.ApplicationProvider;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import mobi.parchment.widget.adapterview.gridview.GridLayoutManager;
+import mobi.parchment.widget.adapterview.gridview.GridLayoutManagerAttributes;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 @RunWith(RobolectricTestRunner.class)
 public class GridLayoutManagerTest {
 
@@ -41,7 +39,22 @@ public class GridLayoutManagerTest {
 
     @Before
     public void setup() {
-        attributes = new GridLayoutManagerAttributes(NUMBER_OF_COLUMNS, false, true, false, 0, SnapPosition.onScreen, CELL_SPACING, true, true, true, true, false, false, false);
+        attributes =
+                new GridLayoutManagerAttributes(
+                        NUMBER_OF_COLUMNS,
+                        false,
+                        true,
+                        false,
+                        0,
+                        SnapPosition.onScreen,
+                        CELL_SPACING,
+                        true,
+                        true,
+                        true,
+                        true,
+                        false,
+                        false,
+                        false);
         listLayoutManager = new GridLayoutManager(mViewGroup, null, adapterViewManager, attributes);
         mTestAdapter = new TestAdapter(VIEW_SIZE);
         adapterViewManager.setAdapter(mTestAdapter);
@@ -88,7 +101,6 @@ public class GridLayoutManagerTest {
         assertThat(secondView.getTop()).isEqualTo(100);
         assertThat(secondView.getBottom()).isEqualTo(200);
     }
-
 
     @Test
     public void layout_handlesOverDrawWithOnScreenWithCellSpacing() {
@@ -143,16 +155,21 @@ public class GridLayoutManagerTest {
     }
 
     /**
-     * 02-28 11:44:17.499 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 2 mDisplacement: 0 ]
-     * 02-28 11:44:17.509 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 4 mDisplacement: 0 ]
-     * 02-28 11:44:18.670 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 6 mDisplacement: 0 ]
-     * 02-28 11:44:19.411 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 8 mDisplacement: 0 ]
-     * 02-28 11:44:20.062 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -62 ]
-     * 02-28 11:44:20.102 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -74 ]
-     * 02-28 11:44:20.122 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -19 ]
-     * 02-28 11:44:20.152 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -14 ]
-     * 02-28 11:44:20.162 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -9 ]
-     * 02-28 11:44:20.172 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 10 mDisplacement: -6 ]
+     * 02-28 11:44:17.499 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [
+     * mid: 2 mDisplacement: 0 ] 02-28 11:44:17.509 D/SimpleHLV( 7924): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 4 mDisplacement: 0 ] 02-28 11:44:18.670
+     * D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 6
+     * mDisplacement: 0 ] 02-28 11:44:19.411 D/SimpleHLV( 7924): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: 0 ] 02-28 11:44:20.062
+     * D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
+     * mDisplacement: -62 ] 02-28 11:44:20.102 D/SimpleHLV( 7924): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -74 ] 02-28
+     * 11:44:20.122 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
+     * mDisplacement: -19 ] 02-28 11:44:20.152 D/SimpleHLV( 7924): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -14 ] 02-28
+     * 11:44:20.162 D/SimpleHLV( 7924): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 10
+     * mDisplacement: -9 ] 02-28 11:44:20.172 D/SimpleHLV( 7924): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 10 mDisplacement: -6 ]
      */
     @Test
     public void layoutViewTestCorrectIndexIncrementationForGroups2() {
@@ -194,18 +211,19 @@ public class GridLayoutManagerTest {
         doLayout(animation);
         animation.setDisplacement(-6);
         doLayout(animation);
-
     }
 
     /**
-     * 02-28 11:27:30.464 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 2 mDisplacement: 0 ]
-     * 02-28 11:27:30.484 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 4 mDisplacement: 0 ]
-     * 02-28 11:27:35.300 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 6 mDisplacement: 0 ]
-     * 02-28 11:27:35.900 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 8 mDisplacement: -43 ]
-     * 02-28 11:27:35.920 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 8 mDisplacement: -9 ]
-     * 02-28 11:27:35.950 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation:  [ mid: 8 mDisplacement: -132 ]
+     * 02-28 11:27:30.464 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [
+     * mid: 2 mDisplacement: 0 ] 02-28 11:27:30.484 D/SimpleHLV( 6148): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 4 mDisplacement: 0 ] 02-28 11:27:35.300
+     * D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 6
+     * mDisplacement: 0 ] 02-28 11:27:35.900 D/SimpleHLV( 6148): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: -43 ] 02-28
+     * 11:27:35.920 D/SimpleHLV( 6148): *UI* [GridLayoutManager:layout:67:tid1] animation: [ mid: 8
+     * mDisplacement: -9 ] 02-28 11:27:35.950 D/SimpleHLV( 6148): *UI*
+     * [GridLayoutManager:layout:67:tid1] animation: [ mid: 8 mDisplacement: -132 ]
      */
-
     @Test
     public void layoutViewTestCorrectIndexIncrementationForGroups() {
         mTestAdapter.setAdapterSize(0);
@@ -240,7 +258,6 @@ public class GridLayoutManagerTest {
         animation.newAnimation();
         animation.setDisplacement(-132);
         doLayout(animation);
-
     }
 
     @Test
@@ -272,7 +289,6 @@ public class GridLayoutManagerTest {
         assertThat(secondView.getRight()).isEqualTo(255);
         assertThat(secondView.getTop()).isEqualTo(0);
         assertThat(secondView.getBottom()).isEqualTo(100);
-
     }
 
     @Test
@@ -418,11 +434,13 @@ public class GridLayoutManagerTest {
     }
 
     private void doLayout(Animation animation) {
-        listLayoutManager.layout(mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        listLayoutManager.layout(
+                mViewGroup, animation, false, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
     }
 
     private void doFirstLayout(int viewGroupSize) {
-        final int measureSpec = View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
         mViewGroup.measure(measureSpec, measureSpec);
         mViewGroup.layout(0, 0, viewGroupSize, viewGroupSize);
     }
@@ -435,18 +453,21 @@ public class GridLayoutManagerTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(mViews, new Comparator<View>() {
-                @Override
-                public int compare(View lhs, View rhs) {
-                    return lhs.getLeft() - rhs.getLeft();
-                }
-            });
+            Collections.sort(
+                    mViews,
+                    new Comparator<View>() {
+                        @Override
+                        public int compare(View lhs, View rhs) {
+                            return lhs.getLeft() - rhs.getLeft();
+                        }
+                    });
 
             return mViews.get(position);
         }
 
         @Override
-        public boolean addViewInAdapterView(View view, int index, ViewGroup.LayoutParams layoutParams) {
+        public boolean addViewInAdapterView(
+                View view, int index, ViewGroup.LayoutParams layoutParams) {
             mViews.add(index, view);
             return true;
         }
@@ -498,5 +519,4 @@ public class GridLayoutManagerTest {
             return outer;
         }
     }
-
 }

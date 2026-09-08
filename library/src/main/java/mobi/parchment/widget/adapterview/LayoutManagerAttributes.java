@@ -1,77 +1,86 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 public class LayoutManagerAttributes {
 
-	private static class DefaultValues {
-		private static final SnapPosition SNAP_POSITION = SnapPosition.center;
-	}
+    private static class DefaultValues {
+        private static final SnapPosition SNAP_POSITION = SnapPosition.center;
+    }
 
-	private boolean mIsCircularScroll;
-	private boolean mIsViewPager;
-	private boolean mIsVertical;
-	private int mViewPagerInterval;
-	private boolean mSnapToPosition;
-	private SnapPosition mSnapPosition;
-	private int mCellSpacing;
-	private boolean mSelectOnSnap;
-	private boolean mSelectWhileScrolling;
+    private boolean mIsCircularScroll;
+    private boolean mIsViewPager;
+    private boolean mIsVertical;
+    private int mViewPagerInterval;
+    private boolean mSnapToPosition;
+    private SnapPosition mSnapPosition;
+    private int mCellSpacing;
+    private boolean mSelectOnSnap;
+    private boolean mSelectWhileScrolling;
 
-	public LayoutManagerAttributes(final boolean isCircularScroll, final boolean snapToPosition, final boolean isViewPager, final int viewPagerInterval, final SnapPosition snapPosition, final int cellSpacing, final boolean selectOnSnap, final boolean selectWhileScrolling, final boolean isVertical) {
-		super();
+    public LayoutManagerAttributes(
+            final boolean isCircularScroll,
+            final boolean snapToPosition,
+            final boolean isViewPager,
+            final int viewPagerInterval,
+            final SnapPosition snapPosition,
+            final int cellSpacing,
+            final boolean selectOnSnap,
+            final boolean selectWhileScrolling,
+            final boolean isVertical) {
+        super();
 
-		if (snapPosition != null)
-			mSnapPosition = snapPosition;
-		else
-			mSnapPosition = DefaultValues.SNAP_POSITION;
+        if (snapPosition != null) mSnapPosition = snapPosition;
+        else mSnapPosition = DefaultValues.SNAP_POSITION;
 
-		mViewPagerInterval = viewPagerInterval;
-		mIsViewPager = isViewPager;
-		mIsCircularScroll = isCircularScroll;
-		mSnapToPosition = snapToPosition;
-		mCellSpacing = cellSpacing;
-		mSelectOnSnap = selectOnSnap;
-		mIsVertical = isVertical;
-		mSelectWhileScrolling = selectWhileScrolling;
-	}
+        mViewPagerInterval = viewPagerInterval;
+        mIsViewPager = isViewPager;
+        mIsCircularScroll = isCircularScroll;
+        mSnapToPosition = snapToPosition;
+        mCellSpacing = cellSpacing;
+        mSelectOnSnap = selectOnSnap;
+        mIsVertical = isVertical;
+        mSelectWhileScrolling = selectWhileScrolling;
+    }
 
-	public boolean isCircularScroll() {
-		return mIsCircularScroll;
-	}
+    public boolean isCircularScroll() {
+        return mIsCircularScroll;
+    }
 
-	public boolean isSnapToPosition() {
-		return mSnapToPosition;
-	}
+    public boolean isSnapToPosition() {
+        return mSnapToPosition;
+    }
 
-	public SnapPosition getSnapPosition() {
-		return mSnapPosition;
-	}
+    public SnapPosition getSnapPosition() {
+        return mSnapPosition;
+    }
 
-	public boolean selectOnSnap() {
-		return mSelectOnSnap;
-	}
+    public boolean selectOnSnap() {
+        return mSelectOnSnap;
+    }
 
-	public int getCellSpacing() {
-		return mCellSpacing;
-	}
+    public int getCellSpacing() {
+        return mCellSpacing;
+    }
 
-	public boolean isViewPager() {
-		return mIsViewPager;
-	}
+    public boolean isViewPager() {
+        return mIsViewPager;
+    }
 
-	public int getViewPagerInterval() {
-		return mViewPagerInterval;
-	}
-	
-	public boolean isVertical() {
-		return mIsVertical;
-	}
+    public int getViewPagerInterval() {
+        return mViewPagerInterval;
+    }
 
+    public boolean isVertical() {
+        return mIsVertical;
+    }
 
-	public boolean isSnapPositionOnScreen() {
-		return mSnapPosition == SnapPosition.onScreen;
-	}
-	
-	public boolean selectWhileScrolling() {
-		return mSelectWhileScrolling;
-	}
+    public boolean isSnapPositionOnScreen() {
+        return mSnapPosition == SnapPosition.onScreen;
+    }
+
+    public boolean selectWhileScrolling() {
+        return mSelectWhileScrolling;
+    }
 }

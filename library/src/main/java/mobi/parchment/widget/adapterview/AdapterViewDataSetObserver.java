@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.database.DataSetObserver;
 
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 public abstract class AdapterViewDataSetObserver extends DataSetObserver {
 
     protected final AdapterViewManager mAdapterViewManager;
@@ -33,5 +34,4 @@ public abstract class AdapterViewDataSetObserver extends DataSetObserver {
     protected AdapterViewManager getAdapterViewManager() {
         return mAdapterViewManager;
     }
-
 }

@@ -1,12 +1,13 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.view.View;
 
-/**
- * Created by Emir Hasanbegovic on 2014-03-31.
- */
+/** Created by Emir Hasanbegovic on 2014-03-31. */
 public class LayoutManagerState<Cell> extends View.BaseSavedState {
 
     private final int mOffset;
@@ -31,15 +32,19 @@ public class LayoutManagerState<Cell> extends View.BaseSavedState {
         out.writeInt(mStartCellPosition);
     }
 
-    public static final Parcelable.Creator<LayoutManagerState> CREATOR = new Parcelable.Creator<LayoutManagerState>() {
-        public LayoutManagerState createFromParcel(Parcel in) {
-            return new LayoutManagerState(in);
-        }
+    // The Cell type parameter is erased in a Parcel, so the creator is deliberately wildcarded.
+    public static final Parcelable.Creator<LayoutManagerState<?>> CREATOR =
+            new Parcelable.Creator<LayoutManagerState<?>>() {
+                @Override
+                public LayoutManagerState<?> createFromParcel(Parcel in) {
+                    return new LayoutManagerState<>(in);
+                }
 
-        public LayoutManagerState[] newArray(int size) {
-            return new LayoutManagerState[size];
-        }
-    };
+                @Override
+                public LayoutManagerState<?>[] newArray(int size) {
+                    return new LayoutManagerState<?>[size];
+                }
+            };
 
     public int getOffset() {
         return mOffset;

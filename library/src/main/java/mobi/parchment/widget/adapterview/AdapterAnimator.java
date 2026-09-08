@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.view.GestureDetector.OnGestureListener;
@@ -6,13 +9,16 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 public class AdapterAnimator implements OnGestureListener, AnimationStoppedListener {
 
     public static enum State {
-        scrolling, animatingTo, jumpingTo, flinging, snapingTo, notMoving
+        scrolling,
+        animatingTo,
+        jumpingTo,
+        flinging,
+        snapingTo,
+        notMoving
     }
 
     private static final int FINAL_ANIMATE_TO_DURATION_IN_MILLISECONDS = 500;
@@ -32,7 +38,12 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
 
     private boolean mComputedOffsetReady;
 
-    public AdapterAnimator(final ViewGroup view, final boolean isViewPager, final boolean isVerticalScroll, final LayoutManagerBridge layoutManagerBridge, ViewConfiguration viewConfiguration) {
+    public AdapterAnimator(
+            final ViewGroup view,
+            final boolean isViewPager,
+            final boolean isVerticalScroll,
+            final LayoutManagerBridge layoutManagerBridge,
+            ViewConfiguration viewConfiguration) {
         mLayoutManagerBridge = layoutManagerBridge;
         mLayoutManagerBridge.setAnimationStoppedListener(this);
         mViewGroup = view;
@@ -50,10 +61,15 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     @Override
-    public boolean onFling(final MotionEvent e1, final MotionEvent e2, final float velocityX, final float velocityY) {
+    public boolean onFling(
+            final MotionEvent e1,
+            final MotionEvent e2,
+            final float velocityX,
+            final float velocityY) {
         setState(State.flinging);
         if (mIsViewPager) {
-            final int viewPageDistance = mLayoutManagerBridge.getViewPagerScrollDistance(velocityX, velocityY);
+            final int viewPageDistance =
+                    mLayoutManagerBridge.getViewPagerScrollDistance(velocityX, velocityY);
             mScrollAnimator.startScroll(viewPageDistance, ANIMATION_DURATION);
         } else {
             mScrollAnimator.flingBy(velocityX, velocityY);
@@ -69,7 +85,11 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     @Override
-    public boolean onScroll(final MotionEvent e1, final MotionEvent e2, final float distanceX, final float distanceY) {
+    public boolean onScroll(
+            final MotionEvent e1,
+            final MotionEvent e2,
+            final float distanceX,
+            final float distanceY) {
         if (mIsVerticalScroll) {
             updateYTouchSlop(e1, e2);
         } else {
@@ -81,7 +101,8 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         }
 
         setState(State.scrolling);
-        final int displacement = (int) mLayoutManagerBridge.getScrollDisplacement(distanceX, distanceY);
+        final int displacement =
+                (int) mLayoutManagerBridge.getScrollDisplacement(distanceX, distanceY);
         mAnimation.setDisplacement(displacement);
         mViewGroup.requestLayout();
         return true;
@@ -138,11 +159,11 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             mScrollAnimator.startScroll(scrollDistance, ANIMATION_DURATION);
             mViewGroup.requestLayout();
         }
-
     }
 
     public void computeScrollOffset() {
-        mComputedOffsetReady = !mScrollAnimator.isFinished() && mScrollAnimator.computeScrollOffset();
+        mComputedOffsetReady =
+                !mScrollAnimator.isFinished() && mScrollAnimator.computeScrollOffset();
 
         if (!mComputedOffsetReady) {
             final boolean isScrolling = mState.equals(State.scrolling);
@@ -154,7 +175,6 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
 
         mAnimation.setDisplacement(currentOffset - mPreviousDisplacement);
         mPreviousDisplacement = currentOffset;
-
     }
 
     public Animation getAnimation() {
@@ -166,7 +186,10 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             case snapingTo:
             case flinging:
                 if (mComputedOffsetReady) return mAnimation;
-                else setState(State.notMoving);
+                // An animation whose offset is not ready yet is treated as stopped.
+                setState(State.notMoving);
+                mAnimation.newAnimation();
+                return mAnimation;
             case notMoving:
             default:
                 mAnimation.newAnimation();
@@ -191,14 +214,14 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     public static float getXTouchSlop(final MotionEvent e1, final MotionEvent e2) {
-        if (e1 == null || e2 == null){
+        if (e1 == null || e2 == null) {
             return 0;
         }
         return Math.abs(e1.getX() - e2.getX());
     }
 
     public static float getYTouchSlop(final MotionEvent e1, final MotionEvent e2) {
-        if (e1 == null || e2 == null){
+        if (e1 == null || e2 == null) {
             return 0;
         }
         return Math.abs(e1.getY() - e2.getY());

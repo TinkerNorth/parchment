@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment;
 
 import android.content.Context;
@@ -7,19 +10,13 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.squareup.picasso.Picasso;
-
-import mobi.parchment.sample.R;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import mobi.parchment.models.Picture;
+import mobi.parchment.sample.R;
 
-/**
- * Created by Emir Hasanbegovic on 2014-03-21.
- */
+/** Created by Emir Hasanbegovic on 2014-03-21. */
 public class ProductsAdapter extends BaseAdapter {
 
     private final int mLayoutResourceId;
@@ -93,7 +90,8 @@ public class ProductsAdapter extends BaseAdapter {
         final View view = getView(context, convertView, parent);
         final Picture picture = (Picture) getItem(position);
 
-        final ImageView imageView = (ImageView) view.findViewById(R.id.list_item_picture_image_view);
+        final ImageView imageView =
+                (ImageView) view.findViewById(R.id.list_item_picture_image_view);
         imageView.setImageBitmap(null);
         Picasso.get().load(picture.mUrl).into(imageView);
 
@@ -101,5 +99,4 @@ public class ProductsAdapter extends BaseAdapter {
         textView.setText(picture.mCaption);
         return view;
     }
-
 }

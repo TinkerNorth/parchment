@@ -1,4 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 import android.app.Activity;
 import android.content.res.Resources;
@@ -6,17 +11,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-
 import mobi.parchment.test.R;
 import mobi.parchment.widget.adapterview.listview.ListView;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.android.controller.ActivityController;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(RobolectricTestRunner.class)
 public class HorizontalListViewTest {
@@ -26,14 +27,17 @@ public class HorizontalListViewTest {
 
     @Test
     public void testBasicIntegration() {
-        final ActivityController<TestActivity> controller = Robolectric.buildActivity(TestActivity.class);
+        final ActivityController<TestActivity> controller =
+                Robolectric.buildActivity(TestActivity.class);
         final TestActivity testActivity = controller.get();
         testActivity.setLayoutId(R.layout.basic);
         controller.create();
 
-        final ListView horizontalListView = (ListView) testActivity.findViewById(R.id.horizontal_list_view);
+        final ListView<?> horizontalListView = testActivity.findViewById(R.id.horizontal_list_view);
 
-        final int measureSpec = View.MeasureSpec.makeMeasureSpec(HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
         horizontalListView.measure(measureSpec, measureSpec);
         horizontalListView.layout(0, 0, HORIZONTAL_LIST_VIEW_WIDTH, HORIZONTAL_LIST_VIEW_WIDTH);
 
@@ -45,20 +49,24 @@ public class HorizontalListViewTest {
 
     @Test
     public void testSnapPositionOnScreenWithMargin() {
-        final ActivityController<TestActivity> controller = Robolectric.buildActivity(TestActivity.class);
+        final ActivityController<TestActivity> controller =
+                Robolectric.buildActivity(TestActivity.class);
         final TestActivity testActivity = controller.get();
         testActivity.setLayoutId(R.layout.on_screen_cell_spacing);
         controller.create();
 
-        final ListView horizontalListView = (ListView) testActivity.findViewById(R.id.horizontal_list_view);
+        final ListView<?> horizontalListView = testActivity.findViewById(R.id.horizontal_list_view);
 
-        final int measureSpec = View.MeasureSpec.makeMeasureSpec(HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.EXACTLY);
         horizontalListView.measure(measureSpec, measureSpec);
         horizontalListView.layout(0, 0, HORIZONTAL_LIST_VIEW_WIDTH, HORIZONTAL_LIST_VIEW_WIDTH);
 
         final Resources resources = testActivity.getResources();
         final int viewWidth = resources.getDimensionPixelSize(R.dimen.list_item_test_width);
-        final int margin = resources.getDimensionPixelSize(R.dimen.horizontal_list_view_test_margin);
+        final int margin =
+                resources.getDimensionPixelSize(R.dimen.horizontal_list_view_test_margin);
 
         assertThat(horizontalListView.getWidth()).isEqualTo(HORIZONTAL_LIST_VIEW_WIDTH);
         assertThat(horizontalListView.getChildCount()).isGreaterThan(0);
@@ -82,7 +90,8 @@ public class HorizontalListViewTest {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(layoutId);
-            final ListView horizontalScrollView = (ListView) findViewById(R.id.horizontal_list_view);
+            final ListView<TestAdapter> horizontalScrollView =
+                    findViewById(R.id.horizontal_list_view);
             final TestAdapter testAdapter = new TestAdapter();
             horizontalScrollView.setAdapter(testAdapter);
         }

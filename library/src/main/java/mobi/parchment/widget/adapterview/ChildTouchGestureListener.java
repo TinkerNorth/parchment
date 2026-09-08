@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview;
 
 import android.view.MotionEvent;
@@ -7,9 +10,7 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 public class ChildTouchGestureListener extends AdapterAnimator {
 
     private final OnClickListener mOnClickListener;
@@ -19,7 +20,14 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     private boolean mIsChildConsumingTouch;
     private boolean mIsSingleTapUp;
 
-    public ChildTouchGestureListener(final ViewGroup viewGroup, final boolean isViewPager, final boolean isVertical, final OnClickListener onClickListener, final OnLongClickListener onLongClickListener, final LayoutManagerBridge layoutManagerBridge, final ViewConfiguration viewConfiguration) {
+    public ChildTouchGestureListener(
+            final ViewGroup viewGroup,
+            final boolean isViewPager,
+            final boolean isVertical,
+            final OnClickListener onClickListener,
+            final OnLongClickListener onLongClickListener,
+            final LayoutManagerBridge layoutManagerBridge,
+            final ViewConfiguration viewConfiguration) {
         super(viewGroup, isViewPager, isVertical, layoutManagerBridge, viewConfiguration);
         mOnClickListener = onClickListener;
         mOnLongClickListener = onLongClickListener;
@@ -38,10 +46,14 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     }
 
     @Override
-    public boolean onScroll(final MotionEvent e1, final MotionEvent e2, final float distanceX, final float distanceY) {
+    public boolean onScroll(
+            final MotionEvent e1,
+            final MotionEvent e2,
+            final float distanceX,
+            final float distanceY) {
         final float xTouchSlop = getXTouchSlop(e1, e2);
         final float yTouchSlop = getYTouchSlop(e1, e2);
-        if (xTouchSlop > mScaledTouchSlop || yTouchSlop > mScaledTouchSlop ) {
+        if (xTouchSlop > mScaledTouchSlop || yTouchSlop > mScaledTouchSlop) {
             if (mInitialTouchView != null) {
                 mInitialTouchView.setPressed(false);
                 mInitialTouchView = null;
@@ -54,7 +66,7 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     @Override
     public boolean onSingleTapUp(MotionEvent motionEvent) {
         mIsSingleTapUp = true;
-        if (!mIsChildConsumingTouch &&  mInitialTouchView != null) {
+        if (!mIsChildConsumingTouch && mInitialTouchView != null) {
             onItemClick(mInitialTouchView);
             return super.onSingleTapUp(motionEvent, mInitialTouchView);
         }
@@ -64,7 +76,7 @@ public class ChildTouchGestureListener extends AdapterAnimator {
 
     @Override
     public void onShowPress(final MotionEvent event) {
-        if (!mIsChildConsumingTouch && mInitialTouchView != null){
+        if (!mIsChildConsumingTouch && mInitialTouchView != null) {
             mInitialTouchView.setPressed(true);
         }
         super.onShowPress(event);
@@ -103,13 +115,12 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     }
 
     private void onItemLongClick(final View view) {
-        if (mOnLongClickListener== null) {
+        if (mOnLongClickListener == null) {
             return;
         }
 
         mOnLongClickListener.onLongClick(view);
     }
-
 
     private void onItemClick(final View view) {
         if (mOnClickListener == null) {
@@ -130,7 +141,7 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     }
 
     private void stopTouch() {
-        if (!mIsSingleTapUp && mInitialTouchView != null){
+        if (!mIsSingleTapUp && mInitialTouchView != null) {
             mInitialTouchView.setPressed(false);
         }
         mIsSingleTapUp = false;
@@ -141,5 +152,4 @@ public class ChildTouchGestureListener extends AdapterAnimator {
     public void setIsChildConsumingTouch(final boolean isChildConsumingTouch) {
         mIsChildConsumingTouch = isChildConsumingTouch;
     }
-
 }

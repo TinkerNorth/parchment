@@ -1,23 +1,25 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
 package mobi.parchment.widget.adapterview.gridview;
 
 import android.view.View;
 import android.view.ViewGroup;
-
 import java.util.List;
-
 import mobi.parchment.widget.adapterview.AdapterViewManager;
 import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.OnSelectedListener;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
-/**
- * Created by Emir Hasanbegovic
- */
+/** Created by Emir Hasanbegovic */
 public class GridLayoutManager extends LayoutManager<Group> {
     private final GridLayoutManagerAttributes mGridLayoutManagerAttributes;
 
-
-    public GridLayoutManager(final ViewGroup viewGroup, final OnSelectedListener onSelectedListener, final AdapterViewManager adapterViewManager, final GridLayoutManagerAttributes gridLayoutManagerAttributes) {
+    public GridLayoutManager(
+            final ViewGroup viewGroup,
+            final OnSelectedListener onSelectedListener,
+            final AdapterViewManager adapterViewManager,
+            final GridLayoutManagerAttributes gridLayoutManagerAttributes) {
         super(viewGroup, onSelectedListener, adapterViewManager, gridLayoutManagerAttributes);
         mGridLayoutManagerAttributes = gridLayoutManagerAttributes;
     }
@@ -76,7 +78,8 @@ public class GridLayoutManager extends LayoutManager<Group> {
         final int horizontalMeasureSpec = getChildWidthMeasureSpec();
         final List<View> views = group.getViews();
         for (final View view : views) {
-            mAdapterViewManager.measureView(viewGroup, view, horizontalMeasureSpec, verticalMeasureSpec);
+            mAdapterViewManager.measureView(
+                    viewGroup, view, horizontalMeasureSpec, verticalMeasureSpec);
         }
     }
 
@@ -165,7 +168,7 @@ public class GridLayoutManager extends LayoutManager<Group> {
     private int getChildWidthMeasureSpec() {
         final int widthMeasureSpec = getWidthMeasureSpec();
         if (isVerticalScroll()) {
-            final int maxMeasureWidth = getMaxMeasureWidth() ;
+            final int maxMeasureWidth = getMaxMeasureWidth();
             final int measureSpecMode = View.MeasureSpec.getMode(widthMeasureSpec);
             return View.MeasureSpec.makeMeasureSpec(maxMeasureWidth, measureSpecMode);
         }
@@ -191,16 +194,23 @@ public class GridLayoutManager extends LayoutManager<Group> {
         final Group group = new Group(isVerticalScroll());
         final int positionLimit = Math.min(adapterPosition + numberOfCells, adapterCount);
         for (int index = adapterPosition; index < positionLimit; index++) {
-            final View view = mAdapterViewManager.getView(mViewGroup, index, widthMeasureSpec, heightMeasureSpec);
+            final View view =
+                    mAdapterViewManager.getView(
+                            mViewGroup, index, widthMeasureSpec, heightMeasureSpec);
             group.addView(view);
         }
 
         return group;
     }
 
-
     @Override
-    public void layoutCell(final Group group, final int cellStart, final int cellEnd, final int firstAdapterPositionInCell, final int breadth, final int cellSpacing) {
+    public void layoutCell(
+            final Group group,
+            final int cellStart,
+            final int cellEnd,
+            final int firstAdapterPositionInCell,
+            final int breadth,
+            final int cellSpacing) {
         final List<View> views = group.getViews();
         final int groupBreadth = group.getBreadth(cellSpacing);
         int viewBreadthOffset = getBreadthOffset(breadth, groupBreadth);
@@ -297,5 +307,4 @@ public class GridLayoutManager extends LayoutManager<Group> {
         if (isVerticalScroll()) return group.getVerticalScrollRepresentative();
         return group.getHorizontalScrollRepresentative();
     }
-
 }
