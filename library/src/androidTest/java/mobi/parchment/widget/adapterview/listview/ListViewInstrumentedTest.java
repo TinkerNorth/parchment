@@ -35,6 +35,9 @@ public class ListViewInstrumentedTest {
     private static final int ITEM_WIDTH = 200;
     private static final int ITEM_HEIGHT = 100;
     private static final int ITEM_COUNT = 50;
+    // A ListView built without attributes defaults to snapPosition=center.
+    private static final int CENTERED_TOP = (HEIGHT - ITEM_HEIGHT) / 2;
+    private static final int DRAG_DISTANCE = 45;
 
     @Test
     public void inflatedHorizontalListView_laysOutOnlyVisibleChildren() {
@@ -79,12 +82,12 @@ public class ListViewInstrumentedTest {
         final CreateAndLayOutVertically create = new CreateAndLayOutVertically(context);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(create);
         final FrameListView listView = create.listView();
-        assertEquals(0, listView.getChildAt(0).getTop());
+        assertEquals(CENTERED_TOP, listView.getChildAt(0).getTop());
         assertFalse(listView.isLayoutRequested());
 
         final DragThenFrame dragThenFrame = new DragThenFrame(listView);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(dragThenFrame);
-        assertEquals(-45, listView.getChildAt(0).getTop());
+        assertEquals(CENTERED_TOP - DRAG_DISTANCE, listView.getChildAt(0).getTop());
         assertFalse(listView.isLayoutRequested());
         assertEquals(0, listView.getPositionForView(listView.getChildAt(0)));
 
@@ -95,7 +98,7 @@ public class ListViewInstrumentedTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(runFrame);
         assertTrue(
                 "the fling should have moved the content further than the drag",
-                listView.getChildAt(0).getTop() < -45
+                listView.getChildAt(0).getTop() < CENTERED_TOP - DRAG_DISTANCE
                         || listView.getPositionForView(listView.getChildAt(0)) > 0);
         assertFalse(listView.isLayoutRequested());
         assertTrue(listView.getChildCount() < ITEM_COUNT);
