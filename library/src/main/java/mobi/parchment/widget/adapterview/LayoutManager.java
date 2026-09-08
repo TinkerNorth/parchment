@@ -758,7 +758,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final boolean isSnapToPosition = mLayoutManagerAttributes.isSnapToPosition();
         if (!isSnapToPosition) return 0;
 
-        final int size = mScrollDirectionManager.getViewGroupSize(viewGroup);
+        final int size = getSizeInsidePadding(viewGroup);
 
         final View nearestView = getSnapDistanceToNearestView(size);
         if (nearestView == null) return 0;
@@ -786,7 +786,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int adapterCount = mAdapterViewManager.getAdapterCount();
         final int lastItemIndex = adapterCount - 1;
 
-        final int size = mScrollDirectionManager.getViewGroupSize(mViewGroup);
+        final int size = getSizeInsidePadding(mViewGroup);
         final View nearestViewToSnapPosition = getNearestViewToSnapPosition(size);
         final int positionOfNearestView = getPosition(nearestViewToSnapPosition);
 
@@ -857,7 +857,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     private void jumpToPosition(final AdapterViewHandler adapterViewHandler, final int position) {
-        final int size = mScrollDirectionManager.getViewGroupSize(mViewGroup);
+        final int size = getSizeInsidePadding(mViewGroup);
 
         final View nearestViewToSnapPosition = getNearestViewToSnapPosition(size);
         final int positionOfNearestView = getPosition(nearestViewToSnapPosition);
@@ -919,6 +919,11 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     public int getViewGroupSize(final ViewGroup viewGroup) {
         return mScrollDirectionManager.getViewGroupSize(viewGroup);
+    }
+
+    public int getSizeInsidePadding(final ViewGroup viewGroup) {
+        final int size = mScrollDirectionManager.getViewGroupSize(viewGroup);
+        return size - getStartSizePadding() - getEndSizePadding();
     }
 
     public boolean isVerticalScroll() {

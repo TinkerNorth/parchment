@@ -22,7 +22,7 @@ public class LayoutManagerBridge {
 
         if (!mLayoutManager.isSnapToPosition()) return 0;
 
-        final int size = mLayoutManager.getViewGroupSize(viewGroup);
+        final int size = mLayoutManager.getSizeInsidePadding(viewGroup);
         final int distance = mLayoutManager.getSnapToPixelDistance(size, view);
         return distance;
     }
