@@ -33,6 +33,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     private boolean mTouchSlopExceeded = false;
 
     private int mPreviousDisplacement;
+    private int mPendingScrollDisplacement;
     private State mState = State.notMoving;
 
     private boolean mComputedOffsetReady;
@@ -102,7 +103,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         setState(State.scrolling);
         final int displacement =
                 (int) mLayoutManagerBridge.getScrollDisplacement(distanceX, distanceY);
-        mAnimation.setDisplacement(displacement);
+        mPendingScrollDisplacement += displacement;
         mViewGroup.requestLayout();
         return true;
     }
@@ -149,6 +150,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
 
         mState = state;
         mPreviousDisplacement = 0;
+        if (state != State.scrolling) mPendingScrollDisplacement = 0;
 
         // This snaps to the position when the animation is finished.
         if (state == State.notMoving && mLayoutManagerBridge != null) {
@@ -179,6 +181,8 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     public Animation getAnimation() {
         switch (mState) {
             case scrolling:
+                mAnimation.setDisplacement(mPendingScrollDisplacement);
+                mPendingScrollDisplacement = 0;
                 return mAnimation;
             case jumpingTo:
             case animatingTo:
