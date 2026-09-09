@@ -3,12 +3,12 @@
 
 package mobi.parchment.models;
 
-public class Picture {
-    public final String mUrl;
+public final class Picture {
+    public final String mSlug;
     public final String mCaption;
 
-    public Picture(String url, String caption) {
-        mUrl = url;
+    public Picture(final String slug, final String caption) {
+        mSlug = slug;
         mCaption = caption;
     }
 }

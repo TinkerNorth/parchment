@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 600dp tablet, portrait: measured 550x920, 270x300, 560x400, cells to 953x918. -->
+<resources>
+    <dimen name="picture_request_horizontal_height">960dp</dimen>
+    <dimen name="picture_request_gridview_width">290dp</dimen>
+    <dimen name="picture_request_view_pager_width">600dp</dimen>
+    <dimen name="picture_request_grid_pattern_width">740dp</dimen>
+    <dimen name="picture_request_grid_pattern_height">660dp</dimen>
+</resources>

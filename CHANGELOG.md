@@ -12,6 +12,13 @@ everything around them is new.
 
 ### Changed
 
+- Sample: each photo is requested from the Unsplash resizer at the size it
+  will be shown at, instead of a fixed 800px wide image for every cell. The
+  size is a pair of dimension resources per sample screen, so the existing
+  `-port` and `sw###dp` qualifiers pick it the same way they already pick the
+  cell sizes themselves; the three that a layout dimension already states
+  alias it rather than repeating the number. Requests are in device pixels,
+  so density is applied once by `getDimensionPixelSize`.
 - With `snapToPosition` on, a fling ends on the nearest snap position
   instead of decelerating to a stop and then starting a separate snap. The
   layout manager computes the adjustment when the fling starts, extrapolating

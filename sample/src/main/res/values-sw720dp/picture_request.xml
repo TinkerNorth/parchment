@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 800dp tablet, landscape: measured 400x760, 400x200, 1240x550, cells to 781x759. -->
+<resources>
+    <dimen name="picture_request_horizontal_height">800dp</dimen>
+    <dimen name="picture_request_gridview_width">420dp</dimen>
+    <dimen name="picture_request_view_pager_width">1280dp</dimen>
+    <dimen name="picture_request_grid_pattern_width">800dp</dimen>
+    <dimen name="picture_request_grid_pattern_height">780dp</dimen>
+</resources>

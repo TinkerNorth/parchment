@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The size each sample asks the Unsplash resizer for. The width of a
+     horizontal list cell, the height of a grid cell and the height of a pager
+     page are already dimensions, so those alias them and follow the same
+     qualifiers; the rest are the sizes measured on a phone and on 600dp and
+     800dp tablets, rounded up so a request is never smaller than the view. -->
+<resources>
+    <dimen name="picture_request_horizontal_width">@dimen/list_item_horizontal_height</dimen>
+    <dimen name="picture_request_horizontal_height">640dp</dimen>
+
+    <dimen name="picture_request_gridview_width">200dp</dimen>
+    <dimen name="picture_request_gridview_height">@dimen/list_item_gridview_picture_height</dimen>
+
+    <dimen name="picture_request_view_pager_width">340dp</dimen>
+    <dimen name="picture_request_view_pager_height">@dimen/list_item_view_pager_height</dimen>
+
+    <dimen name="picture_request_grid_pattern_width">400dp</dimen>
+    <dimen name="picture_request_grid_pattern_height">400dp</dimen>
+</resources>
