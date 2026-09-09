@@ -93,9 +93,11 @@ public class ProductsAdapter extends BaseAdapter {
         final View view = getView(context, convertView, parent);
         final Picture picture = (Picture) getItem(position);
 
-        final String url = PictureUrl.forSize(picture.mSlug, mWidthPixels, mHeightPixels);
-        final ImageView imageView = view.findViewById(R.id.list_item_picture_image_view);
+        final ImageView imageView =
+                (ImageView) view.findViewById(R.id.list_item_picture_image_view);
         imageView.setImageBitmap(null);
+
+        final String url = PictureUrl.forSize(picture.mSlug, mWidthPixels, mHeightPixels);
         Picasso.get().load(url).into(imageView);
 
         final TextView textView = (TextView) view.findViewById(R.id.list_item_picture_text_view);
