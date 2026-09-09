@@ -18,6 +18,9 @@ import mobi.parchment.sample.R;
 
 public class ProductsAdapter extends BaseAdapter {
 
+    private static final String UNSPLASH_PREFIX = "https://images.unsplash.com/photo-";
+    private static final String UNSPLASH_SUFFIX = "?w=800&q=75";
+
     private final int mLayoutResourceId;
 
     public ProductsAdapter(final int layoutResourceId) {
@@ -26,29 +29,33 @@ public class ProductsAdapter extends BaseAdapter {
         mPictures = getPictures();
     }
 
+    private static String url(final String slug) {
+        return UNSPLASH_PREFIX + slug + UNSPLASH_SUFFIX;
+    }
+
     public static List<Picture> getPictures() {
         final List<Picture> pictures = new ArrayList<Picture>();
-        pictures.add(new Picture("https://i.imgur.com/8LOZwbE.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/EfLvmlO.png", "Cheetahs"));
-        pictures.add(new Picture("https://i.imgur.com/VfH1siL.png", "Cloud Break"));
-        pictures.add(new Picture("https://i.imgur.com/rmU8E53.png", "Lighthouse"));
-        pictures.add(new Picture("https://i.imgur.com/qZCCdFW.png", "Uluru"));
-        pictures.add(new Picture("https://i.imgur.com/zkt4IEl.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/xL9BSy3.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/lYQPhnY.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/5tM1vxy.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/lUbn6U6.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/fk4l1QY.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/wk49eIK.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/qwz8VUx.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/XR8Dc2D.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/lGBUYjK.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/8AgQWCh.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/YMwlUy3.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/MyWKsZf.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/gTghrcj.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/ePH4nP4.png", "National photo contest"));
-        pictures.add(new Picture("https://i.imgur.com/KVJuX7O.png", "National photo contest"));
+        pictures.add(new Picture(url("1506905925346-21bda4d32df4"), "Above the cloud line"));
+        pictures.add(new Picture(url("1418065460487-3e41a6c84dc5"), "Fog in the pines"));
+        pictures.add(new Picture(url("1439853949127-fa647821eba0"), "Glacier valley"));
+        pictures.add(new Picture(url("1444927714506-8492d94b4e3d"), "Blue ridges"));
+        pictures.add(new Picture(url("1505765050516-f72dcac9c60e"), "Peaks in cloud"));
+        pictures.add(new Picture(url("1483728642387-6c3bdd6c93e5"), "Watzmann at dusk"));
+        pictures.add(new Picture(url("1470071459604-3b5ec3a7fe05"), "Highland light"));
+        pictures.add(new Picture(url("1433086966358-54859d0ed716"), "Multnomah Falls"));
+        pictures.add(new Picture(url("1441974231531-c6227db76b6e"), "Old growth"));
+        pictures.add(new Picture(url("1447752875215-b2761acb3c5d"), "Boardwalk"));
+        pictures.add(new Picture(url("1472214103451-9374bd1c798e"), "Fairy pools"));
+        pictures.add(new Picture(url("1470252649378-9c29740c9fa8"), "Dawn on the lake"));
+        pictures.add(new Picture(url("1501785888041-af3ef285b470"), "Boathouse, Braies"));
+        pictures.add(new Picture(url("1504893524553-b855bce32c67"), "Green gorge"));
+        pictures.add(new Picture(url("1519681393784-d120267933ba"), "Peaks at night"));
+        pictures.add(new Picture(url("1470240731273-7821a6eeb6bd"), "Meadow, storm light"));
+        pictures.add(new Picture(url("1441716844725-09cedc13a4e7"), "Still water"));
+        pictures.add(new Picture(url("1454372182658-c712e4c5a1db"), "Jetty"));
+        pictures.add(new Picture(url("1439405326854-014607f694d7"), "Cold sea"));
+        pictures.add(new Picture(url("1464822759023-fed622ff2c3b"), "Alpine valley"));
+        pictures.add(new Picture(url("1477346611705-65d1883cee1e"), "Ridge at dusk"));
         return pictures;
     }
 

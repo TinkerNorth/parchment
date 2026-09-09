@@ -19,8 +19,12 @@ versions pinned in `gradle/libs.versions.toml`.
 
 ## Sample app
 
-- **Picasso** (Apache-2.0): image loading in the demo adapters. Demo images
-  are hosted on imgur and are not part of this repository.
+- **Picasso** (Apache-2.0): image loading in the demo adapters.
+- **Unsplash** photos: the demo images the adapters load. They are hotlinked
+  from the Unsplash CDN (`images.unsplash.com`) with a `w` parameter, which is
+  how the [Unsplash License](https://unsplash.com/license) asks that they be
+  served, and are not part of this repository. An app that ships should bundle
+  its own images rather than depend on a CDN it does not control.
 
 ## Build
 

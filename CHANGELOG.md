@@ -41,6 +41,10 @@ everything around them is new.
 - Tests: Robolectric 4.16.1, AssertJ 3.27, androidx.test 1.7; the old
   `integration` Maven module lives in `library/src/test` now.
 - Sample: targets SDK 37, Material theme, RTL-aware padding, Picasso 2.71828.
+- Sample: the demo photo set moved from imgur to the Unsplash CDN, and each
+  of the 21 photos now carries its own caption. Eighteen of them read
+  "National photo contest", which made paging and snapping hard to follow
+  because the caption did not change as the cell did.
 - `AbstractAdapterView` invalidates the whole view after adding or removing
   a child instead of the deprecated `invalidate(Rect)`.
 
