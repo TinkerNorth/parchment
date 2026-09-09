@@ -19,6 +19,14 @@ everything around them is new.
   cell sizes themselves; the three that a layout dimension already states
   alias it rather than repeating the number. Requests are in device pixels,
   so density is applied once by `getDimensionPixelSize`.
+- Sample: Picasso is built with a memory cache of a third of the heap instead
+  of the seventh it sizes itself at. A photo requested at the size of the view
+  is several times larger than the fixed 800px one it replaces, and on a
+  256MB-heap device only three GridPatternView cells fit in the default cache,
+  so scrolling back evicted almost everything: 4 hits against 104 misses over
+  a pass through the pattern view and back. A third of the heap, with the
+  pattern view's request trimmed, makes that 24 hits against 72.
+
 - With `snapToPosition` on, a fling ends on the nearest snap position
   instead of decelerating to a stop and then starting a separate snap. The
   layout manager computes the adjustment when the fling starts, extrapolating

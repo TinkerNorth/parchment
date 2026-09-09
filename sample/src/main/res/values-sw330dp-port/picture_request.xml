@@ -4,6 +4,6 @@
     <dimen name="picture_request_horizontal_height">900dp</dimen>
     <dimen name="picture_request_gridview_width">190dp</dimen>
     <dimen name="picture_request_view_pager_width">400dp</dimen>
-    <dimen name="picture_request_grid_pattern_width">700dp</dimen>
-    <dimen name="picture_request_grid_pattern_height">620dp</dimen>
+    <dimen name="picture_request_grid_pattern_width">600dp</dimen>
+    <dimen name="picture_request_grid_pattern_height">530dp</dimen>
 </resources>
