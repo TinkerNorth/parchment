@@ -14,7 +14,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 public class SimpleGridPatternViewActivity extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_grid_pattern_view);
 
@@ -43,6 +43,16 @@ public class SimpleGridPatternViewActivity extends BaseActivity {
         gridPatternView.addGridPatternGroupDefinition(gridPatternItemDefinitions);
 
         gridPatternView.setAdapter(getProductsAdapter());
+    }
+
+    @Override
+    public int getPictureRequestWidthDimension() {
+        return R.dimen.picture_request_grid_pattern_width;
+    }
+
+    @Override
+    public int getPictureRequestHeightDimension() {
+        return R.dimen.picture_request_grid_pattern_height;
     }
 
     @Override

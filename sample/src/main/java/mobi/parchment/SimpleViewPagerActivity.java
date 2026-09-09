@@ -11,12 +11,22 @@ import mobi.parchment.widget.adapterview.listview.ListView;
 public class SimpleViewPagerActivity extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_view_pager);
 
         final ListView<BaseAdapter> viewPager = findViewById(R.id.parchment_view);
         viewPager.setAdapter(getProductsAdapter());
+    }
+
+    @Override
+    public int getPictureRequestWidthDimension() {
+        return R.dimen.picture_request_view_pager_width;
+    }
+
+    @Override
+    public int getPictureRequestHeightDimension() {
+        return R.dimen.picture_request_view_pager_height;
     }
 
     @Override

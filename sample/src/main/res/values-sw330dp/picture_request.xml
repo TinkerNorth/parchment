@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phone, landscape: 411x923dp measured 300x371, 281x200, 883x250, cells to 362x369. -->
+<resources>
+    <dimen name="picture_request_horizontal_height">400dp</dimen>
+    <dimen name="picture_request_gridview_width">300dp</dimen>
+    <dimen name="picture_request_view_pager_width">920dp</dimen>
+    <dimen name="picture_request_grid_pattern_width">380dp</dimen>
+    <dimen name="picture_request_grid_pattern_height">380dp</dimen>
+</resources>

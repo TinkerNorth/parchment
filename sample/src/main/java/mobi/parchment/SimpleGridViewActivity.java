@@ -11,12 +11,22 @@ import mobi.parchment.widget.adapterview.gridview.GridView;
 public class SimpleGridViewActivity extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_gridview);
 
         final GridView<BaseAdapter> gridView = findViewById(R.id.parchment_view);
         gridView.setAdapter(getProductsAdapter());
+    }
+
+    @Override
+    public int getPictureRequestWidthDimension() {
+        return R.dimen.picture_request_gridview_width;
+    }
+
+    @Override
+    public int getPictureRequestHeightDimension() {
+        return R.dimen.picture_request_gridview_height;
     }
 
     @Override

@@ -11,12 +11,22 @@ import mobi.parchment.widget.adapterview.listview.ListView;
 public class SimpleListViewActivity extends BaseActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_simple_horizontal);
 
         final ListView<BaseAdapter> horizontalListView = findViewById(R.id.parchment_view);
         horizontalListView.setAdapter(getProductsAdapter());
+    }
+
+    @Override
+    public int getPictureRequestWidthDimension() {
+        return R.dimen.picture_request_horizontal_width;
+    }
+
+    @Override
+    public int getPictureRequestHeightDimension() {
+        return R.dimen.picture_request_horizontal_height;
     }
 
     @Override
