@@ -18,7 +18,6 @@ import android.widget.TextView;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-import java.util.concurrent.atomic.AtomicReference;
 import mobi.parchment.test.R;
 import mobi.parchment.widget.adapterview.AdapterViewInitializer;
 import mobi.parchment.widget.adapterview.AdapterViewManager;
@@ -41,29 +40,11 @@ public class ListViewInstrumentedTest {
     @Test
     public void inflatedHorizontalListView_laysOutOnlyVisibleChildren() {
         final Context context = ApplicationProvider.getApplicationContext();
-        final AtomicReference<ListView<BaseAdapter>> holder = new AtomicReference<>();
+        final InflateAndLayOutHorizontally inflateAndLayOut =
+                new InflateAndLayOutHorizontally(context);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(inflateAndLayOut);
 
-        InstrumentationRegistry.getInstrumentation()
-                .runOnMainSync(
-                        () -> {
-                            final View inflated =
-                                    LayoutInflater.from(context)
-                                            .inflate(R.layout.list_view_horizontal, null);
-                            @SuppressWarnings("unchecked")
-                            final ListView<BaseAdapter> listView = (ListView<BaseAdapter>) inflated;
-                            listView.setAdapter(new FixedWidthAdapter(context));
-                            final int widthSpec =
-                                    View.MeasureSpec.makeMeasureSpec(
-                                            WIDTH, View.MeasureSpec.EXACTLY);
-                            final int heightSpec =
-                                    View.MeasureSpec.makeMeasureSpec(
-                                            HEIGHT, View.MeasureSpec.EXACTLY);
-                            listView.measure(widthSpec, heightSpec);
-                            listView.layout(0, 0, WIDTH, HEIGHT);
-                            holder.set(listView);
-                        });
-
-        final ListView<BaseAdapter> listView = holder.get();
+        final ListView<BaseAdapter> listView = inflateAndLayOut.listView();
         assertNotNull(listView);
         final int childCount = listView.getChildCount();
         assertTrue("expected some children, got " + childCount, childCount > 0);
@@ -134,6 +115,35 @@ public class ListViewInstrumentedTest {
 
         void runFrame() {
             onAnimationFrame();
+        }
+    }
+
+    private static final class InflateAndLayOutHorizontally implements Runnable {
+        private final Context mContext;
+        private ListView<BaseAdapter> mListView;
+
+        InflateAndLayOutHorizontally(final Context context) {
+            mContext = context;
+        }
+
+        ListView<BaseAdapter> listView() {
+            return mListView;
+        }
+
+        @Override
+        public void run() {
+            final View inflated =
+                    LayoutInflater.from(mContext).inflate(R.layout.list_view_horizontal, null);
+            // The layout names the ListView, so the inflated root is that view.
+            @SuppressWarnings("unchecked")
+            final ListView<BaseAdapter> listView = (ListView<BaseAdapter>) inflated;
+            listView.setAdapter(new FixedWidthAdapter(mContext));
+            final int widthSpec = View.MeasureSpec.makeMeasureSpec(WIDTH, View.MeasureSpec.EXACTLY);
+            final int heightSpec =
+                    View.MeasureSpec.makeMeasureSpec(HEIGHT, View.MeasureSpec.EXACTLY);
+            listView.measure(widthSpec, heightSpec);
+            listView.layout(0, 0, WIDTH, HEIGHT);
+            mListView = listView;
         }
     }
 

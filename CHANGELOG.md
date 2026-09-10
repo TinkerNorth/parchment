@@ -92,6 +92,12 @@ everything around them is new.
 
 ### Added
 
+- An instrumented harness, `ParchmentViewHarness`, that inflates a view
+  from a layout with a real `LayoutInflater`, attaches it to an Activity at
+  an exact pixel size, drives real measure and layout passes, dispatches
+  real gestures, and hands a test an immutable snapshot of where the
+  children landed. All eleven `parchment_` attributes are covered by
+  on-device tests built on it, asserting geometry rather than getters.
 - Spotless (google-java-format, AOSP style) with SPDX license headers on
   every Java file; `javac -Xlint:all -Werror`; Android Lint with warnings
   as errors and no baseline.
