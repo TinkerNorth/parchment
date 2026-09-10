@@ -274,6 +274,11 @@ behaviour of the views is unchanged; everything around them is new.
     zero, so the two rounded opposite ways once a cell was larger than the
     viewport, and a cell larger by an odd number of pixels left a permanent
     one-pixel error. This reached all three views.
+- A `GridPatternView` no longer adds the view's start padding a second time
+  when placing each view inside its cell. The cell start already carries the
+  padding, so with `android:paddingTop` set (`paddingLeft` when scrolling
+  horizontally) the pattern was drawn that far past where the engine held the
+  cell, and a centred cell came to rest off centre by the padding.
 - A gesture whose first frame is held by the start or the end of the list no
   longer counts the movement it was denied. The layout pass folded the
   clamp's correction back into the distance a gesture has travelled only
