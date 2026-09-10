@@ -4,6 +4,7 @@
 package mobi.parchment.widget.adapterview.listview;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -47,6 +48,8 @@ public class ListView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
         final SnapPosition snapPosition = attributes.getSnapPosition();
         final boolean selectOnSnap = attributes.selectOnSnap();
         final boolean selectWhileScrolling = attributes.selectWhileScrolling();
+        final Drawable divider = attributes.getDivider();
+        final int dividerSize = attributes.getDividerSize();
         final LayoutManagerAttributes layoutManagerAttributes =
                 new LayoutManagerAttributes(
                         isCircularScroll,
@@ -69,7 +72,9 @@ public class ListView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
                         isViewPager,
                         adapterViewManager,
                         listLayoutManager,
-                        isVerticalScroll);
+                        isVerticalScroll,
+                        divider,
+                        dividerSize);
         return adapterViewAdapterViewInitializer;
     }
 }

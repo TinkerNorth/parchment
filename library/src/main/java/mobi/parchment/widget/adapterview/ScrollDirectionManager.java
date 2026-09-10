@@ -3,6 +3,8 @@
 
 package mobi.parchment.widget.adapterview;
 
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
@@ -56,5 +58,23 @@ public class ScrollDirectionManager {
     public int getDrawBreadth(int left, int top, int right, int bottom) {
         if (isVerticalScroll()) return right - left;
         return bottom - top;
+    }
+
+    public int getDrawableSize(final Drawable drawable) {
+        if (isVerticalScroll()) return drawable.getIntrinsicHeight();
+        return drawable.getIntrinsicWidth();
+    }
+
+    public void setDrawBounds(
+            final Rect bounds,
+            final int start,
+            final int end,
+            final int breadthStart,
+            final int breadthEnd) {
+        if (isVerticalScroll()) {
+            bounds.set(breadthStart, start, breadthEnd, end);
+            return;
+        }
+        bounds.set(start, breadthStart, end, breadthEnd);
     }
 }

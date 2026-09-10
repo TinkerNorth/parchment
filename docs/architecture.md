@@ -59,6 +59,40 @@ The step itself:
 The layout managers never call `getLeft()`/`getTop()` directly; that is
 the rule that keeps one engine working for both orientations.
 
+## The draw pass
+
+`AbstractAdapterView.dispatchDraw` draws the cells through `super`, then
+hands the canvas to `CellDivider`, which paints `parchment_divider` once
+between each pair of adjacent drawn cells. It reads the boundaries through
+`LayoutManager.getDrawnCellCount`, `getDrawnCellStart` and `getDrawnCellEnd`,
+so the cell list itself stays inside the engine, and it maps thickness and
+breadth onto left/top/right/bottom through `ScrollDirectionManager` like
+everything else orientation-specific. Drawing runs on every frame while
+anything moves, so nothing in Parchment allocates on that path: one `Rect`
+field is refilled per divider, the loop is indexed rather than iterated, and
+`Group` reads a row's bounds without an iterator or a boxed accumulator.
+What a `Drawable` does inside its own `draw` is its own business.
+
+Dividers are decoration and never enter the layout: the cells sit where
+`parchment_cellSpacing` puts them and the divider is centred in the gap
+between two cells' boundaries. Painting after the children is what makes a
+divider thicker than the spacing — a zero spacing included — visible rather
+than hidden under the cell it overlaps. `android:clipToPadding` is applied
+by `ViewGroup.dispatchDraw` and restored before it returns, so it never
+clips the divider; `CellDivider` applies `getStartBreadthPadding` and
+`getEndBreadthPadding` itself instead (`CellDividerPaintTest`).
+
+With `parchment_isCircularScroll` on, the drawn cells already wrap, so the
+divider between the last cell and the first is just a divider between two
+adjacent drawn cells and needs no case of its own.
+
+A cell that scrolls off the start keeps its divider for as long as the gap
+after it is on screen, without the draw pass knowing anything about it:
+`layout` recycles a cell once its end passes 0, but the backward pass then
+prepends cells while `mOffset` is still above 0, and `mOffset` is above 0
+exactly when part of that gap is still visible
+(`divider_whenACellScrollsOffTheStart_isStillDrawnWhileItsGapIsOnScreen`).
+
 ## Recycling
 
 `AdapterViewManager` keeps a `Queue<View>` per adapter view type plus a
@@ -167,4 +201,5 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
+| Why is the divider missing or in the wrong place? | `CellDivider`, `CellDividerTest`, `CellDividerPaintTest` |
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` + `ViewPagerTest` |

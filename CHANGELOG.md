@@ -7,10 +7,45 @@ All notable changes to Parchment, newest first. The format follows
 
 ## [Unreleased]
 
-The first work on Parchment since 2014. Behaviour of the views is unchanged;
-everything around them is new.
+The first work on Parchment since 2014. Apart from the new cell divider,
+behaviour of the views is unchanged; everything around them is new.
+
+### Added
+
+- `parchment_divider` and `parchment_dividerSize` draw a divider between
+  adjacent cells in all three views, the thing the platform `ListView` has
+  and Parchment did not (#25). There is one fewer divider than there are
+  cells on screen: never before the first, never after the last. A cell is
+  one view in `ListView` and a whole group in `GridView` and
+  `GridPatternView`, so a divider separates rows rather than the items
+  inside a row. The divider is decoration and takes no space of its own: it
+  is centred in the `parchment_cellSpacing` gap, so the spacing is what you
+  size to make room for it, and a divider thicker than the spacing overflows
+  evenly onto both cells and is painted over them — which is also what makes
+  one visible when the spacing is zero. Along the breadth it runs inside
+  `android:padding*`; `android:clipToPadding` is applied to the cells inside
+  `ViewGroup.dispatchDraw` and restored before it returns, so it never
+  reaches the divider under either setting. Without `parchment_dividerSize`
+  the drawable's intrinsic size along the scroll axis is used, and a colour
+  has none, so a colour divider with no size paints nothing, as with the
+  platform widget. The divider is drawn as it is given: drawable state and
+  animation are not driven, as with the platform widget.
 
 ### Changed
+
+- **Breaking:** `AbstractAdapterView.createAdapterViewInitializer` takes two
+  more parameters, the divider drawable and its size. It is `protected` and
+  an implementation detail, but a subclass that overrides it — the pattern
+  the in-tree test views use to reach the gesture listener — has to take the
+  two new parameters and pass them on.
+
+- `GridView` rows report their bounds without allocating. `Group.getTop`,
+  `getBottom`, `getLeft` and `getRight` walked their views with an iterator
+  and a boxed `Integer` accumulator; they now index the list and accumulate
+  an `int`, because the divider pass reads a cell's bounds on every frame
+  while the view moves. An empty group reported those bounds by throwing a
+  `NullPointerException` and now reports 0, matching `getMeasuredWidth` and
+  `getMeasuredHeight`, which already did.
 
 - **Breaking:** every custom XML attribute now carries a `parchment_`
   prefix: `orientation` is `parchment_orientation`, `cellSpacing` is

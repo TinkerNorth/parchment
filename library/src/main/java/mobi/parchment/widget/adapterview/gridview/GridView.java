@@ -4,6 +4,7 @@
 package mobi.parchment.widget.adapterview.gridview;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -45,6 +46,8 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
         final SnapPosition snapPosition = gridAttributes.getSnapPosition();
         final boolean selectOnSnap = gridAttributes.selectOnSnap();
         final boolean selectWhileScrolling = gridAttributes.selectWhileScrolling();
+        final Drawable divider = gridAttributes.getDivider();
+        final int dividerSize = gridAttributes.getDividerSize();
         final boolean isTop = gridAttributes.isTop();
         final boolean isBottom = gridAttributes.isBottom();
         final boolean isLeft = gridAttributes.isLeft();
@@ -72,7 +75,13 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
 
         final AdapterViewInitializer<Group> adapterViewAdapterViewInitializer =
                 createAdapterViewInitializer(
-                        context, isViewPager, adapterViewManager, gridLayoutManager, isVertical);
+                        context,
+                        isViewPager,
+                        adapterViewManager,
+                        gridLayoutManager,
+                        isVertical,
+                        divider,
+                        dividerSize);
         return adapterViewAdapterViewInitializer;
     }
 }

@@ -19,6 +19,8 @@
             <enum name="onScreen" value="3"/>
         </attr>
         <attr name="parchment_selectWhileScrolling" format="boolean"/>
+        <attr name="parchment_divider" format="reference|color"/>
+        <attr name="parchment_dividerSize" format="dimension"/>
     </declare-styleable>
 
     <declare-styleable name="GridView">

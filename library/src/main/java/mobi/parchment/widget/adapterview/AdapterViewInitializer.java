@@ -11,16 +11,19 @@ public class AdapterViewInitializer<Cell> {
     private final GestureDetector mGestureDetector;
     private final LayoutManager<Cell> mLayoutManager;
     private final AdapterViewManager mAdapterViewManager;
+    private final CellDivider mCellDivider;
 
     public AdapterViewInitializer(
             final ChildTouchGestureListener childTouchListener,
             final GestureDetector gestureDetector,
             final LayoutManager<Cell> layoutManager,
-            final AdapterViewManager adapterViewManager) {
+            final AdapterViewManager adapterViewManager,
+            final CellDivider cellDivider) {
         mChildTouchListener = childTouchListener;
         mGestureDetector = gestureDetector;
         mLayoutManager = layoutManager;
         mAdapterViewManager = adapterViewManager;
+        mCellDivider = cellDivider;
     }
 
     public ChildTouchGestureListener getChildTouchListener() {
@@ -37,5 +40,9 @@ public class AdapterViewInitializer<Cell> {
 
     public AdapterViewManager getAdapterViewManager() {
         return mAdapterViewManager;
+    }
+
+    CellDivider getCellDivider() {
+        return mCellDivider;
     }
 }

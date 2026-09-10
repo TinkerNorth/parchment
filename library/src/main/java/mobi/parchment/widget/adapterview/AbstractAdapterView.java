@@ -5,6 +5,8 @@ package mobi.parchment.widget.adapterview;
 
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -71,7 +73,9 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             final boolean isViewPager,
             final AdapterViewManager adapterViewManager,
             final LayoutManager<Cell> layoutManager,
-            final boolean isVerticalScroll) {
+            final boolean isVerticalScroll,
+            final Drawable divider,
+            final int dividerSize) {
         final LayoutManagerBridge layoutManagerBridge = new LayoutManagerBridge(layoutManager);
         final ViewConfiguration viewConfiguration = ViewConfiguration.get(context);
         final ChildTouchGestureListener childTouchGestureListener =
@@ -87,11 +91,17 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         final AdapterViewGestureDetector adapterViewGestureDetector =
                 new AdapterViewGestureDetector(context, childTouchGestureListener);
 
+        final ScrollDirectionManager scrollDirectionManager =
+                layoutManager.getScrollDirectionManager();
+        final CellDivider cellDivider =
+                new CellDivider(divider, dividerSize, scrollDirectionManager);
+
         return new AdapterViewInitializer<Cell>(
                 childTouchGestureListener,
                 adapterViewGestureDetector,
                 layoutManager,
-                adapterViewManager);
+                adapterViewManager,
+                cellDivider);
     }
 
     protected abstract AdapterViewInitializer<Cell> getAdapterViewInitializer(
@@ -238,6 +248,14 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             default:
                 break;
         }
+    }
+
+    @Override
+    protected void dispatchDraw(final Canvas canvas) {
+        super.dispatchDraw(canvas);
+        final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
+        final CellDivider cellDivider = mAdapterViewInitializer.getCellDivider();
+        cellDivider.draw(canvas, this, layoutManager);
     }
 
     @Override
