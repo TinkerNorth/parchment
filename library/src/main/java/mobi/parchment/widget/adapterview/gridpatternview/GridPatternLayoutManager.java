@@ -214,9 +214,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         final int cellSpacingCount = gridPatternItemDefinitionStart;
         final int gridItemPixelSize = getGridItemSize(gridPatternGroupDefinition);
         final int gridItemStartOffset =
-                getStartSizePadding()
-                        + cellSpacingCount * cellSpacing
-                        + gridPatternItemDefinitionStart * gridItemPixelSize;
+                cellSpacingCount * cellSpacing + gridPatternItemDefinitionStart * gridItemPixelSize;
         return gridItemStartOffset;
     }
 

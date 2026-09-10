@@ -27,10 +27,7 @@ public interface SnapPositionInterface<Cell> {
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell);
 
     public int getSnapToPixelDistance(
-            final LayoutManager<Cell> layoutManager,
-            final ScrollDirectionManager scrollDirectionManager,
-            final int size,
-            final View view);
+            final LayoutManager<Cell> layoutManager, final int size, final Cell cell);
 
     public int getRedrawOffset(
             final ScrollDirectionManager scrollDirectionManager,
