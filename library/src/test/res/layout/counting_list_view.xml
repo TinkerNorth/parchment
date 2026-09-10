@@ -5,6 +5,6 @@
       android:id="@+id/counting_list_view"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      parchment:orientation="horizontal"
-      parchment:snapToPosition="true"
-      parchment:snapPosition="center"/>
+      parchment:parchment_orientation="horizontal"
+      parchment:parchment_snapToPosition="true"
+      parchment:parchment_snapPosition="center"/>

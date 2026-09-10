@@ -12,6 +12,33 @@ everything around them is new.
 
 ### Changed
 
+- **Breaking:** every custom XML attribute now carries a `parchment_`
+  prefix: `orientation` is `parchment_orientation`, `cellSpacing` is
+  `parchment_cellSpacing`, and so on for all eleven. Custom attribute names
+  share one flat namespace across everything the resource merger sees, so
+  Parchment's unqualified names collided with any other library declaring
+  the same name and the consumer could not build at all; aapt2 stops the
+  merge with `duplicate value for resource 'attr/orientation' with config
+  ''`. Two declarations survive that merge only when they match exactly, so
+  `cellSpacing` as a dimension here and an integer there was already fatal,
+  and an attribute carrying `enum` or `flag` children — `orientation`,
+  `snapPosition`, `gravity` — collided even when both declarations were
+  byte-for-byte identical. Format, meaning, and the enum and flag values
+  are unchanged, and the old names are not kept as deprecated aliases:
+  2.0 is the breaking window and reading both would double the parsing
+  code. The README tables list all eleven names. Substituting your own
+  res-auto prefix for `parchment` below — never `android`, whose own
+  `orientation` and `gravity` are a different namespace and must not be
+  touched — this is the whole migration:
+
+      sed -i -E 's/\bparchment:(orientation|cellSpacing|isCircularScroll|snapToPosition|selectOnSnap|isViewPager|snapPosition|selectWhileScrolling|numberOfViewsPerCell|gravity|ratio)=/parchment:parchment_\1=/g' $(git ls-files '*.xml')
+
+  The `declare-styleable` names (`ListView`, `GridView`, `GridPatternView`)
+  are deliberately unchanged: the resource merger unions same-named
+  styleables instead of failing them, and each app relinks the library's R
+  indices, so a consumer declaring its own `ListView` styleable still
+  builds.
+
 - Sample: each photo is requested from the Unsplash resizer at the size it
   will be shown at, instead of a fixed 800px wide image for every cell. The
   size is a pair of dimension resources per sample screen, so the existing
@@ -27,7 +54,7 @@ everything around them is new.
   a pass through the pattern view and back. A third of the heap, with the
   pattern view's request trimmed, makes that 24 hits against 72.
 
-- With `snapToPosition` on, a fling ends on the nearest snap position
+- With `parchment_snapToPosition` on, a fling ends on the nearest snap position
   instead of decelerating to a stop and then starting a separate snap. The
   layout manager computes the adjustment when the fling starts, extrapolating
   with the edge cell's size when the end lies beyond the visible cells, and
@@ -65,6 +92,12 @@ everything around them is new.
 
 ### Added
 
+- An instrumented harness, `ParchmentViewHarness`, that inflates a view
+  from a layout with a real `LayoutInflater`, attaches it to an Activity at
+  an exact pixel size, drives real measure and layout passes, dispatches
+  real gestures, and hands a test an immutable snapshot of where the
+  children landed. All eleven `parchment_` attributes are covered by
+  on-device tests built on it, asserting geometry rather than getters.
 - Spotless (google-java-format, AOSP style) with SPDX license headers on
   every Java file; `javac -Xlint:all -Werror`; Android Lint with warnings
   as errors and no baseline.

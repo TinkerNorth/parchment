@@ -2,9 +2,9 @@
 <mobi.parchment.widget.adapterview.listview.ListView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:parchment="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/horizontal_list_view"
+    android:id="@+id/parchment_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    parchment:parchment_cellSpacing="0dp"
-    parchment:parchment_orientation="horizontal"
-    parchment:parchment_snapPosition="onScreen" />
+    parchment:parchment_orientation="vertical"
+    parchment:parchment_snapPosition="center"
+    parchment:parchment_selectWhileScrolling="true" />

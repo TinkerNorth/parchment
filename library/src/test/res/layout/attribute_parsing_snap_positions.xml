@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:parchment="http://schemas.android.com/apk/res-auto"
+              android:id="@+id/no_parchment_attributes"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/snap_position_center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="center"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/snap_position_start"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="start"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/snap_position_end"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="end"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/snap_position_on_screen"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="onScreen"/>
+</LinearLayout>

@@ -47,7 +47,8 @@ public class Attributes {
             try {
                 final int snapPositionOrdinal =
                         typedArray.getInteger(
-                                R.styleable.ListView_snapPosition, SnapPosition.onScreen.ordinal());
+                                R.styleable.ListView_parchment_snapPosition,
+                                SnapPosition.onScreen.ordinal());
                 final SnapPosition[] snapPositionValues = SnapPosition.values();
                 if (snapPositionValues.length > snapPositionOrdinal && snapPositionOrdinal >= 0)
                     mSnapPosition = SnapPosition.values()[snapPositionOrdinal];
@@ -55,29 +56,32 @@ public class Attributes {
 
                 mIsViewPager =
                         typedArray.getBoolean(
-                                R.styleable.ListView_isViewPager, DefaultValues.IS_VIEW_PAGER);
+                                R.styleable.ListView_parchment_isViewPager,
+                                DefaultValues.IS_VIEW_PAGER);
                 mIsCircularScroll =
                         typedArray.getBoolean(
-                                R.styleable.ListView_isCircularScroll,
+                                R.styleable.ListView_parchment_isCircularScroll,
                                 DefaultValues.IS_CIRCULAR_SCROLL);
                 mSnapToPosition =
                         typedArray.getBoolean(
-                                R.styleable.ListView_snapToPosition,
+                                R.styleable.ListView_parchment_snapToPosition,
                                 DefaultValues.SNAP_TO_POSITION);
                 mCellSpacing =
                         typedArray.getDimensionPixelSize(
-                                R.styleable.ListView_cellSpacing, DefaultValues.CELL_SPACING);
+                                R.styleable.ListView_parchment_cellSpacing,
+                                DefaultValues.CELL_SPACING);
                 mSelectOnSnap =
                         typedArray.getBoolean(
-                                R.styleable.ListView_selectOnSnap, DefaultValues.SELECT_ON_SNAP);
+                                R.styleable.ListView_parchment_selectOnSnap,
+                                DefaultValues.SELECT_ON_SNAP);
                 mSelectWhileScrolling =
                         typedArray.getBoolean(
-                                R.styleable.ListView_selectWhileScrolling,
+                                R.styleable.ListView_parchment_selectWhileScrolling,
                                 DefaultValues.SELECT_WHILE_SCROLLING);
 
                 final int orientationOrdinal =
                         typedArray.getInteger(
-                                R.styleable.ListView_orientation,
+                                R.styleable.ListView_parchment_orientation,
                                 DefaultValues.ORIENTATION.ordinal());
                 final Orientation[] orientationValues = Orientation.values();
                 if (orientationValues.length > orientationOrdinal && orientationOrdinal >= 0) {
