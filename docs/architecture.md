@@ -117,9 +117,32 @@ positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
 ## ViewPager mode
 
 `parchment_isViewPager` changes the gesture interpretation, not the layout: a
-completed gesture advances exactly one cell in the fling direction
-(`AdapterAnimator` with the `mViewPageDistance`), and the snap position is
-forced to `start` so pages align. It composes with `parchment_isCircularScroll`.
+completed gesture advances exactly `parchment_viewPagerInterval` cells (one by
+default) in the fling direction, however far the finger travelled.
+`AdapterAnimator.onFling` asks `LayoutManagerBridge` for the distance instead
+of handing the velocity to the scroller.
+
+`LayoutManager` measures that distance in `layout`, only when
+`parchment_isViewPager` is on, whenever a new animation id arrives and before
+that frame's displacement is applied. A new id arrives when a gesture starts
+and again on every layout taken while the view is at rest, so the distance is
+always the one measured from the layout the gesture started from. It takes the
+cell nearest the snap position as the anchor, and the distance is the gap
+between the anchor's snapped start and the start of the cell the interval
+away, in each direction separately (`mViewPageDistanceForward` and
+`mViewPageDistanceBack`). Measuring from starts rather than summing sizes is
+what makes cells of different sizes page correctly, puts the landing point on
+a cell boundary even when the gesture starts part-way through a cell, and
+keeps a cell wider than the viewport to one cell per gesture. Cells past the
+ends of the visible run are extrapolated from the edge cell's size plus
+spacing and capped at the adapter's ends, the same way `getFlingSnapAdjustment`
+extrapolates, so a gesture at the last cell asks for no movement rather than
+running off the end. Circular scrolling lifts that cap and the positions wrap.
+
+The snap position is *not* forced: `parchment_snapPosition` applies as it does
+everywhere else (`onScreen` for a view inflated from XML), and the anchor is
+found through the same `SnapPositionInterface` the snaps use, so paging works
+from wherever a cell rests. It composes with `parchment_isCircularScroll`.
 
 ## Touch
 
@@ -144,4 +167,4 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
-| Why does the ViewPager page twice? | `AdapterAnimator` + `ViewPagerTest` |
+| Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` + `ViewPagerTest` |

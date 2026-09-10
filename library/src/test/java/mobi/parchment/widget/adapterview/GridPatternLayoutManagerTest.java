@@ -31,6 +31,10 @@ public class GridPatternLayoutManagerTest {
     public static final int VIEW_GROUP_SIZE = 300;
     public static final int VIEW_SIZE = 145;
     public static final int CELL_SPACING = 10;
+    private static final int ONE_GROUP_PER_GESTURE = 1;
+    private static final int SECOND_GROUP_POSITION = 2;
+    private static final int PAGER_ADAPTER_SIZE = 9;
+    private static final int NOT_DRAWN = Integer.MIN_VALUE;
     final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
@@ -300,6 +304,100 @@ public class GridPatternLayoutManagerTest {
         assertThat(thirdView.getBottom()).isEqualTo(300);
     }
 
+    @Test
+    public void viewPagerGesture_onAGridPattern_advancesOneWholePatternGroup() {
+        final PatternPager pager = new PatternPager();
+
+        final int firstGroupSpan = pager.topOf(SECOND_GROUP_POSITION) - pager.topOf(0);
+        assertThat(firstGroupSpan).isGreaterThan(0);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-firstGroupSpan);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.topOf(SECOND_GROUP_POSITION)).isEqualTo(0);
+    }
+
+    private static final class PatternPager {
+        private final MyViewGroup mPagerViewGroup;
+        private final GridPatternLayoutManager mPagerLayoutManager;
+        private final Animation mPagerAnimation = new Animation();
+
+        private PatternPager() {
+            mPagerViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
+            final AdapterViewManager pagerAdapterViewManager = new AdapterViewManager();
+            final GridPatternLayoutManagerAttributes pagerAttributes =
+                    new GridPatternLayoutManagerAttributes(
+                            false,
+                            false,
+                            true,
+                            ONE_GROUP_PER_GESTURE,
+                            SnapPosition.start,
+                            CELL_SPACING,
+                            false,
+                            false,
+                            true,
+                            1f);
+            mPagerLayoutManager =
+                    new GridPatternLayoutManager(
+                            mPagerViewGroup, null, pagerAdapterViewManager, pagerAttributes);
+
+            final List<GridPatternItemDefinition> firstGroupItems =
+                    new ArrayList<GridPatternItemDefinition>();
+            firstGroupItems.add(new GridPatternItemDefinition(0, 0, 1, 1));
+            firstGroupItems.add(new GridPatternItemDefinition(0, 1, 1, 1));
+            mPagerLayoutManager.addGridPatternGroupDefinition(
+                    new GridPatternGroupDefinition(true, firstGroupItems));
+
+            final List<GridPatternItemDefinition> secondGroupItems =
+                    new ArrayList<GridPatternItemDefinition>();
+            secondGroupItems.add(new GridPatternItemDefinition(0, 0, 1, 2));
+            mPagerLayoutManager.addGridPatternGroupDefinition(
+                    new GridPatternGroupDefinition(true, secondGroupItems));
+
+            final TestAdapter pagerAdapter = new TestAdapter(VIEW_SIZE);
+            pagerAdapterViewManager.setAdapter(pagerAdapter);
+            pagerAdapter.setAdapterSize(PAGER_ADAPTER_SIZE);
+
+            final int measureSpec =
+                    View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+            mPagerViewGroup.measure(measureSpec, measureSpec);
+            mPagerViewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+            layout();
+        }
+
+        private void layout() {
+            mPagerLayoutManager.layout(
+                    mPagerViewGroup, mPagerAnimation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        }
+
+        private void startGesture() {
+            mPagerAnimation.newAnimation();
+            layout();
+        }
+
+        private int pageDistance(final Move move) {
+            return mPagerLayoutManager.getViewPagerScrollDistance(move);
+        }
+
+        private void page(final Move move) {
+            mPagerAnimation.setDisplacement(pageDistance(move));
+            layout();
+        }
+
+        private int topOf(final int adapterPosition) {
+            for (final View view : mPagerViewGroup.mViews) {
+                final Object tag = view.getTag();
+                final boolean isTheWantedView = tag.equals(Integer.valueOf(adapterPosition));
+                if (isTheWantedView) return view.getTop();
+            }
+            return NOT_DRAWN;
+        }
+    }
+
     private void doLayout() {
         doLayout(new Animation());
     }
@@ -315,7 +413,7 @@ public class GridPatternLayoutManagerTest {
         mViewGroup.layout(0, 0, viewGroupSize, viewGroupSize);
     }
 
-    public class MyViewGroup extends LinearLayout implements AdapterViewHandler {
+    public static class MyViewGroup extends LinearLayout implements AdapterViewHandler {
         public final List<View> mViews = new ArrayList<View>();
 
         public MyViewGroup(Context context) {
@@ -323,14 +421,7 @@ public class GridPatternLayoutManagerTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(
-                    mViews,
-                    new Comparator<View>() {
-                        @Override
-                        public int compare(View lhs, View rhs) {
-                            return lhs.getLeft() - rhs.getLeft();
-                        }
-                    });
+            Collections.sort(mViews, new LeftToRightComparator());
 
             return mViews.get(position);
         }
@@ -348,9 +439,16 @@ public class GridPatternLayoutManagerTest {
         }
     }
 
-    public class TestAdapter extends BaseAdapter {
+    private static final class LeftToRightComparator implements Comparator<View> {
+        @Override
+        public int compare(final View lhs, final View rhs) {
+            return lhs.getLeft() - rhs.getLeft();
+        }
+    }
+
+    public static class TestAdapter extends BaseAdapter {
+        private final int mViewSize;
         private int mAdapterSize;
-        private int mViewSize;
 
         public TestAdapter(int viewSize) {
             mViewSize = viewSize;

@@ -12,7 +12,7 @@ public class Attributes {
 
     private static class DefaultValues {
         private static final int CELL_SPACING = 0;
-        private static final int VIEW_PAGER_INTERVAL = 0;
+        private static final int VIEW_PAGER_INTERVAL = 1;
         private static final Orientation ORIENTATION = Orientation.vertical;
         private static final boolean IS_CIRCULAR_SCROLL = false;
         private static final boolean SNAP_TO_POSITION = false;
@@ -58,6 +58,11 @@ public class Attributes {
                         typedArray.getBoolean(
                                 R.styleable.ListView_parchment_isViewPager,
                                 DefaultValues.IS_VIEW_PAGER);
+                final int viewPagerInterval =
+                        typedArray.getInteger(
+                                R.styleable.ListView_parchment_viewPagerInterval,
+                                DefaultValues.VIEW_PAGER_INTERVAL);
+                mViewPagerInterval = Math.max(viewPagerInterval, DefaultValues.VIEW_PAGER_INTERVAL);
                 mIsCircularScroll =
                         typedArray.getBoolean(
                                 R.styleable.ListView_parchment_isCircularScroll,

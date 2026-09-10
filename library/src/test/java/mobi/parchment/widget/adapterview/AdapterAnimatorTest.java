@@ -174,7 +174,31 @@ public class AdapterAnimatorTest {
         ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
 
         assertThat(mFrameScheduler.mRequests).isEqualTo(1);
-        assertThat(nextFrameDisplacement()).isEqualTo(-VIEW_GROUP_SIZE);
+        assertThat(nextFrameDisplacement()).isEqualTo(-VIEW_SIZE);
+    }
+
+    @Test
+    public void onFling_asAViewPagerInTheOtherDirection_movesExactlyOneCellBack() {
+        layOutList(true, SnapPosition.start, true);
+        layout();
+
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
+        layout();
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(mLayoutManager.getViewForPosition(1).getLeft()).isEqualTo(0);
+
+        layout();
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onFling(down(), up(), -FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(MAX_SNAP_DURATION + 1));
+
+        assertThat(mFrameScheduler.mRequests).isEqualTo(1);
+        assertThat(nextFrameDisplacement()).isEqualTo(VIEW_SIZE);
     }
 
     @Test
