@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:parchment="http://schemas.android.com/apk/res-auto"
+      class="mobi.parchment.widget.adapterview.SnapSettleTest$SettleGridPatternView"
+      android:id="@+id/settle_grid_pattern"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:paddingLeft="15px"
+      android:paddingRight="25px"
+      parchment:orientation="horizontal"
+      parchment:snapPosition="center"
+      parchment:snapToPosition="true"
+      parchment:cellSpacing="10px"
+      parchment:ratio="0.5"/>

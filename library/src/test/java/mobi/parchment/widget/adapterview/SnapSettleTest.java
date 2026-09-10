@@ -43,6 +43,8 @@ public class SnapSettleTest {
     private static final float FLING_VELOCITY = -1000f;
     private static final float DRAG_DISTANCE = 45f;
     private static final int CENTRED_CELL_START = 48;
+    private static final int PADDED_CENTRED_CELL_START = 53;
+    private static final int PADDED_CELL_BREADTH_START = 15;
     private static final int STARTED_CELL_START = 0;
     private static final int ENDED_CELL_START = 96;
     private static final int ON_SCREEN_CELL_START = 0;
@@ -55,6 +57,8 @@ public class SnapSettleTest {
     private static final int CENTRED_EVEN_TALL_CELL_START = -3;
     private static final int FIRST_VIEW_OF_SECOND_CELL = 3;
     private static final int LAST_VIEW_OF_SECOND_CELL = 5;
+    private static final int PADDED_STARTED_CELL_START = 20;
+    private static final int HORIZONTAL_PADDED_CENTRED_CELL_START = 118;
 
     private Activity mActivity;
     private FrameLayout mContent;
@@ -127,6 +131,18 @@ public class SnapSettleTest {
     }
 
     @Test
+    public void gridPatternCenterSnap_withPadding_centresTheCellInsideThePadding() {
+        final SettleGridPatternView view =
+                gridPatternView(R.layout.settle_grid_pattern_padded, ADAPTER_SIZE, true);
+
+        drag(view);
+
+        assertSettled(view);
+        assertThat(cellStarts(view)).contains(PADDED_CENTRED_CELL_START);
+        assertThat(view.getChildAt(0).getLeft()).isEqualTo(PADDED_CELL_BREADTH_START);
+    }
+
+    @Test
     public void gridPatternCenterSnap_withCircularScroll_settlesWithTheCellOnScreen() {
         final SettleGridPatternView view =
                 gridPatternView(R.layout.settle_grid_pattern_circular, ADAPTER_SIZE, true);
@@ -168,6 +184,29 @@ public class SnapSettleTest {
 
         assertSettled(view);
         assertThat(cellStarts(view)).contains(ENDED_CELL_START);
+    }
+
+    @Test
+    public void gridPatternStartSnap_withPadding_settlesWithTheCellAtThePaddingEdge() {
+        final SettleGridPatternView view =
+                gridPatternView(R.layout.settle_grid_pattern_start_padded, ADAPTER_SIZE, true);
+
+        drag(view);
+
+        assertSettled(view);
+        assertThat(cellStarts(view)).contains(PADDED_STARTED_CELL_START);
+    }
+
+    @Test
+    public void gridPatternCenterSnap_scrollingHorizontallyWithPadding_centresInsideThePadding() {
+        final SettleGridPatternView view =
+                gridPatternView(
+                        R.layout.settle_grid_pattern_horizontal_padded, ADAPTER_SIZE, false);
+
+        drag(view);
+
+        assertSettled(view);
+        assertThat(horizontalCellStarts(view)).contains(HORIZONTAL_PADDED_CENTRED_CELL_START);
     }
 
     @Test
@@ -274,13 +313,24 @@ public class SnapSettleTest {
 
     private List<Integer> cellStarts(final SettleGridPatternView view) {
         final List<Integer> starts = new ArrayList<Integer>();
+        final int widestBreadth = widestChildBreadth(view);
         for (int index = 0; index < view.getChildCount(); index++) {
             final View child = view.getChildAt(index);
             final int childBreadth = child.getRight() - child.getLeft();
-            final boolean isTheCellsFirstView = childBreadth == VIEW_BREADTH;
+            final boolean isTheCellsFirstView = childBreadth == widestBreadth;
             if (isTheCellsFirstView) starts.add(child.getTop());
         }
         return starts;
+    }
+
+    private int widestChildBreadth(final SettleGridPatternView view) {
+        int widest = 0;
+        for (int index = 0; index < view.getChildCount(); index++) {
+            final View child = view.getChildAt(index);
+            final int childBreadth = child.getRight() - child.getLeft();
+            if (childBreadth > widest) widest = childBreadth;
+        }
+        return widest;
     }
 
     private List<Integer> horizontalCellStarts(final SettleGridPatternView view) {

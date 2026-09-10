@@ -85,7 +85,11 @@ The `Cell` type parameter is what differs between the three views:
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
 "three small" repeats every five items. With no definitions it degrades to
-a plain list (`GridPatternLayoutManagerNoDefinitionTest`).
+a plain list (`GridPatternLayoutManagerNoDefinitionTest`). A cell's views sit
+at the grid offsets their item definitions give, measured from the cell's
+start; the start already carries the view's start padding, so the pattern
+adds nothing for padding of its own
+(`gridPatternCenterSnap_withPadding_centresTheCellInsideThePadding`).
 
 ## Snapping
 

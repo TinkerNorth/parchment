@@ -100,6 +100,11 @@ everything around them is new.
     zero, so the two rounded opposite ways once a cell was larger than the
     viewport, and a cell larger by an odd number of pixels left a permanent
     one-pixel error. This reached all three views.
+- A `GridPatternView` no longer adds the view's start padding a second time
+  when placing each view inside its cell. The cell start already carries the
+  padding, so with `android:paddingTop` set (`paddingLeft` when scrolling
+  horizontally) the pattern was drawn that far past where the engine held the
+  cell, and a centred cell came to rest off centre by the padding.
 - A fling, page, or programmatic scroll that ends hands off to its snap in
   the same frame, after that frame's layout. The snap used to start one frame
   later and was started twice, which left a frame with no motion at the
