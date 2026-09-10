@@ -227,7 +227,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         final int adjust = setOffset(displacement, newSize);
 
-        if (continuedAnimation) mAnimationDisplacement += adjust;
+        mAnimationDisplacement += adjust;
 
         final int breadth = mScrollDirectionManager.getDrawBreadth(left, top, right, bottom);
         layoutCells(adapterViewHandler, newSize, breadth);

@@ -43,6 +43,7 @@ public class ViewPagerTest {
     private static final boolean CIRCULAR = true;
     private static final boolean NOT_CIRCULAR = false;
     private static final int TEN_CELLS = 10;
+    private static final int LAST_OF_TEN_CELLS = TEN_CELLS - 1;
     private static final int FOUR_CELLS = 4;
     private static final int START_OF_THE_VIEWPORT = 0;
     private static final int NOT_DRAWN = Integer.MIN_VALUE;
@@ -521,6 +522,47 @@ public class ViewPagerTest {
         assertThat(pager.startOf(1)).isEqualTo(centredStart);
     }
 
+    /**
+     * A gesture whose very first frame is held by the bounds must not count the movement it was
+     * denied. The distance a page asks for is measured from where the gesture started, so a first
+     * frame that carried a drag the start of the list refused used to leave that drag in the
+     * running total, and the page that followed was short by it in one direction and long by it in
+     * the other. Whether a gesture's first frame carries a drag at all depends on whether a touch
+     * move and an animation frame land in the same pass, which is why this only ever showed up on a
+     * device.
+     */
+    @Test
+    public void aGestureWhoseFirstFrameIsHeldAtTheStart_doesNotCountTheHeldMovementAsTravelled() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGestureWith(SMALL_CELL_SIZE);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(0);
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+    }
+
+    /**
+     * The other end of the same clamp. The end of the list is held by a different method with a
+     * different limit than the start, so it needs its own case: a forward gesture there answered
+     * with the negative of the drag it was denied, moving the content backwards.
+     */
+    @Test
+    public void aGestureWhoseFirstFrameIsHeldAtTheEnd_doesNotCountTheHeldMovementAsTravelled() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+        for (int page = 0; page < LAST_OF_TEN_CELLS; page++) {
+            pager.startGesture();
+            pager.page(Move.forward);
+        }
+        assertThat(pager.startOf(LAST_OF_TEN_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGestureWith(-SMALL_CELL_SIZE);
+
+        assertThat(pager.startOf(LAST_OF_TEN_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(SMALL_CELL_SIZE);
+    }
+
     private static Pager equalCellPager(final int viewPagerInterval, final boolean isCircular) {
         return new Pager(
                 THREE_CELL_VIEWPORT,
@@ -621,6 +663,13 @@ public class ViewPagerTest {
 
         private void startGesture() {
             mPagerAnimation.newAnimation();
+            layout();
+        }
+
+        /** Starts a gesture whose first frame already carries a drag, as one on a device can. */
+        private void startGestureWith(final int displacement) {
+            mPagerAnimation.newAnimation();
+            mPagerAnimation.setDisplacement(displacement);
             layout();
         }
 

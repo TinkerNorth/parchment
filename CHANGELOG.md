@@ -132,6 +132,17 @@ everything around them is new.
 
 ### Fixed
 
+- A gesture whose first frame is held by the start or the end of the list no
+  longer counts the movement it was denied. The layout pass folded the
+  clamp's correction back into the distance a gesture has travelled only
+  while an animation continued, never on the frame that began it, so a first
+  frame carrying a drag the bounds refused left that drag in the running
+  total. In ViewPager mode the page that followed was then short by it in one
+  direction and long by it in the other: a backward swipe at the first cell
+  crept forward by the first frame's drag instead of holding still. Whether a
+  gesture's first frame carries a drag at all depends on whether a touch move
+  and an animation frame land in the same pass, which made it intermittent
+  and invisible to a unit test that drives layout by hand.
 - A fling, page, or programmatic scroll that ends hands off to its snap in
   the same frame, after that frame's layout. The snap used to start one frame
   later and was started twice, which left a frame with no motion at the

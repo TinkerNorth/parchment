@@ -120,7 +120,12 @@ positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
 completed gesture advances exactly `parchment_viewPagerInterval` cells (one by
 default) in the fling direction, however far the finger travelled.
 `AdapterAnimator.onFling` asks `LayoutManagerBridge` for the distance instead
-of handing the velocity to the scroller.
+of handing the velocity to the scroller. What the scroller is handed is that
+distance *minus* how far the gesture has already dragged the content, so the
+finger and the animation together move exactly one page from where the gesture
+started. That running total counts only movement the bounds actually allowed:
+a frame the over-draw clamp refuses adds nothing to it, or a gesture held at
+either end of the list would answer with the drag it was denied.
 
 `LayoutManager` measures that distance in `layout`, only when
 `parchment_isViewPager` is on, whenever a new animation id arrives and before
