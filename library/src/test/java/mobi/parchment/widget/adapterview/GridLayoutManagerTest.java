@@ -30,6 +30,11 @@ public class GridLayoutManagerTest {
     public static final int VIEW_SIZE = 100;
     public static final int CELL_SPACING = 10;
     public static final int NUMBER_OF_COLUMNS = 2;
+    private static final int ONE_GROUP_PER_GESTURE = 1;
+    private static final int THREE_GROUPS_PER_GESTURE = 3;
+    private static final int PAGER_ADAPTER_SIZE = 10;
+    private static final int NOT_DRAWN = Integer.MIN_VALUE;
+    private static final int ZERO_VIEW_SIZE = 0;
     final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
@@ -400,6 +405,143 @@ public class GridLayoutManagerTest {
         assertThat(secondView.getBottom()).isEqualTo(100);
     }
 
+    @Test
+    public void aGridThatIsNotAViewPager_withZeroSizedViews_laysOutWithoutReadingACellsView() {
+        final MyViewGroup viewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
+        final AdapterViewManager zeroSizeAdapterViewManager = new AdapterViewManager();
+        final GridLayoutManagerAttributes notAViewPager =
+                new GridLayoutManagerAttributes(
+                        NUMBER_OF_COLUMNS,
+                        false,
+                        false,
+                        false,
+                        ONE_GROUP_PER_GESTURE,
+                        SnapPosition.start,
+                        CELL_SPACING,
+                        false,
+                        false,
+                        true,
+                        true,
+                        false,
+                        false,
+                        false);
+        final GridLayoutManager zeroSizeLayoutManager =
+                new GridLayoutManager(viewGroup, null, zeroSizeAdapterViewManager, notAViewPager);
+        final TestAdapter zeroSizeAdapter = new TestAdapter(ZERO_VIEW_SIZE);
+        zeroSizeAdapterViewManager.setAdapter(zeroSizeAdapter);
+        zeroSizeAdapter.setAdapterSize(PAGER_ADAPTER_SIZE);
+
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+        viewGroup.measure(measureSpec, measureSpec);
+        viewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+        final Animation animation = new Animation();
+        animation.newAnimation();
+        zeroSizeLayoutManager.layout(viewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+        animation.newAnimation();
+        zeroSizeLayoutManager.layout(viewGroup, animation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+        assertThat(zeroSizeLayoutManager.getViewPagerScrollDistance(Move.forward)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewPagerGesture_onAGrid_advancesOneWholeGroup() {
+        final GridPager pager = new GridPager(ONE_GROUP_PER_GESTURE);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-(VIEW_SIZE + CELL_SPACING));
+
+        pager.page(Move.forward);
+
+        assertThat(pager.topOf(2)).isEqualTo(0);
+        assertThat(pager.topOf(3)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewPagerGesture_onAGridWithAnIntervalOfThree_advancesThreeWholeGroups() {
+        final GridPager pager = new GridPager(THREE_GROUPS_PER_GESTURE);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-THREE_GROUPS_PER_GESTURE * (VIEW_SIZE + CELL_SPACING));
+
+        pager.page(Move.forward);
+
+        assertThat(pager.topOf(6)).isEqualTo(0);
+    }
+
+    private static final class GridPager {
+        private final MyViewGroup mPagerViewGroup;
+        private final GridLayoutManager mPagerLayoutManager;
+        private final Animation mPagerAnimation = new Animation();
+
+        private GridPager(final int viewPagerInterval) {
+            mPagerViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
+            final AdapterViewManager pagerAdapterViewManager = new AdapterViewManager();
+            final GridLayoutManagerAttributes pagerAttributes =
+                    new GridLayoutManagerAttributes(
+                            NUMBER_OF_COLUMNS,
+                            false,
+                            false,
+                            true,
+                            viewPagerInterval,
+                            SnapPosition.start,
+                            CELL_SPACING,
+                            false,
+                            false,
+                            true,
+                            true,
+                            false,
+                            false,
+                            false);
+            mPagerLayoutManager =
+                    new GridLayoutManager(
+                            mPagerViewGroup, null, pagerAdapterViewManager, pagerAttributes);
+            final TestAdapter pagerAdapter = new TestAdapter(VIEW_SIZE);
+            pagerAdapterViewManager.setAdapter(pagerAdapter);
+            pagerAdapter.setAdapterSize(PAGER_ADAPTER_SIZE);
+
+            final int measureSpec =
+                    View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
+            mPagerViewGroup.measure(measureSpec, measureSpec);
+            mPagerViewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+
+            layout();
+        }
+
+        private void layout() {
+            mPagerLayoutManager.layout(
+                    mPagerViewGroup, mPagerAnimation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        }
+
+        private void startGesture() {
+            mPagerAnimation.newAnimation();
+            layout();
+        }
+
+        private int pageDistance(final Move move) {
+            return mPagerLayoutManager.getViewPagerScrollDistance(move);
+        }
+
+        private void page(final Move move) {
+            mPagerAnimation.setDisplacement(pageDistance(move));
+            layout();
+        }
+
+        private int topOf(final int adapterPosition) {
+            for (final View view : mPagerViewGroup.mViews) {
+                final Object tag = view.getTag();
+                final boolean isTheWantedView = tag.equals(Integer.valueOf(adapterPosition));
+                if (isTheWantedView) return view.getTop();
+            }
+            return NOT_DRAWN;
+        }
+    }
+
     private void doLayout() {
         doLayout(new Animation());
     }
@@ -415,7 +557,7 @@ public class GridLayoutManagerTest {
         mViewGroup.layout(0, 0, viewGroupSize, viewGroupSize);
     }
 
-    public class MyViewGroup extends LinearLayout implements AdapterViewHandler {
+    public static class MyViewGroup extends LinearLayout implements AdapterViewHandler {
         public final List<View> mViews = new ArrayList<View>();
 
         public MyViewGroup(Context context) {
@@ -423,14 +565,7 @@ public class GridLayoutManagerTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(
-                    mViews,
-                    new Comparator<View>() {
-                        @Override
-                        public int compare(View lhs, View rhs) {
-                            return lhs.getLeft() - rhs.getLeft();
-                        }
-                    });
+            Collections.sort(mViews, new LeftToRightComparator());
 
             return mViews.get(position);
         }
@@ -448,9 +583,16 @@ public class GridLayoutManagerTest {
         }
     }
 
-    public class TestAdapter extends BaseAdapter {
+    private static final class LeftToRightComparator implements Comparator<View> {
+        @Override
+        public int compare(final View lhs, final View rhs) {
+            return lhs.getLeft() - rhs.getLeft();
+        }
+    }
+
+    public static class TestAdapter extends BaseAdapter {
+        private final int mViewSize;
         private int mAdapterSize;
-        private int mViewSize;
 
         public TestAdapter(int viewSize) {
             mViewSize = viewSize;

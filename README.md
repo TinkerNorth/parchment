@@ -21,7 +21,9 @@ every child in memory. The story, and a feature-by-feature comparison with
 - Four snap modes built into the layout engine: `center`, `start`, `end`,
   `onScreen`
 - Circular (infinite) scrolling with a single boolean, no adapter tricks
-- ViewPager behaviour on the same ListView and the same adapter
+- ViewPager behaviour on the same ListView and the same adapter: one
+  completed gesture advances exactly one cell, or `parchment_viewPagerInterval`
+  of them
 - GridView whose rows wrap to the tallest cell
 - GridPatternView: declare a repeating pattern of mixed-span cells and let
   the engine tile your data through it
@@ -100,7 +102,8 @@ cd parchment
     parchment:parchment_snapPosition="center"
     parchment:parchment_snapToPosition="true"
     parchment:parchment_isCircularScroll="false"
-    parchment:parchment_isViewPager="false" />
+    parchment:parchment_isViewPager="false"
+    parchment:parchment_viewPagerInterval="1" />
 ```
 
 ### Java
@@ -141,6 +144,7 @@ All views:
 | `parchment_selectOnSnap` | boolean | Fire `OnItemSelectedListener` when a snap completes |
 | `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
 | `parchment_isViewPager` | boolean | One cell per gesture, ViewPager style |
+| `parchment_viewPagerInterval` | integer | Cells a ViewPager gesture advances; defaults to 1, values below 1 are read as 1 |
 
 GridView:
 

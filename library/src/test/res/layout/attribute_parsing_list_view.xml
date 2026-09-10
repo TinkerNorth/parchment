@@ -11,5 +11,6 @@
         parchment:parchment_snapToPosition="true"
         parchment:parchment_selectOnSnap="true"
         parchment:parchment_isViewPager="true"
+        parchment:parchment_viewPagerInterval="3"
         parchment:parchment_snapPosition="end"
         parchment:parchment_selectWhileScrolling="true"/>

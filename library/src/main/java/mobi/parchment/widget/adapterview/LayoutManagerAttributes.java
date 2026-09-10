@@ -7,6 +7,7 @@ public class LayoutManagerAttributes {
 
     private static class DefaultValues {
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
+        private static final int VIEW_PAGER_INTERVAL = 1;
     }
 
     private boolean mIsCircularScroll;
@@ -34,7 +35,7 @@ public class LayoutManagerAttributes {
         if (snapPosition != null) mSnapPosition = snapPosition;
         else mSnapPosition = DefaultValues.SNAP_POSITION;
 
-        mViewPagerInterval = viewPagerInterval;
+        mViewPagerInterval = Math.max(viewPagerInterval, DefaultValues.VIEW_PAGER_INTERVAL);
         mIsViewPager = isViewPager;
         mIsCircularScroll = isCircularScroll;
         mSnapToPosition = snapToPosition;
