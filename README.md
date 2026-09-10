@@ -169,6 +169,67 @@ view.setAdapter(adapter);
 The [sample app](sample/src/main/java/mobi/parchment) exercises all four
 views.
 
+### Scroll listener
+
+`setOnScrollListener` reports scrolling on all three views. It takes the shape
+of `RecyclerView.OnScrollListener` rather than `AbsListView.OnScrollListener`: a
+state change and this frame's movement, not visible item positions.
+`android.widget.AdapterView` declares no `setOnScrollListener`, so nothing here
+overrides or shadows a platform method.
+
+```java
+public final class ParallaxHeader implements OnScrollListener {
+
+    @Override
+    public void onScrolled(final AbstractAdapterView<?, ?> view, final int displacement) {
+        mHeader.setTranslationX(mHeader.getTranslationX() + displacement / 2f);
+    }
+
+    @Override
+    public void onScrollStateChanged(
+            final AbstractAdapterView<?, ?> view, final ScrollState scrollState) {
+        mHeader.setSelected(scrollState == ScrollState.idle);
+    }
+}
+
+listView.setOnScrollListener(new ParallaxHeader(header));
+```
+
+`onScrolled` fires once per frame in which the content moved, carrying the
+signed distance it moved along the scroll axis. Parchment scrolls one axis at a
+time, so that is one value rather than a `(dx, dy)` pair with one half always
+zero. The sign is Parchment's own, not RecyclerView's: it is the displacement
+applied to the content, so positive moves cells toward larger coordinates (right,
+or down when `parchment_orientation` is `vertical`) and negative moves them
+toward the start. RecyclerView's `dx`/`dy` measure the viewport instead and so
+carry the opposite sign; the parameter is called `displacement` rather than `dx`
+to keep that difference visible at the call site.
+
+The distance reported is what the cells actually moved, not what was asked for: a
+fling that runs into the first or last cell reports only the part that landed,
+and a frame that moves nothing reports nothing at all. A jump is not a scroll, so
+`setSelection` and a data set change report no displacement.
+
+`onScrollStateChanged` fires only when the state changes, so it never reports the
+same state twice in a row:
+
+| `ScrollState` | When |
+|---|---|
+| `dragging` | a finger is moving the content, past the touch slop |
+| `settling` | the content is moving on its own: a fling, a snap, a tap-to-snap, or a programmatic move |
+| `idle` | nothing is moving |
+
+A gesture that never passes the touch slop reports nothing at all. Both callbacks
+run after the frame's layout, so a listener that reads the view sees the cells
+where they landed rather than half-updated; within a frame `onScrolled` comes
+first, so `idle` always means every movement has already been reported.
+
+What is reported is a change, not a snapshot: a listener set while the content is
+already moving is told the current state on the next frame if it differs from the
+last state reported on this view, and told nothing if it does not — so setting the
+same listener twice mid-gesture does not repeat `dragging`. Setting a listener
+costs no extra animation frames.
+
 ### XML attributes
 
 All views:

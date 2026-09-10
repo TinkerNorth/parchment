@@ -12,6 +12,36 @@ behaviour of the views is unchanged; everything around them is new.
 
 ### Added
 
+- `setOnScrollListener` reports scrolling on all three views, which had no way
+  to observe it at all (#23, #19). `OnScrollListener` takes the shape of
+  `RecyclerView.OnScrollListener` rather than `AbsListView.OnScrollListener`:
+  `onScrollStateChanged` with a `ScrollState` of `idle`, `dragging` or
+  `settling`, and `onScrolled` with this frame's movement, not the first visible
+  item and a visible count. The platform `AdapterView` declares no
+  `setOnScrollListener` of its own, so nothing is overridden or shadowed.
+  `settling` covers everything the content does on its own — a fling, a snap, a
+  tap-to-snap and a programmatic move are one perceived motion, and Parchment
+  hands a fling off to a snap without stopping in between, so splitting them
+  would report a state the user never sees. A state is reported only when it
+  changes, so a drag, release, snap and rest gives `dragging`, `settling`,
+  `idle` once each, and a gesture inside the touch slop reports nothing.
+  Displacement is a single signed value along the scroll axis rather than a
+  `(dx, dy)` pair with one half always zero, because Parchment scrolls one axis
+  at a time; it is the displacement applied to the content, so its sign is the
+  opposite of `RecyclerView.onScrolled`'s, and the parameter is named
+  `displacement` rather than `dx` to say so. It is what the cells actually
+  moved, so a fling clamped at an end reports only the part that landed, a frame
+  that moves nothing reports nothing, and a jump — `setSelection`, a data set
+  change — reports no displacement because it is not a scroll. Both callbacks
+  run after the frame's layout, and `onScrolled` runs before the state change,
+  so `idle` means every movement has already been reported. What is reported is
+  a change and not a snapshot: a listener set while the content is already
+  moving is told the current state on the next frame when it differs from the
+  last state reported on that view, which is what keeps setting the same
+  listener twice mid-gesture from repeating `dragging`. Setting a listener adds
+  no animation frames to a gesture, and the callback path allocates nothing: the
+  dispatcher reuses its two fields and the states are enum constants.
+
 - `parchment_divider` and `parchment_dividerSize` draw a divider between
   adjacent cells in all three views, the thing the platform `ListView` has
   and Parchment did not (#25). There is one fewer divider than there are
@@ -38,6 +68,19 @@ behaviour of the views is unchanged; everything around them is new.
   an implementation detail, but a subclass that overrides it — the pattern
   the in-tree test views use to reach the gesture listener — has to take the
   two new parameters and pass them on.
+
+- **Breaking:** the `AdapterAnimator` and `ChildTouchGestureListener`
+  constructors take a `ScrollListenerDispatcher`, which is package-private, so
+  a subclass outside `mobi.parchment.widget.adapterview` can no longer call
+  them. Both classes are implementation details that the views build for
+  themselves — the in-tree test views reach the gesture listener by overriding
+  `createAdapterViewInitializer`, not by constructing one — so nothing outside
+  the library should be calling these constructors. The animator needs the
+  dispatcher because it owns the state machine: a state change that reaches no
+  frame, as when a drag is released exactly on the snap position and no
+  animation follows, would otherwise never be reported, and asking the
+  dispatcher there is what keeps a view with no listener from scheduling a
+  frame it does not need.
 
 - `GridView` rows report their bounds without allocating. `Group.getTop`,
   `getBottom`, `getLeft` and `getRight` walked their views with an iterator

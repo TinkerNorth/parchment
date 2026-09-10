@@ -32,6 +32,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     private int mViewPageDistanceForward;
     private int mViewPageDistanceBack;
     private int mAnimationDisplacement;
+    private int mFrameDisplacement;
     protected final ViewGroup mViewGroup;
     private final ScrollDirectionManager mScrollDirectionManager;
 
@@ -229,12 +230,15 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         if (continuedAnimation) mAnimationDisplacement += adjust;
 
+        mFrameDisplacement = displacement + adjust;
+
         final int breadth = mScrollDirectionManager.getDrawBreadth(left, top, right, bottom);
         layoutCells(adapterViewHandler, newSize, breadth);
 
         if (resetWhenNoCellsAreDrawn(newSize, displacement)) {
             onAnimationStopped();
             mAnimationDisplacement = 0;
+            mFrameDisplacement = 0;
             layoutCells(adapterViewHandler, newSize, breadth);
         }
 
@@ -320,6 +324,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             return;
         }
         mAnimationDisplacement = 0;
+        mFrameDisplacement += correction;
         mOffset += correction;
         layoutCells(adapterViewHandler, size, breadth);
     }
@@ -552,6 +557,10 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     ScrollDirectionManager getScrollDirectionManager() {
         return mScrollDirectionManager;
+    }
+
+    int getFrameDisplacement() {
+        return mFrameDisplacement;
     }
 
     int getDrawnCellCount() {
