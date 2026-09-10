@@ -51,10 +51,13 @@ jobs:
           languages: java-kotlin
           queries: security-extended,security-and-quality
 
+      # Gradle serves cached modules without running javac, so CodeQL's tracer sees
+      # no source and finalises an empty database.
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew :library:assembleDebug :sample:assembleDebug
+          ./gradlew clean
+          ./gradlew :library:assembleDebug :sample:assembleDebug --no-build-cache
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
