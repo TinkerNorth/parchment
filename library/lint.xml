@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <lint>
-    <!-- Picasso's unused RemoteViews path; the sample posts no notifications. -->
-    <issue id="NotificationPermission" severity="ignore" />
     <!-- NewerVersionAvailable queries Maven Central as it runs, so it turns a third party's
          release schedule into a build failure on commits that changed nothing, and it fails
          retroactively on commits that were green when written. Informational keeps it
