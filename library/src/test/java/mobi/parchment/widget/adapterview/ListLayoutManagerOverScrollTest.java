@@ -43,6 +43,7 @@ public class ListLayoutManagerOverScrollTest {
     private final TestAdapter mTestAdapter = new TestAdapter();
     private final Animation mAnimation = new Animation();
     private ListLayoutManager mListLayoutManager;
+    private int mSummedFrameDisplacement;
 
     private void setup(final SnapPosition snapPosition, final boolean isCircularScroll) {
         setup(snapPosition, isCircularScroll, ADAPTER_SIZE, 0, 0);
@@ -79,10 +80,17 @@ public class ListLayoutManagerOverScrollTest {
 
         mAnimation.newAnimation();
         layout();
+        mSummedFrameDisplacement = 0;
     }
 
     private void layout() {
         mListLayoutManager.layout(mViewGroup, mAnimation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        mSummedFrameDisplacement += frameDisplacement();
+    }
+
+    private int frameDisplacement() {
+        final LayoutManager<View> layoutManager = mListLayoutManager;
+        return layoutManager.getFrameDisplacement();
     }
 
     private void scrollBy(final int displacement) {
@@ -276,6 +284,114 @@ public class ListLayoutManagerOverScrollTest {
 
         assertThat(mStoppedListener.mCount).isEqualTo(1);
         assertThat(view(0).getLeft()).isEqualTo(0);
+    }
+
+    @Test
+    public void frameDisplacement_onTheFirstLayout_isZero() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+
+        assertThat(frameDisplacement()).isEqualTo(0);
+    }
+
+    @Test
+    public void frameDisplacement_forAFrameThatMovesNothing_isZero() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+
+        scrollBy(0);
+
+        assertThat(frameDisplacement()).isEqualTo(0);
+    }
+
+    @Test
+    public void frameDisplacement_forAScrollForward_isTheDistanceTheCellsMoved() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        final int before = view(0).getLeft();
+
+        scrollBy(-50);
+
+        assertThat(view(0).getLeft() - before).isEqualTo(-50);
+        assertThat(frameDisplacement()).isEqualTo(-50);
+    }
+
+    @Test
+    public void frameDisplacement_forAScrollBack_keepsThePositiveSign() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        scrollBy(-150);
+        final int before = view(0).getLeft();
+
+        scrollBy(60);
+
+        assertThat(view(0).getLeft() - before).isEqualTo(60);
+        assertThat(frameDisplacement()).isEqualTo(60);
+    }
+
+    @Test
+    public void frameDisplacement_forAFrameHeldAtTheEnd_isOnlyTheDistanceTheCellsMoved() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        scrollInFrames(17, -50);
+        final int before = view(LAST_POSITION).getLeft();
+        assertThat(before).isEqualTo(150);
+
+        scrollBy(-120);
+
+        assertThat(view(LAST_POSITION).getLeft()).isEqualTo(100);
+        assertThat(frameDisplacement()).isEqualTo(-50);
+    }
+
+    @Test
+    public void frameDisplacement_forAFrameHeldAtTheStart_isOnlyTheDistanceTheCellsMoved() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        scrollBy(-50);
+        assertThat(view(0).getLeft()).isEqualTo(50);
+
+        scrollBy(120);
+
+        assertThat(view(0).getLeft()).isEqualTo(100);
+        assertThat(frameDisplacement()).isEqualTo(50);
+    }
+
+    @Test
+    public void frameDisplacement_withCircularScroll_isTheWholeDisplacement() {
+        setup(SnapPosition.start, CIRCULAR);
+
+        scrollBy(-500);
+
+        assertThat(mStoppedListener.mCount).isEqualTo(0);
+        assertThat(frameDisplacement()).isEqualTo(-500);
+    }
+
+    @Test
+    public void frameDisplacement_summedAcrossAScroll_isTheTotalDistanceTheCellsMoved() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        final int before = view(0).getLeft();
+
+        scrollInFrames(5, -30);
+
+        assertThat(view(0).getLeft() - before).isEqualTo(-150);
+        assertThat(mSummedFrameDisplacement).isEqualTo(-150);
+    }
+
+    @Test
+    public void frameDisplacement_summedIntoTheEnd_stopsCountingWhereTheCellsStop() {
+        setup(SnapPosition.center, NOT_CIRCULAR);
+        final int lastCellStartBefore = view(0).getLeft() + LAST_POSITION * VIEW_SIZE;
+
+        scrollInFrames(20, -50);
+
+        final int lastCellStartAfter = view(LAST_POSITION).getLeft();
+        assertThat(lastCellStartAfter).isEqualTo(100);
+        assertThat(mSummedFrameDisplacement).isEqualTo(lastCellStartAfter - lastCellStartBefore);
+    }
+
+    @Test
+    public void frameDisplacement_whenEveryCellScrollsOffTheStart_reportsAJumpAsNoScroll() {
+        setup(SnapPosition.onScreen, NOT_CIRCULAR);
+
+        scrollBy(-5000);
+
+        assertThat(mStoppedListener.mCount).isEqualTo(1);
+        assertThat(view(LAST_POSITION).getRight()).isEqualTo(300);
+        assertThat(frameDisplacement()).isEqualTo(0);
     }
 
     private static final class CountingAnimationStoppedListener

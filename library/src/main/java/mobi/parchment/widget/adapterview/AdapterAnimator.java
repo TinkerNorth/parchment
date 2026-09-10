@@ -27,8 +27,10 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     private final ViewGroup mViewGroup;
     private final AnimationFrameScheduler mFrameScheduler;
     private final LayoutManagerBridge mLayoutManagerBridge;
+    private final ScrollListenerDispatcher mScrollListenerDispatcher;
     private final boolean mIsViewPager;
     private boolean mTouchSlopExceeded = false;
+    private boolean mIsInsideAFrame;
 
     private int mPreviousDisplacement;
     private int mPendingScrollDisplacement;
@@ -42,9 +44,11 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             final boolean isViewPager,
             final boolean isVerticalScroll,
             final LayoutManagerBridge layoutManagerBridge,
-            final ViewConfiguration viewConfiguration) {
+            final ViewConfiguration viewConfiguration,
+            final ScrollListenerDispatcher scrollListenerDispatcher) {
         mLayoutManagerBridge = layoutManagerBridge;
         mLayoutManagerBridge.setAnimationStoppedListener(this);
+        mScrollListenerDispatcher = scrollListenerDispatcher;
         mViewGroup = view;
         mFrameScheduler = frameScheduler;
         mIsViewPager = isViewPager;
@@ -151,6 +155,11 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     void setState(final State state) {
+        moveToState(state);
+        requestFrameForUndispatchedScrollState();
+    }
+
+    private void moveToState(final State state) {
         if (!mScrollAnimator.isFinished()) mScrollAnimator.forceFinished(true);
 
         final boolean isNotMoving = mState.equals(State.notMoving);
@@ -161,16 +170,26 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         if (state != State.scrolling) mPendingScrollDisplacement = 0;
 
         // This snaps to the position when the animation is finished.
-        if (state == State.notMoving && mLayoutManagerBridge != null) {
-            final int scrollDistance = mLayoutManagerBridge.snapTo(mViewGroup);
-            if (scrollDistance == 0) return;
-            setState(State.snapingTo);
-            mScrollAnimator.snapTo(scrollDistance);
-            mFrameScheduler.requestAnimationFrame();
-        }
+        if (state != State.notMoving || mLayoutManagerBridge == null) return;
+
+        final int scrollDistance = mLayoutManagerBridge.snapTo(mViewGroup);
+        if (scrollDistance == 0) return;
+
+        moveToState(State.snapingTo);
+        mScrollAnimator.snapTo(scrollDistance);
+        mFrameScheduler.requestAnimationFrame();
+    }
+
+    void requestFrameForUndispatchedScrollState() {
+        if (mIsInsideAFrame) return;
+
+        final ScrollState scrollState = ScrollState.from(mState);
+        if (!mScrollListenerDispatcher.hasUndispatchedScrollState(scrollState)) return;
+        mFrameScheduler.requestAnimationFrame();
     }
 
     public void computeScrollOffset() {
+        mIsInsideAFrame = true;
         mComputedOffsetReady = false;
         if (mState == State.scrolling) return;
 
@@ -186,8 +205,9 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     public void onFrameLaidOut() {
-        if (mState == State.scrolling || mState == State.notMoving) return;
-        if (mScrollAnimator.isFinished()) setState(State.notMoving);
+        final boolean isAnimating = mState != State.scrolling && mState != State.notMoving;
+        if (isAnimating && mScrollAnimator.isFinished()) setState(State.notMoving);
+        mIsInsideAFrame = false;
     }
 
     public Animation getAnimation() {

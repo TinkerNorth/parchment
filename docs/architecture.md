@@ -55,9 +55,68 @@ The step itself:
    next frame; when it settles with `parchment_snapToPosition` on, the
    `SnapPositionInterface` computes the displacement to the nearest cell
    and a snap animation starts.
+5. Last, `ScrollListenerDispatcher` reports the frame to an `OnScrollListener`
+   if one is set. Being last is the contract: a listener that reads the view
+   sees the cells where this frame put them, not half-updated
+   (`theCallbacks_runAfterTheFramesLayout_soAListenerSeesTheCellsWhereTheyLanded`).
 
 The layout managers never call `getLeft()`/`getTop()` directly; that is
 the rule that keeps one engine working for both orientations.
+
+## Reporting the frame
+
+What the listener is told about movement is not `animation.getDisplacement()`.
+`LayoutManager.layout` records `mFrameDisplacement`, the displacement it actually
+applied: the frame's displacement plus the over-draw adjust `setOffset` returns,
+plus any correction `correctOverScroll` makes afterwards. That is the number by
+which the cells moved, so a fling clamped at an end reports only the part that
+landed. The recycling inside `layoutCells` also moves `mOffset`, but it moves
+`mStartCellPosition` with it and the cells do not move, so the offset's own delta
+would be the wrong number to report. A reset — every cell scrolled off, so
+`resetWhenNoCellsAreDrawn` puts the content back at an end — contributes nothing,
+because that is a jump and not a scroll; any over-scroll correction the same
+frame makes afterwards still counts, because that one does move the cells.
+`setSelection` and a data set change are jumps too, and move `mOffset` outside
+`layout` altogether, so they report nothing
+(`setSelection_isAJumpAndNotAScroll_soItReportsNoDisplacement`).
+
+The state comes from `AdapterAnimator.State` through `ScrollState.from`:
+`scrolling` is `dragging`, `notMoving` is `idle`, and everything that moves the
+content on its own — `flinging`, `snapingTo`, `animatingTo`, `jumpingTo` — is
+`settling`. The dispatcher keeps the last state it reported and says nothing when
+it has not changed, which is what swallows the `notMoving` that `setState`
+passes through on its way to `snapingTo` when a drag is released off the snap
+position.
+
+`AdapterAnimator.setState` asks the dispatcher whether the new state is one the
+listener has not been told about yet, and if so requests a frame. Every state
+that moves anything already requests one; this covers the state that does not,
+`notMoving` reached from a drag released exactly on the snap position, which asks
+for no animation and so would otherwise never reach a frame to be reported. The
+question is asked of the dispatcher rather than answered in the view so that a
+view with no listener schedules nothing extra
+(`onUp_afterADragThatNeedsNoSnap_withNoScrollListener_requestsNoFrame`), and
+`AbstractAdapterView.setOnScrollListener` asks it too, which is what tells a
+listener set part-way through a gesture what the view is already doing.
+
+The asking is split out of `moveToState`, which does the work and recurses into
+itself when a stop hands off to a snap, so the question is asked once after the
+state has settled rather than once per recursion. Asking during the recursion
+would schedule the snap's first frame before `ScrollAnimator.snapTo` starts the
+scroller, and that frame would then land on the animation's own start and move
+nothing — a whole frame per gesture, spent only because a listener was attached
+(`aDragReleaseSnapAndRest_withAListener_runsTheSameFramesAsWithout`).
+`mIsInsideAFrame` covers the same ground from the other side: `computeScrollOffset`
+and `onFrameLaidOut` bracket the frame step, and a state change inside it needs no
+frame of its own because the step dispatches at its end.
+
+The dispatcher reports a change, not a snapshot. It keeps the last state it
+reported for the view, not for the listener, so a listener set mid-gesture is
+told the current state only when it differs from that, and setting the same
+listener again does not repeat it
+(`reAttachingTheSameListenerMidDrag_doesNotReportDraggingTwice`). It also reads
+the listener field again between the two callbacks, so a listener that removes or
+replaces itself from inside `onScrolled` is not called again in that frame.
 
 ## The draw pass
 
@@ -203,3 +262,4 @@ same content position without the adapter's help.
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
 | Why is the divider missing or in the wrong place? | `CellDivider`, `CellDividerTest`, `CellDividerPaintTest` |
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` + `ViewPagerTest` |
+| Why did the scroll listener report that? | `ScrollListenerDispatcher`, `ScrollState.from`, `LayoutManager.getFrameDisplacement` |

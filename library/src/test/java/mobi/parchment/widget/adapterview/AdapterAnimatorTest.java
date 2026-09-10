@@ -39,6 +39,8 @@ public class AdapterAnimatorTest {
     private final MyViewGroup mViewGroup = new MyViewGroup(mContext);
     private final AdapterViewManager mAdapterViewManager = new AdapterViewManager();
     private final Animation mAnimation = new Animation();
+    private final ScrollListenerDispatcher mScrollListenerDispatcher =
+            new ScrollListenerDispatcher();
     private ListLayoutManager mLayoutManager;
     private AdapterAnimator mAdapterAnimator;
 
@@ -74,7 +76,8 @@ public class AdapterAnimatorTest {
                         isViewPager,
                         false,
                         new LayoutManagerBridge(mLayoutManager),
-                        ViewConfiguration.get(mContext));
+                        ViewConfiguration.get(mContext),
+                        mScrollListenerDispatcher);
         final int measureSpec =
                 View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
         mViewGroup.measure(measureSpec, measureSpec);
@@ -400,6 +403,134 @@ public class AdapterAnimatorTest {
 
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
         assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
+    @Test
+    public void scrollState_whileTheFingerDragsPastTheTouchSlop_isDragging() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(45f), 45f, 0f);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.scrolling);
+        assertThat(scrollState()).isEqualTo(ScrollState.dragging);
+    }
+
+    @Test
+    public void scrollState_forEveryAnimatorStateThatMovesTheContentOnItsOwn_isSettling() {
+        assertThat(ScrollState.from(AdapterAnimator.State.flinging))
+                .isEqualTo(ScrollState.settling);
+        assertThat(ScrollState.from(AdapterAnimator.State.snapingTo))
+                .isEqualTo(ScrollState.settling);
+        assertThat(ScrollState.from(AdapterAnimator.State.animatingTo))
+                .isEqualTo(ScrollState.settling);
+        assertThat(ScrollState.from(AdapterAnimator.State.jumpingTo))
+                .isEqualTo(ScrollState.settling);
+    }
+
+    @Test
+    public void scrollState_atRest_isIdle() {
+        layOutCenterSnappingList();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(scrollState()).isEqualTo(ScrollState.idle);
+    }
+
+    @Test
+    public void scrollState_afterAReleaseThatNeedsASnap_isSettlingWithoutPassingThroughIdle() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(45f), 45f, 0f);
+        layout();
+        assertThat(scrollState()).isEqualTo(ScrollState.dragging);
+
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.snapingTo);
+        assertThat(scrollState()).isEqualTo(ScrollState.settling);
+    }
+
+    @Test
+    public void scrollState_afterAReleaseThatNeedsNoSnap_isIdle() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(VIEW_SIZE), VIEW_SIZE, 0f);
+        layout();
+        assertThat(scrollState()).isEqualTo(ScrollState.dragging);
+
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(scrollState()).isEqualTo(ScrollState.idle);
+    }
+
+    @Test
+    public void scrollState_afterAFling_isSettlingUntilTheFlingComesToRest() {
+        layOutCenterSnappingList();
+
+        mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
+        mAdapterAnimator.onUp();
+
+        assertThat(scrollState()).isEqualTo(ScrollState.settling);
+
+        ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
+        layout();
+        mAdapterAnimator.onFrameLaidOut();
+
+        assertThat(scrollState()).isEqualTo(ScrollState.idle);
+    }
+
+    @Test
+    public void scrollState_afterATapToSnapFromRest_isSettlingAndNeverDragging() {
+        layOutCenterSnappingList();
+        final View tappedView = mLayoutManager.getViewForPosition(2);
+
+        mAdapterAnimator.onDown(down());
+        assertThat(scrollState()).isEqualTo(ScrollState.idle);
+
+        mAdapterAnimator.onSingleTapUp(up(), tappedView);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.flinging);
+        assertThat(scrollState()).isEqualTo(ScrollState.settling);
+    }
+
+    @Test
+    public void scrollState_forAGestureUnderTheTouchSlop_staysIdle() {
+        layOutCenterSnappingList();
+
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(1f), 1f, 0f);
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(scrollState()).isEqualTo(ScrollState.idle);
+    }
+
+    @Test
+    public void scrollState_afterAProgrammaticMoveFromRest_isSettlingAndNeverDragging() {
+        layOutCenterSnappingList();
+
+        mAdapterAnimator.setAnimateToDistance(-VIEW_SIZE);
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.animatingTo);
+        assertThat(scrollState()).isEqualTo(ScrollState.settling);
+    }
+
+    @Test
+    public void onUp_afterADragThatNeedsNoSnap_withNoScrollListener_requestsNoFrame() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.onDown(down());
+        mAdapterAnimator.onScroll(down(), moveTo(VIEW_SIZE), VIEW_SIZE, 0f);
+        layout();
+        mFrameScheduler.mRequests = 0;
+
+        mAdapterAnimator.onUp();
+
+        assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mFrameScheduler.mRequests).isEqualTo(0);
+    }
+
+    private ScrollState scrollState() {
+        return ScrollState.from(mAdapterAnimator.getState());
     }
 
     private int nextFrameDisplacement() {
