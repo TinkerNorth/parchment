@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mobi.parchment.widget.adapterview.gridpatternview.GridPatternView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:parchment="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/parchment_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_orientation="vertical"
+    parchment:parchment_snapPosition="start"
+    parchment:parchment_ratio="1.0"
+    parchment:parchment_isViewPager="true" />

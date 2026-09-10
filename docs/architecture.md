@@ -80,7 +80,7 @@ The `Cell` type parameter is what differs between the three views:
 |---|---|---|
 | `ListView` | `View` | the view's measured size along the scroll axis |
 | `GridView` | `Group` | `parchment_numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `parchment_gravity` places the rest |
-| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(left, top, width, height)` in grid units; `parchment_ratio` fixes the unit's aspect |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units; `parchment_ratio` fixes the unit's aspect |
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by

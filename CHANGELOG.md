@@ -109,7 +109,13 @@ everything around them is new.
   an exact pixel size, drives real measure and layout passes, dispatches
   real gestures, and hands a test an immutable snapshot of where the
   children landed. All eleven `parchment_` attributes are covered by
-  on-device tests built on it, asserting geometry rather than getters.
+  on-device tests built on it, asserting geometry rather than getters, as is
+  paging: a real fling and a real slow drag each advance
+  `parchment_viewPagerInterval` cells with several cells on screen, with cells
+  of unequal size, with a cell taller than the viewport, from a resting
+  position part-way through a cell, at both ends of the adapter, wrapping with
+  `parchment_isCircularScroll`, and on `GridView` and `GridPatternView` where
+  a cell is a whole group.
 - Spotless (google-java-format, AOSP style) with SPDX license headers on
   every Java file; `javac -Xlint:all -Werror`; Android Lint with warnings
   as errors and no baseline.
