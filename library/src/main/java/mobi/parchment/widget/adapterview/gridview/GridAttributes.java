@@ -31,13 +31,14 @@ public class GridAttributes extends Attributes {
             try {
                 final int numberOfColumns =
                         typedArray.getInteger(
-                                R.styleable.GridView_numberOfViewsPerCell,
+                                R.styleable.GridView_parchment_numberOfViewsPerCell,
                                 DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
                 mNumberOfViewsPerCell =
                         Math.max(numberOfColumns, DefaultValues.NUMBER_OF_VIEWS_PER_CELL);
 
                 final int gravity =
-                        typedArray.getInt(R.styleable.GridView_gravity, DefaultValues.GRAVITY);
+                        typedArray.getInt(
+                                R.styleable.GridView_parchment_gravity, DefaultValues.GRAVITY);
                 setGravityValues(gravity);
 
             } finally {

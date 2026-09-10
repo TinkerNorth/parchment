@@ -5,6 +5,6 @@
     android:id="@+id/horizontal_list_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    parchment:cellSpacing="0dp"
-    parchment:orientation="horizontal"
-    parchment:snapPosition="onScreen" />
+    parchment:parchment_cellSpacing="0dp"
+    parchment:parchment_orientation="horizontal"
+    parchment:parchment_snapPosition="onScreen" />

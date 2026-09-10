@@ -2,27 +2,27 @@
 <resources>
 
     <declare-styleable name="ListView">
-        <attr name="orientation" format="enum">
+        <attr name="parchment_orientation" format="enum">
             <enum name="horizontal" value="0"/>
             <enum name="vertical" value="1"/>
         </attr>
-        <attr name="cellSpacing" format="dimension"/>
-        <attr name="isCircularScroll" format="boolean"/>
-        <attr name="snapToPosition" format="boolean"/>
-        <attr name="selectOnSnap" format="boolean"/>
-        <attr name="isViewPager" format="boolean"/>
-        <attr name="snapPosition" format="enum">
+        <attr name="parchment_cellSpacing" format="dimension"/>
+        <attr name="parchment_isCircularScroll" format="boolean"/>
+        <attr name="parchment_snapToPosition" format="boolean"/>
+        <attr name="parchment_selectOnSnap" format="boolean"/>
+        <attr name="parchment_isViewPager" format="boolean"/>
+        <attr name="parchment_snapPosition" format="enum">
             <enum name="center" value="0"/>
             <enum name="start" value="1"/>
             <enum name="end" value="2"/>
             <enum name="onScreen" value="3"/>
         </attr>
-        <attr name="selectWhileScrolling" format="boolean"/>
+        <attr name="parchment_selectWhileScrolling" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="GridView">
-        <attr name="numberOfViewsPerCell" format="integer"/>
-        <attr name="gravity">
+        <attr name="parchment_numberOfViewsPerCell" format="integer"/>
+        <attr name="parchment_gravity">
             <flag name="left" value="0x02"/>
             <flag name="right" value="0x04"/>
             <flag name="top" value="0x08"/>
@@ -31,7 +31,7 @@
     </declare-styleable>
 
     <declare-styleable name="GridPatternView">
-        <attr name="ratio" format="float"/>
+        <attr name="parchment_ratio" format="float"/>
     </declare-styleable>
 
 

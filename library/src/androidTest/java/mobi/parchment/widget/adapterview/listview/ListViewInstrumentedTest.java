@@ -35,7 +35,6 @@ public class ListViewInstrumentedTest {
     private static final int ITEM_WIDTH = 200;
     private static final int ITEM_HEIGHT = 100;
     private static final int ITEM_COUNT = 50;
-    // A ListView built without attributes defaults to snapPosition=center.
     private static final int CENTERED_TOP = (HEIGHT - ITEM_HEIGHT) / 2;
     private static final int DRAG_DISTANCE = 45;
 

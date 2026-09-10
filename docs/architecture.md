@@ -52,7 +52,7 @@ The step itself:
    `ScrollDirectionManager`, which maps start/end/size onto left/right/width
    or top/bottom/height depending on orientation.
 4. If the animation is still running, the view asks the scheduler for the
-   next frame; when it settles with `snapToPosition` on, the
+   next frame; when it settles with `parchment_snapToPosition` on, the
    `SnapPositionInterface` computes the displacement to the nearest cell
    and a snap animation starts.
 
@@ -79,8 +79,8 @@ The `Cell` type parameter is what differs between the three views:
 | View | Cell | Cell size |
 |---|---|---|
 | `ListView` | `View` | the view's measured size along the scroll axis |
-| `GridView` | `Group` | `numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `gravity` places the rest |
-| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(left, top, width, height)` in grid units; `ratio` fixes the unit's aspect |
+| `GridView` | `Group` | `parchment_numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `parchment_gravity` places the rest |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(left, top, width, height)` in grid units; `parchment_ratio` fixes the unit's aspect |
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
@@ -89,13 +89,14 @@ a plain list (`GridPatternLayoutManagerNoDefinitionTest`).
 
 ## Snapping
 
-`snapposition/` holds one strategy per `snapPosition` value. Each answers
+`snapposition/` holds one strategy per `parchment_snapPosition` value. Each answers
 two questions for a cell: where it should sit when snapped, and how far
 the content must move to get it there. `LayoutManager` picks the strategy
-once from the attributes; `onScreen` is the default and never moves
-content on its own.
+once from the attributes; `onScreen` is the default for a view inflated
+from XML, `center` for one built in Java, and neither moves content on
+its own.
 
-With `snapToPosition` on, a fling is retargeted when it starts:
+With `parchment_snapToPosition` on, a fling is retargeted when it starts:
 `LayoutManager.getFlingSnapAdjustment` takes the distance the fling would
 travel, finds the cell that would land nearest the snap position (walking
 the visible cells, and extrapolating with the edge cell's size plus spacing
@@ -108,17 +109,17 @@ different sizes.
 
 ## Circular scrolling
 
-`isCircularScroll` is handled entirely in `LayoutManager`: adapter positions
+`parchment_isCircularScroll` is handled entirely in `LayoutManager`: adapter positions
 are wrapped modulo `getCount()` when cells are fetched, and the start/end
 bounds that stop a normal scroll are disabled. The adapter sees only real
 positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
 
 ## ViewPager mode
 
-`isViewPager` changes the gesture interpretation, not the layout: a
+`parchment_isViewPager` changes the gesture interpretation, not the layout: a
 completed gesture advances exactly one cell in the fling direction
 (`AdapterAnimator` with the `mViewPageDistance`), and the snap position is
-forced to `start` so pages align. It composes with `isCircularScroll`.
+forced to `start` so pages align. It composes with `parchment_isCircularScroll`.
 
 ## Touch
 

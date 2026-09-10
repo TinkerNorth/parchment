@@ -26,7 +26,8 @@ public class GridPatternAttributes extends Attributes {
             try {
 
                 final float ratio =
-                        typedArray.getFloat(R.styleable.GridPatternView_ratio, DefaultValues.RATIO);
+                        typedArray.getFloat(
+                                R.styleable.GridPatternView_parchment_ratio, DefaultValues.RATIO);
                 mRatio = ratio;
             } finally {
                 typedArray.recycle();

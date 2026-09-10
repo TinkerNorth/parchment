@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:parchment="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/grid_view_left_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_numberOfViewsPerCell="3"
+            parchment:parchment_gravity="left|bottom"/>
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/grid_view_right_top"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_gravity="right|top"/>
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/grid_view_every_flag"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_gravity="left|right|top|bottom"/>
+</LinearLayout>

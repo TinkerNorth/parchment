@@ -13,11 +13,11 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:background="#00FF00"
-            horizontalListView:isCircularScroll="false"
-            horizontalListView:cellSpacing="10dp"
-            horizontalListView:isViewPager="false"
-            horizontalListView:selectOnSnap="false"
-            horizontalListView:selectWhileScrolling="false"
-            horizontalListView:snapPosition="center"
-            horizontalListView:snapToPosition="true"/>
+            horizontalListView:parchment_isCircularScroll="false"
+            horizontalListView:parchment_cellSpacing="10dp"
+            horizontalListView:parchment_isViewPager="false"
+            horizontalListView:parchment_selectOnSnap="false"
+            horizontalListView:parchment_selectWhileScrolling="false"
+            horizontalListView:parchment_snapPosition="center"
+            horizontalListView:parchment_snapToPosition="true"/>
 </LinearLayout>

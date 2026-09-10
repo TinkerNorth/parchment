@@ -95,12 +95,12 @@ cd parchment
     android:id="@+id/horizontal_list_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    parchment:orientation="horizontal"
-    parchment:cellSpacing="10dp"
-    parchment:snapPosition="center"
-    parchment:snapToPosition="true"
-    parchment:isCircularScroll="false"
-    parchment:isViewPager="false" />
+    parchment:parchment_orientation="horizontal"
+    parchment:parchment_cellSpacing="10dp"
+    parchment:parchment_snapPosition="center"
+    parchment:parchment_snapToPosition="true"
+    parchment:parchment_isCircularScroll="false"
+    parchment:parchment_isViewPager="false" />
 ```
 
 ### Java
@@ -133,27 +133,27 @@ All views:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `orientation` | `horizontal` or `vertical` | Scroll direction |
-| `cellSpacing` | dimension | Space between cells; outer padding comes from `android:padding*` |
-| `isCircularScroll` | boolean | Wrap from the last item back to the first |
-| `snapToPosition` | boolean | Settle on a cell after a scroll or fling |
-| `snapPosition` | `center`, `start`, `end`, `onScreen` | Where a cell settles |
-| `selectOnSnap` | boolean | Fire `OnItemSelectedListener` when a snap completes |
-| `selectWhileScrolling` | boolean | Fire selection while the content is still moving |
-| `isViewPager` | boolean | One cell per gesture, ViewPager style |
+| `parchment_orientation` | `horizontal` or `vertical` | Scroll direction |
+| `parchment_cellSpacing` | dimension | Space between cells; outer padding comes from `android:padding*` |
+| `parchment_isCircularScroll` | boolean | Wrap from the last item back to the first |
+| `parchment_snapToPosition` | boolean | Settle on a cell after a scroll or fling |
+| `parchment_snapPosition` | `center`, `start`, `end`, `onScreen` | Where a cell settles |
+| `parchment_selectOnSnap` | boolean | Fire `OnItemSelectedListener` when a snap completes |
+| `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
+| `parchment_isViewPager` | boolean | One cell per gesture, ViewPager style |
 
 GridView:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `numberOfViewsPerCell` | integer | Views per row (vertical) or column (horizontal) |
-| `gravity` | `left`, `right`, `top`, `bottom` flags | Where shorter views sit inside a wrapping cell |
+| `parchment_numberOfViewsPerCell` | integer | Views per row (vertical) or column (horizontal) |
+| `parchment_gravity` | `left`, `right`, `top`, `bottom` flags | Where shorter views sit inside a wrapping cell |
 
 GridPatternView:
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `ratio` | float | Aspect ratio of one grid cell |
+| `parchment_ratio` | float | Aspect ratio of one grid cell |
 
 ## Project layout
 
