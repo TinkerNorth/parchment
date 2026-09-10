@@ -364,24 +364,30 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     private View getNearestViewToSnapPosition(final int size) {
-        Cell nearestCell = null;
-        int nearestCellDistance = Integer.MAX_VALUE;
-
-        for (final Cell currentCell : mCells) {
-            final int currentViewDistance =
-                    mSnapPositionInterface.getCellDistanceFromSnapPosition(this, size, currentCell);
-            final boolean currentViewIsCloser = currentViewDistance < nearestCellDistance;
-
-            if (currentViewIsCloser) {
-                nearestCellDistance = currentViewDistance;
-                nearestCell = currentCell;
-            }
-        }
+        final Cell nearestCell = getNearestCellToSnapPosition(size);
         if (nearestCell == null) {
             return null;
         }
 
         return getView(nearestCell);
+    }
+
+    private Cell getNearestCellToSnapPosition(final int size) {
+        Cell nearestCell = null;
+        int nearestCellDistance = Integer.MAX_VALUE;
+
+        for (final Cell currentCell : mCells) {
+            final int currentCellDistance =
+                    mSnapPositionInterface.getCellDistanceFromSnapPosition(this, size, currentCell);
+            final boolean currentCellIsCloser = currentCellDistance < nearestCellDistance;
+
+            if (currentCellIsCloser) {
+                nearestCellDistance = currentCellDistance;
+                nearestCell = currentCell;
+            }
+        }
+
+        return nearestCell;
     }
 
     private int setOffset(final int displacement, final int size) {
@@ -498,24 +504,40 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return overDrawAdjust;
     }
 
-    public View getSnapDistanceToNearestView(final int size) {
+    private Cell getCellToSnapTo(final int size) {
         if (mCells.size() == 0) return null;
 
         final SnapPosition snapPosition = mLayoutManagerAttributes.getSnapPosition();
         final boolean snapPositionIsOnScreen = snapPosition == SnapPosition.onScreen;
         if (snapPositionIsOnScreen) return null;
 
-        final View nearestView = getNearestViewToSnapPosition(size);
-        return nearestView;
+        final Cell nearestCell = getNearestCellToSnapPosition(size);
+        return nearestCell;
     }
 
     public int getCellCenter(final Cell cell) {
         return (getCellStart(cell) + getCellEnd(cell)) / 2;
     }
 
-    public int getSnapToPixelDistance(final int size, final View view) {
-        return mSnapPositionInterface.getSnapToPixelDistance(
-                this, mScrollDirectionManager, size, view);
+    private int getSnapToPixelDistance(final int size, final Cell cell) {
+        return mSnapPositionInterface.getSnapToPixelDistance(this, size, cell);
+    }
+
+    public int getSnapToPixelDistanceForView(final int size, final View view) {
+        final Cell cell = getCellContainingView(view);
+        if (cell == null) return 0;
+
+        return getSnapToPixelDistance(size, cell);
+    }
+
+    private Cell getCellContainingView(final View view) {
+        for (final Cell cell : mCells) {
+            final List<View> views = getViews(cell);
+            final boolean cellHoldsTheView = views.contains(view);
+            if (cellHoldsTheView) return cell;
+        }
+
+        return null;
     }
 
     public int getAdapterCount() {
@@ -763,8 +785,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int cellSpacing = getCellSpacing();
         final Cell firstCell = mCells.get(0);
         final Cell lastCell = mCells.get(mCells.size() - 1);
-        final int firstDistance = getSnapToPixelDistance(size, getView(firstCell));
-        final int lastDistance = getSnapToPixelDistance(size, getView(lastCell));
+        final int firstDistance = getSnapToPixelDistance(size, firstCell);
+        final int lastDistance = getSnapToPixelDistance(size, lastCell);
 
         if (displacement > firstDistance) {
             final int step = getCellSize(firstCell) + cellSpacing;
@@ -783,7 +805,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         int nearestDistance = firstDistance;
         for (final Cell cell : mCells) {
-            final int distance = getSnapToPixelDistance(size, getView(cell));
+            final int distance = getSnapToPixelDistance(size, cell);
             final boolean isNearer =
                     Math.abs(distance - displacement) < Math.abs(nearestDistance - displacement);
             if (isNearer) nearestDistance = distance;
@@ -813,13 +835,13 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         final int size = getSizeInsidePadding(viewGroup);
 
-        final View nearestView = getSnapDistanceToNearestView(size);
-        if (nearestView == null) return 0;
+        final Cell nearestCell = getCellToSnapTo(size);
+        if (nearestCell == null) return 0;
 
         final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
-        if (selectOnSnap) setSelected(nearestView);
+        if (selectOnSnap) setSelected(getView(nearestCell));
 
-        final int distance = getSnapToPixelDistance(size, nearestView);
+        final int distance = getSnapToPixelDistance(size, nearestCell);
         return distance;
     }
 

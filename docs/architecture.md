@@ -95,6 +95,32 @@ the content must move to get it there. `LayoutManager` picks the strategy
 once from the attributes; `onScreen` is the default and never moves
 content on its own.
 
+A strategy answers both from one private `getSnappedCellStart`: the snap
+distance is that start minus `getCellStart`, the backward draw limit is that
+start, the forward draw limit is that start plus `getCellSize`, and
+`getAbsoluteSnapPosition` is that start. Deriving all four from one number is
+what makes a snap target reachable. The draw limits are what stop a scroll, so
+if the start a snap asks for is not the start the clamp allows, the clamp puts
+the content back, the stop asks for the distance again, gets the same answer,
+and the view snaps forever without moving
+(`gridPatternCenterSnap_onceTheCellIsCentred_asksForNoFurtherMovement`).
+
+Two things used to break that. Measuring the cell's representative view rather
+than the cell holds only while that view is exactly as big as its cell, which
+is true of `ListView`, whose cell is the view, and of `GridView`, whose
+representative is the row's tallest view and so is what sets the row's size,
+but false of a `GridPatternView` pattern with more than one row. And writing
+the same halved quantity twice does not survive integer division: `center`'s
+target `(size - cellSize) / 2` and its old forward limit `(size + cellSize) / 2`
+truncate opposite ways once a cell is larger than the viewport, so a cell
+larger by an odd number of pixels was one pixel out of reach in every view
+(`centerSnap_cellTallerThanTheViewportByAnOddNumberOfPixels_settles`).
+
+Tapping a cell snaps that cell, not the view that was tapped:
+`LayoutManagerBridge.onSingleTapUp` finds the cell holding the tapped view
+and asks for that cell's distance, so a tap and the settle that follows it
+agree on where the content stops.
+
 With `snapToPosition` on, a fling is retargeted when it starts:
 `LayoutManager.getFlingSnapAdjustment` takes the distance the fling would
 travel, finds the cell that would land nearest the snap position (walking

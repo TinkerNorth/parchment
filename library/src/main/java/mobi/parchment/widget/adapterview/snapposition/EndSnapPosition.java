@@ -17,14 +17,23 @@ public class EndSnapPosition<Cell> implements SnapPositionInterface<Cell> {
             final List<Cell> cells,
             final int size,
             final Cell cell) {
-        final int startSizePadding = layoutManager.getStartSizePadding();
-        return startSizePadding + size;
+        final int cellSize = layoutManager.getCellSize(cell);
+        final int snappedCellStart = getSnappedCellStart(layoutManager, size, cellSize);
+        return snappedCellStart + cellSize;
     }
 
     @Override
     public int getDrawLimitMoveBackwardOverDrawAdjust(
-            LayoutManager<Cell> layoutManager, List<Cell> cells, int size, Cell cell) {
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell) {
         final int cellSize = layoutManager.getCellSize(cell);
+        return getSnappedCellStart(layoutManager, size, cellSize);
+    }
+
+    private int getSnappedCellStart(
+            final LayoutManager<Cell> layoutManager, final int size, final int cellSize) {
         final int startSizePadding = layoutManager.getStartSizePadding();
         return startSizePadding + size - cellSize;
     }
@@ -46,15 +55,12 @@ public class EndSnapPosition<Cell> implements SnapPositionInterface<Cell> {
 
     @Override
     public int getSnapToPixelDistance(
-            LayoutManager<Cell> layoutManager,
-            ScrollDirectionManager scrollDirectionManager,
-            int size,
-            View view) {
-        final int startPixel = scrollDirectionManager.getViewStart(view);
-        final int viewSize = scrollDirectionManager.getViewSize(view);
-        final int startSizePadding = layoutManager.getStartSizePadding();
+            final LayoutManager<Cell> layoutManager, final int size, final Cell cell) {
+        final int cellSize = layoutManager.getCellSize(cell);
+        final int snappedCellStart = getSnappedCellStart(layoutManager, size, cellSize);
+        final int cellStart = layoutManager.getCellStart(cell);
 
-        return startSizePadding + size - viewSize - startPixel;
+        return snappedCellStart - cellStart;
     }
 
     @Override
@@ -75,8 +81,6 @@ public class EndSnapPosition<Cell> implements SnapPositionInterface<Cell> {
             final int size,
             final int cellSize,
             final Move move) {
-        final int startSizePadding = layoutManager.getStartSizePadding();
-        final int snapPosition = startSizePadding + size - cellSize;
-        return snapPosition;
+        return getSnappedCellStart(layoutManager, size, cellSize);
     }
 }

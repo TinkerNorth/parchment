@@ -80,6 +80,26 @@ everything around them is new.
 
 ### Fixed
 
+- A view with `snapToPosition` on comes to rest after a gesture instead of
+  requesting animation frames forever. A snap asked the content to move to a
+  start that the draw limits, which are what stop a scroll, refuse to reach:
+  the clamp put the content back, the stop asked for the distance again, got
+  the same non-zero answer, and started another snap. Each snap position now
+  derives its snapped start, its two draw limits and its snap distance from
+  one formula, so the start a snap asks for is exactly the start the clamp
+  allows, in both directions. Two ways of reaching the old mismatch:
+  - The snap distance was measured against the cell's representative view
+    while the draw limits were measured against the cell. Those agree only
+    while the representative is exactly as big as its cell, which holds for
+    `ListView`, whose cell is the view, and for `GridView`, whose
+    representative is the row's tallest view and so is what sets the row's
+    size, but not for a `GridPatternView` pattern of more than one row, whose
+    representative is one grid row of it. This reached `center` and `end`.
+  - `center` built its forward draw limit as `(size + cellSize) / 2` and its
+    target as `(size - cellSize) / 2`. Integer division truncates toward
+    zero, so the two rounded opposite ways once a cell was larger than the
+    viewport, and a cell larger by an odd number of pixels left a permanent
+    one-pixel error. This reached all three views.
 - A fling, page, or programmatic scroll that ends hands off to its snap in
   the same frame, after that frame's layout. The snap used to start one frame
   later and was started twice, which left a frame with no motion at the
