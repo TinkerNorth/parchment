@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import mobi.parchment.widget.adapterview.pageinterval.PageIntervalInterface;
+import mobi.parchment.widget.adapterview.pageinterval.PageIntervalSelector;
 import mobi.parchment.widget.adapterview.snapposition.CenterSnapPosition;
 import mobi.parchment.widget.adapterview.snapposition.EndSnapPosition;
 import mobi.parchment.widget.adapterview.snapposition.OnScreenSnapPosition;
@@ -19,9 +21,6 @@ import mobi.parchment.widget.adapterview.snapposition.StartSnapPosition;
 
 public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public static final int INVALID_POSITION = -1;
-
-    private static final int VIEWPORT_VIEW_PAGER_INTERVAL = 0;
-    private static final int ONE_CELL = 1;
 
     private final Map<View, Integer> mPositions = new HashMap<View, Integer>();
 
@@ -32,8 +31,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     private int mAnimationId = -1;
     private int mOffset = 0;
     private int mStartCellPosition;
-    int mViewPageDistanceForward;
-    int mViewPageDistanceBack;
+    protected int mViewPageDistanceForward;
+    protected int mViewPageDistanceBack;
     private int mAnimationDisplacement;
     protected final ViewGroup mViewGroup;
     private final ScrollDirectionManager mScrollDirectionManager;
@@ -44,6 +43,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     protected final List<Cell> mCells = new ArrayList<Cell>();
     private final SnapPositionInterface<Cell> mSnapPositionInterface;
+    private final PageIntervalInterface<Cell> mPageIntervalInterface;
     private View mPressedView;
     private int mWidthMeasureSpec;
     private int mHeightMeasureSpec;
@@ -63,6 +63,9 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
         final SnapPosition snapPosition = getSnapPosition(isCircularScroll);
         mSnapPositionInterface = getSnapPositionInterface(snapPosition);
+
+        final int viewPagerInterval = mLayoutManagerAttributes.getViewPagerInterval();
+        mPageIntervalInterface = PageIntervalSelector.getPageIntervalInterface(viewPagerInterval);
     }
 
     public int getSelectedPosition() {
@@ -91,7 +94,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
     }
 
-    protected int getCellSpacing() {
+    public int getCellSpacing() {
         final int cellSpacing = mLayoutManagerAttributes.getCellSpacing();
         return cellSpacing;
     }
@@ -338,7 +341,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
     }
 
-    void setViewPageDistances(final int size) {
+    protected void setViewPageDistances(final int size) {
         final boolean isViewPager = mLayoutManagerAttributes.isViewPager();
         if (!isViewPager) return;
 
@@ -349,125 +352,27 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int anchorSnappedStart = anchorStart + anchorSnapDisplacement;
         final int viewportEnd = getStartSizePadding() + size;
         final int maximumPageSize = viewportEnd - anchorSnappedStart;
-        final int viewPagerInterval = mLayoutManagerAttributes.getViewPagerInterval();
 
         final long forwardCellIndex =
-                getPageCellIndexForward(
-                        viewPagerInterval, maximumPageSize, anchorIndex, anchorStart);
+                mPageIntervalInterface.getPageCellIndexForward(
+                        this, maximumPageSize, anchorIndex, anchorStart);
         final int forwardCellStart = getCellStartAtIndex(forwardCellIndex);
         mViewPageDistanceForward = forwardCellStart - anchorSnappedStart;
 
         final long backCellIndex =
-                getPageCellIndexBack(viewPagerInterval, maximumPageSize, anchorIndex, anchorStart);
+                mPageIntervalInterface.getPageCellIndexBack(
+                        this, maximumPageSize, anchorIndex, anchorStart);
         final int backCellStart = getCellStartAtIndex(backCellIndex);
         mViewPageDistanceBack = anchorSnappedStart - backCellStart;
     }
 
-    static boolean pagesByCellCount(final int viewPagerInterval) {
-        return viewPagerInterval != VIEWPORT_VIEW_PAGER_INTERVAL;
-    }
-
-    long getPageCellIndexForward(
-            final int viewPagerInterval,
-            final int maximumPageSize,
-            final int anchorIndex,
-            final int anchorStart) {
-        if (pagesByCellCount(viewPagerInterval)) {
-            return getPageCellIndexForwardByCellCount(viewPagerInterval, anchorIndex);
-        }
-        return getPageCellIndexForwardByViewport(maximumPageSize, anchorIndex, anchorStart);
-    }
-
-    static long getPageCellIndexForwardByCellCount(
-            final int viewPagerInterval, final int anchorIndex) {
-        return (long) anchorIndex + viewPagerInterval;
-    }
-
-    long getPageCellIndexForwardByViewport(
-            final int maximumPageSize, final int anchorIndex, final int anchorStart) {
-        long pageCellIndex = anchorIndex + ONE_CELL;
-        int pageCellStart = getCellStartAtIndex(pageCellIndex);
-        long nextCellIndex = pageCellIndex + ONE_CELL;
-        int nextCellStart = getCellStartAtIndex(nextCellIndex);
-
-        while (nextCellJoinsThePage(maximumPageSize, anchorStart, pageCellStart, nextCellStart)) {
-            pageCellIndex = nextCellIndex;
-            pageCellStart = nextCellStart;
-            nextCellIndex = pageCellIndex + ONE_CELL;
-            nextCellStart = getCellStartAtIndex(nextCellIndex);
-        }
-
-        return pageCellIndex;
-    }
-
-    long getPageCellIndexBack(
-            final int viewPagerInterval,
-            final int maximumPageSize,
-            final int anchorIndex,
-            final int anchorStart) {
-        if (pagesByCellCount(viewPagerInterval)) {
-            return getPageCellIndexBackByCellCount(viewPagerInterval, anchorIndex);
-        }
-        return getPageCellIndexBackByViewport(maximumPageSize, anchorIndex, anchorStart);
-    }
-
-    static long getPageCellIndexBackByCellCount(
-            final int viewPagerInterval, final int anchorIndex) {
-        return (long) anchorIndex - viewPagerInterval;
-    }
-
-    long getPageCellIndexBackByViewport(
-            final int maximumPageSize, final int anchorIndex, final int anchorStart) {
-        long pageCellIndex = anchorIndex - ONE_CELL;
-        int pageCellStart = getCellStartAtIndex(pageCellIndex);
-        long previousCellIndex = pageCellIndex - ONE_CELL;
-        int previousCellStart = getCellStartAtIndex(previousCellIndex);
-
-        while (previousCellJoinsThePage(
-                maximumPageSize, anchorStart, pageCellStart, previousCellStart)) {
-            pageCellIndex = previousCellIndex;
-            pageCellStart = previousCellStart;
-            previousCellIndex = pageCellIndex - ONE_CELL;
-            previousCellStart = getCellStartAtIndex(previousCellIndex);
-        }
-
-        return pageCellIndex;
-    }
-
-    boolean nextCellJoinsThePage(
-            final int maximumPageSize,
-            final int pageStart,
-            final int pageCellStart,
-            final int nextCellStart) {
-        final boolean hasAFurtherCell = nextCellStart > pageCellStart;
-        if (!hasAFurtherCell) return false;
-        return pageFits(maximumPageSize, pageStart, nextCellStart);
-    }
-
-    boolean previousCellJoinsThePage(
-            final int maximumPageSize,
-            final int pageLimitStart,
-            final int pageCellStart,
-            final int previousCellStart) {
-        final boolean hasAFurtherCell = previousCellStart < pageCellStart;
-        if (!hasAFurtherCell) return false;
-        return pageFits(maximumPageSize, previousCellStart, pageLimitStart);
-    }
-
-    boolean pageFits(final int maximumPageSize, final long pageStart, final long pageLimitStart) {
-        final int cellSpacing = getCellSpacing();
-        final long pageEnd = pageLimitStart - cellSpacing;
-        final long pageSize = pageEnd - pageStart;
-        return pageSize <= maximumPageSize;
-    }
-
-    int getSnapDisplacement(final int size, final Cell cell) {
+    protected int getSnapDisplacement(final int size, final Cell cell) {
         final View view = getView(cell);
         if (view == null) return 0;
         return getSnapToPixelDistance(size, view);
     }
 
-    int getCellStartAtIndex(final long cellIndex) {
+    public int getCellStartAtIndex(final long cellIndex) {
         final int lastCellIndex = mCells.size() - 1;
 
         final boolean isBeforeTheFirstCell = cellIndex < 0;
@@ -479,7 +384,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return getCellStart(mCells.get((int) cellIndex));
     }
 
-    int getCellStartExtrapolatedBeforeFirst(final long cellIndex) {
+    protected int getCellStartExtrapolatedBeforeFirst(final long cellIndex) {
         final int cellSpacing = getCellSpacing();
         final Cell firstCell = mCells.get(0);
         final long step = getCellSize(firstCell) + cellSpacing;
@@ -488,7 +393,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return getDrawableCellStart(cellStart);
     }
 
-    int getCellStartExtrapolatedAfterLast(final long cellIndex) {
+    protected int getCellStartExtrapolatedAfterLast(final long cellIndex) {
         final int cellSpacing = getCellSpacing();
         final int lastCellIndex = mCells.size() - 1;
         final Cell lastCell = mCells.get(lastCellIndex);

@@ -18,6 +18,10 @@ import mobi.parchment.widget.adapterview.gridview.GridLayoutManager;
 import mobi.parchment.widget.adapterview.gridview.GridLayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.gridview.Group;
 import mobi.parchment.widget.adapterview.listview.ListLayoutManager;
+import mobi.parchment.widget.adapterview.pageinterval.CellCountPageInterval;
+import mobi.parchment.widget.adapterview.pageinterval.PageIntervalInterface;
+import mobi.parchment.widget.adapterview.pageinterval.PageIntervalSelector;
+import mobi.parchment.widget.adapterview.pageinterval.ViewportPageInterval;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -58,6 +62,7 @@ public class LayoutManagerPagingMethodsTest {
     private static final int VIEWPORT_PADDING = 20;
     private static final int NO_DISTANCE = 0;
     private static final int NUMBER_OF_VIEWS_PER_CELL = 2;
+    private static final LayoutManager<View> NO_LAYOUT_MANAGER = null;
 
     private static final int FIRST_CELL = 0;
     private static final int SECOND_CELL = 1;
@@ -70,6 +75,8 @@ public class LayoutManagerPagingMethodsTest {
     private static final int A_WHOLE_VIEWPORT = THREE_CELL_VIEWPORT;
 
     private static final int ONE_PIXEL = 1;
+    private static final int SPACED_CELL_STEP = CELL_SIZE + CELL_SPACING;
+    private static final int ROOM_FOR_TWO_SPACED_CELLS = CELL_SIZE + CELL_SPACING + CELL_SIZE;
     private static final int A_PAGE_THAT_MISSES_BY_A_PIXEL = A_WHOLE_VIEWPORT - ONE_PIXEL;
     private static final int NO_PAGE_ROOM = 0;
     private static final int NEGATIVE_PAGE_ROOM = -100;
@@ -105,37 +112,37 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void pagesByCellCount_withAnIntervalOfZero_choosesTheViewportAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(VIEWPORT_PAGING)).isFalse();
+        assertThat(PageIntervalSelector.pagesByCellCount(VIEWPORT_PAGING)).isFalse();
     }
 
     @Test
     public void pagesByCellCount_withAnIntervalOfOne_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(ONE_CELL_PER_GESTURE)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(ONE_CELL_PER_GESTURE)).isTrue();
     }
 
     @Test
     public void pagesByCellCount_withAnIntervalOfTwo_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(TWO_CELLS_PER_GESTURE)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(TWO_CELLS_PER_GESTURE)).isTrue();
     }
 
     @Test
     public void pagesByCellCount_withAnIntervalLargerThanTheAdapter_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS)).isTrue();
     }
 
     @Test
     public void pagesByCellCount_withTheLargestInterval_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(Integer.MAX_VALUE)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(Integer.MAX_VALUE)).isTrue();
     }
 
     @Test
     public void pagesByCellCount_withANegativeInterval_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(A_NEGATIVE_INTERVAL)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(A_NEGATIVE_INTERVAL)).isTrue();
     }
 
     @Test
     public void pagesByCellCount_withTheMostNegativeInterval_choosesTheCellCountAlgorithm() {
-        assertThat(LayoutManager.pagesByCellCount(Integer.MIN_VALUE)).isTrue();
+        assertThat(PageIntervalSelector.pagesByCellCount(Integer.MIN_VALUE)).isTrue();
     }
 
     @Test
@@ -165,7 +172,7 @@ public class LayoutManagerPagingMethodsTest {
         assertThat(intervalAfterAttributeParsing(Integer.MIN_VALUE)).isEqualTo(VIEWPORT_PAGING);
     }
 
-    // ---------------------------------------------------- getPageCellIndexForward dispatch
+    // ------------------------------------------ the selected strategy, paging forward
 
     @Test
     public void getPageCellIndexForward_withAnIntervalOfZero_runsTheViewportWalk() {
@@ -211,7 +218,7 @@ public class LayoutManagerPagingMethodsTest {
         assertThat(forward(manager, VIEWPORT_PAGING + ONE_CELL_PER_GESTURE)).isEqualTo(SECOND_CELL);
     }
 
-    // ------------------------------------------------------- getPageCellIndexBack dispatch
+    // --------------------------------------------- the selected strategy, paging back
 
     @Test
     public void getPageCellIndexBack_withAnIntervalOfZero_runsTheViewportWalk() {
@@ -261,40 +268,30 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void forwardByCellCount_fromTheFirstCell_addsTheInterval() {
-        assertThat(
-                        LayoutManager.getPageCellIndexForwardByCellCount(
-                                ONE_CELL_PER_GESTURE, FIRST_CELL))
-                .isEqualTo(SECOND_CELL);
+        assertThat(forwardByCellCount(ONE_CELL_PER_GESTURE, FIRST_CELL)).isEqualTo(SECOND_CELL);
     }
 
     @Test
     public void forwardByCellCount_fromACellInTheMiddle_addsTheInterval() {
-        assertThat(
-                        LayoutManager.getPageCellIndexForwardByCellCount(
-                                THREE_CELLS_PER_GESTURE, FOURTH_CELL))
+        assertThat(forwardByCellCount(THREE_CELLS_PER_GESTURE, FOURTH_CELL))
                 .isEqualTo(FOURTH_CELL + THREE_CELLS_PER_GESTURE);
     }
 
     @Test
     public void forwardByCellCount_fromTheLastCell_namesACellBeyondTheAdapterEnd() {
-        assertThat(
-                        LayoutManager.getPageCellIndexForwardByCellCount(
-                                ONE_CELL_PER_GESTURE, LAST_OF_TEN_CELLS))
+        assertThat(forwardByCellCount(ONE_CELL_PER_GESTURE, LAST_OF_TEN_CELLS))
                 .isEqualTo(ONE_PAST_TEN_CELLS);
     }
 
     @Test
     public void forwardByCellCount_withAnIntervalLargerThanTheAdapter_namesACellFarBeyondTheEnd() {
-        assertThat(
-                        LayoutManager.getPageCellIndexForwardByCellCount(
-                                MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL))
+        assertThat(forwardByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL))
                 .isEqualTo(MORE_CELLS_THAN_THE_ADAPTER_HAS);
     }
 
     @Test
     public void forwardByCellCount_withTheLargestInterval_doesNotWrapToANegativeIndex() {
-        final long index =
-                LayoutManager.getPageCellIndexForwardByCellCount(Integer.MAX_VALUE, FOURTH_CELL);
+        final long index = forwardByCellCount(Integer.MAX_VALUE, FOURTH_CELL);
 
         assertThat(index).isEqualTo((long) FOURTH_CELL + Integer.MAX_VALUE);
         assertThat(index).isGreaterThan(Integer.MAX_VALUE);
@@ -302,8 +299,7 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void forwardByCellCount_withTheMostNegativeInterval_doesNotWrapToAPositiveIndex() {
-        final long index =
-                LayoutManager.getPageCellIndexForwardByCellCount(Integer.MIN_VALUE, FOURTH_CELL);
+        final long index = forwardByCellCount(Integer.MIN_VALUE, FOURTH_CELL);
 
         assertThat(index).isEqualTo((long) FOURTH_CELL + Integer.MIN_VALUE);
         assertThat(index).isLessThan(0L);
@@ -311,30 +307,25 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void backByCellCount_fromTheFirstCell_namesACellBeforeTheAdapterStart() {
-        assertThat(LayoutManager.getPageCellIndexBackByCellCount(ONE_CELL_PER_GESTURE, FIRST_CELL))
+        assertThat(backByCellCount(ONE_CELL_PER_GESTURE, FIRST_CELL))
                 .isEqualTo(-ONE_CELL_PER_GESTURE);
     }
 
     @Test
     public void backByCellCount_fromACellInTheMiddle_subtractsTheInterval() {
-        assertThat(
-                        LayoutManager.getPageCellIndexBackByCellCount(
-                                THREE_CELLS_PER_GESTURE, FOURTH_CELL))
+        assertThat(backByCellCount(THREE_CELLS_PER_GESTURE, FOURTH_CELL))
                 .isEqualTo(FOURTH_CELL - THREE_CELLS_PER_GESTURE);
     }
 
     @Test
     public void backByCellCount_fromTheLastCell_subtractsTheInterval() {
-        assertThat(
-                        LayoutManager.getPageCellIndexBackByCellCount(
-                                ONE_CELL_PER_GESTURE, LAST_OF_TEN_CELLS))
+        assertThat(backByCellCount(ONE_CELL_PER_GESTURE, LAST_OF_TEN_CELLS))
                 .isEqualTo(LAST_OF_TEN_CELLS - ONE_CELL_PER_GESTURE);
     }
 
     @Test
     public void backByCellCount_withTheLargestInterval_doesNotWrapToAPositiveIndex() {
-        final long index =
-                LayoutManager.getPageCellIndexBackByCellCount(Integer.MAX_VALUE, FOURTH_CELL);
+        final long index = backByCellCount(Integer.MAX_VALUE, FOURTH_CELL);
 
         assertThat(index).isEqualTo((long) FOURTH_CELL - Integer.MAX_VALUE);
         assertThat(index).isLessThan(0L);
@@ -342,8 +333,7 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void backByCellCount_withTheMostNegativeInterval_doesNotWrapToANegativeIndex() {
-        final long index =
-                LayoutManager.getPageCellIndexBackByCellCount(Integer.MIN_VALUE, FOURTH_CELL);
+        final long index = backByCellCount(Integer.MIN_VALUE, FOURTH_CELL);
 
         assertThat(index).isEqualTo((long) FOURTH_CELL - Integer.MIN_VALUE);
         assertThat(index).isGreaterThan(Integer.MAX_VALUE);
@@ -352,9 +342,7 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void cellCountPaging_pastTheAdapterEndWithoutCircularScroll_isCappedAtTheLastCell() {
         final LayoutManager<View> manager = equalCellManager();
-        final long index =
-                LayoutManager.getPageCellIndexForwardByCellCount(
-                        MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
+        final long index = forwardByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
 
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(LAST_OF_TEN_CELLS * CELL_SIZE);
     }
@@ -362,9 +350,7 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void cellCountPaging_pastTheAdapterEndWithCircularScroll_keepsExtrapolating() {
         final LayoutManager<View> manager = circularEqualCellManager();
-        final long index =
-                LayoutManager.getPageCellIndexForwardByCellCount(
-                        MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
+        final long index = forwardByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
 
         assertThat(manager.getCellStartAtIndex(index))
                 .isEqualTo(MORE_CELLS_THAN_THE_ADAPTER_HAS * CELL_SIZE);
@@ -374,9 +360,7 @@ public class LayoutManagerPagingMethodsTest {
     public void
             cellCountPaging_beforeTheAdapterStartWithoutCircularScroll_isCappedAtTheFirstCell() {
         final LayoutManager<View> manager = equalCellManager();
-        final long index =
-                LayoutManager.getPageCellIndexBackByCellCount(
-                        MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
+        final long index = backByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
 
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(NO_DISTANCE);
     }
@@ -384,9 +368,7 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void cellCountPaging_beforeTheAdapterStartWithCircularScroll_keepsExtrapolating() {
         final LayoutManager<View> manager = circularEqualCellManager();
-        final long index =
-                LayoutManager.getPageCellIndexBackByCellCount(
-                        MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
+        final long index = backByCellCount(MORE_CELLS_THAN_THE_ADAPTER_HAS, FIRST_CELL);
 
         assertThat(manager.getCellStartAtIndex(index))
                 .isEqualTo(-MORE_CELLS_THAN_THE_ADAPTER_HAS * CELL_SIZE);
@@ -395,8 +377,7 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void cellCountPaging_withTheLargestIntervalPastTheEnd_isStillCappedAtTheLastCell() {
         final LayoutManager<View> manager = equalCellManager();
-        final long index =
-                LayoutManager.getPageCellIndexForwardByCellCount(Integer.MAX_VALUE, FIRST_CELL);
+        final long index = forwardByCellCount(Integer.MAX_VALUE, FIRST_CELL);
 
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(LAST_OF_TEN_CELLS * CELL_SIZE);
     }
@@ -407,9 +388,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withAPageThatFitsExactly_takesTheCellThatFits() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(FOURTH_CELL);
     }
 
@@ -417,9 +396,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withAPageThatMissesByOnePixel_leavesThatCellBehind() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_PAGE_THAT_MISSES_BY_A_PIXEL, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_PAGE_THAT_MISSES_BY_A_PIXEL, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(THIRD_CELL);
     }
 
@@ -427,9 +404,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withASingleCellAdapter_findsNoFurtherCell() {
         final LayoutManager<View> manager = singleCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(SECOND_CELL);
         assertThat(manager.getCellStartAtIndex(SECOND_CELL)).isEqualTo(NO_DISTANCE);
     }
@@ -438,9 +413,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withACellLargerThanTheViewport_advancesExactlyOneCell() {
         final LayoutManager<View> manager = largeCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                SMALL_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, SMALL_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(SECOND_CELL);
     }
 
@@ -448,9 +421,17 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withCellSpacing_countsTheSpacingThatComesWithEachCell() {
         final LayoutManager<View> manager = spacedCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+                .isEqualTo(THIRD_CELL);
+    }
+
+    @Test
+    public void forwardByViewport_withAPageThatOnlyFitsBecauseTheSpacingIsNotPartOfIt_takesIt() {
+        final LayoutManager<View> manager = spacedCellManager();
+
+        assertThat(manager.getCellStartAtIndex(THIRD_CELL))
+                .isEqualTo(ROOM_FOR_TWO_SPACED_CELLS + CELL_SPACING);
+        assertThat(viewportForward(manager, ROOM_FOR_TWO_SPACED_CELLS, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(THIRD_CELL);
     }
 
@@ -460,9 +441,7 @@ public class LayoutManagerPagingMethodsTest {
 
         assertThat(manager.getCellStartAtIndex(FOURTH_CELL))
                 .isEqualTo(UNEQUAL_CELLS_THAT_FILL_THE_VIEWPORT);
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(FOURTH_CELL);
     }
 
@@ -472,8 +451,11 @@ public class LayoutManagerPagingMethodsTest {
 
         assertThat(manager.getCellStartAtIndex(FIRST_CELL)).isEqualTo(VIEWPORT_PADDING);
         assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                THE_VIEWPORT_INSIDE_THE_PADDING, FIRST_CELL, VIEWPORT_PADDING))
+                        viewportForward(
+                                manager,
+                                THE_VIEWPORT_INSIDE_THE_PADDING,
+                                FIRST_CELL,
+                                VIEWPORT_PADDING))
                 .isEqualTo(THIRD_CELL);
     }
 
@@ -486,8 +468,11 @@ public class LayoutManagerPagingMethodsTest {
         assertThat(manager.getCellStartAtIndex(FIRST_CELL))
                 .isEqualTo(A_REST_PART_WAY_THROUGH_A_CELL);
         assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, A_REST_PART_WAY_THROUGH_A_CELL))
+                        viewportForward(
+                                manager,
+                                A_WHOLE_VIEWPORT,
+                                FIRST_CELL,
+                                A_REST_PART_WAY_THROUGH_A_CELL))
                 .isEqualTo(FOURTH_CELL);
     }
 
@@ -495,7 +480,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withNoPageRoom_advancesExactlyOneCell() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(manager.getPageCellIndexForwardByViewport(NO_PAGE_ROOM, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, NO_PAGE_ROOM, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(SECOND_CELL);
     }
 
@@ -503,9 +488,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_withNegativePageRoom_advancesExactlyOneCell() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                NEGATIVE_PAGE_ROOM, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, NEGATIVE_PAGE_ROOM, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(SECOND_CELL);
     }
 
@@ -515,8 +498,7 @@ public class LayoutManagerPagingMethodsTest {
         final int lastCellStart = LAST_OF_TEN_CELLS * CELL_SIZE;
 
         final long index =
-                manager.getPageCellIndexForwardByViewport(
-                        A_WHOLE_VIEWPORT, LAST_OF_TEN_CELLS, lastCellStart);
+                viewportForward(manager, A_WHOLE_VIEWPORT, LAST_OF_TEN_CELLS, lastCellStart);
 
         assertThat(index).isEqualTo(ONE_PAST_TEN_CELLS);
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(lastCellStart);
@@ -528,9 +510,7 @@ public class LayoutManagerPagingMethodsTest {
         final int anchorIndex = LAST_OF_TEN_CELLS - TWO_CELLS_PER_GESTURE;
         final int anchorStart = anchorIndex * CELL_SIZE;
 
-        final long index =
-                manager.getPageCellIndexForwardByViewport(
-                        A_WHOLE_VIEWPORT, anchorIndex, anchorStart);
+        final long index = viewportForward(manager, A_WHOLE_VIEWPORT, anchorIndex, anchorStart);
 
         assertThat(index).isEqualTo(LAST_OF_TEN_CELLS);
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(LAST_OF_TEN_CELLS * CELL_SIZE);
@@ -541,9 +521,7 @@ public class LayoutManagerPagingMethodsTest {
         final LayoutManager<View> manager = circularFourCellManager();
         final int anchorStart = FOURTH_CELL * CELL_SIZE;
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
                 .isEqualTo(FOURTH_CELL + THREE_CELLS_PER_GESTURE);
     }
 
@@ -551,9 +529,7 @@ public class LayoutManagerPagingMethodsTest {
     public void forwardByViewport_inAVerticalList_walksTheSameCells() {
         final LayoutManager<View> manager = verticalEqualCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportForward(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(FOURTH_CELL);
     }
 
@@ -561,9 +537,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withAPageThatFitsExactly_takesTheCellThatFits() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
                 .isEqualTo(FIRST_CELL);
     }
 
@@ -572,7 +546,8 @@ public class LayoutManagerPagingMethodsTest {
         final LayoutManager<View> manager = equalCellManager();
 
         assertThat(
-                        manager.getPageCellIndexBackByViewport(
+                        viewportBack(
+                                manager,
                                 A_PAGE_THAT_MISSES_BY_A_PIXEL,
                                 FOURTH_CELL,
                                 FOURTH_CELL * CELL_SIZE))
@@ -583,9 +558,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withASingleCellAdapter_findsNoFurtherCell() {
         final LayoutManager<View> manager = singleCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(-ONE_CELL_PER_GESTURE);
         assertThat(manager.getCellStartAtIndex(-ONE_CELL_PER_GESTURE)).isEqualTo(NO_DISTANCE);
     }
@@ -594,21 +567,26 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withACellLargerThanTheViewport_advancesExactlyOneCell() {
         final LayoutManager<View> manager = largeCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                SMALL_VIEWPORT, SECOND_CELL, LARGE_CELL_SIZE))
+        assertThat(viewportBack(manager, SMALL_VIEWPORT, SECOND_CELL, LARGE_CELL_SIZE))
                 .isEqualTo(FIRST_CELL);
     }
 
     @Test
     public void backByViewport_withCellSpacing_countsTheSpacingThatComesWithEachCell() {
         final LayoutManager<View> manager = spacedCellManager();
-        final int anchorStart = FOURTH_CELL * (CELL_SIZE + CELL_SPACING);
+        final int anchorStart = FOURTH_CELL * SPACED_CELL_STEP;
 
         assertThat(manager.getCellStartAtIndex(FOURTH_CELL)).isEqualTo(anchorStart);
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
+                .isEqualTo(SECOND_CELL);
+    }
+
+    @Test
+    public void backByViewport_withAPageThatOnlyFitsBecauseTheSpacingIsNotPartOfIt_takesIt() {
+        final LayoutManager<View> manager = spacedCellManager();
+        final int anchorStart = FOURTH_CELL * SPACED_CELL_STEP;
+
+        assertThat(viewportBack(manager, ROOM_FOR_TWO_SPACED_CELLS, FOURTH_CELL, anchorStart))
                 .isEqualTo(SECOND_CELL);
     }
 
@@ -617,7 +595,8 @@ public class LayoutManagerPagingMethodsTest {
         final LayoutManager<View> manager = unequalCellManager();
 
         assertThat(
-                        manager.getPageCellIndexBackByViewport(
+                        viewportBack(
+                                manager,
                                 A_WHOLE_VIEWPORT,
                                 FOURTH_CELL,
                                 UNEQUAL_CELLS_THAT_FILL_THE_VIEWPORT))
@@ -629,9 +608,7 @@ public class LayoutManagerPagingMethodsTest {
         final LayoutManager<View> manager = paddedManager();
         final int anchorStart = VIEWPORT_PADDING + FOURTH_CELL * CELL_SIZE;
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                THE_VIEWPORT_INSIDE_THE_PADDING, FOURTH_CELL, anchorStart))
+        assertThat(viewportBack(manager, THE_VIEWPORT_INSIDE_THE_PADDING, FOURTH_CELL, anchorStart))
                 .isEqualTo(SECOND_CELL);
     }
 
@@ -643,9 +620,7 @@ public class LayoutManagerPagingMethodsTest {
         final int anchorStart = FOURTH_CELL * CELL_SIZE + A_REST_PART_WAY_THROUGH_A_CELL;
 
         assertThat(manager.getCellStartAtIndex(FOURTH_CELL)).isEqualTo(anchorStart);
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FOURTH_CELL, anchorStart))
                 .isEqualTo(FIRST_CELL);
     }
 
@@ -653,9 +628,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withNoPageRoom_advancesExactlyOneCell() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                NO_PAGE_ROOM, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
+        assertThat(viewportBack(manager, NO_PAGE_ROOM, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
                 .isEqualTo(THIRD_CELL);
     }
 
@@ -663,9 +636,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withNegativePageRoom_advancesExactlyOneCell() {
         final LayoutManager<View> manager = equalCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                NEGATIVE_PAGE_ROOM, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
+        assertThat(viewportBack(manager, NEGATIVE_PAGE_ROOM, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
                 .isEqualTo(THIRD_CELL);
     }
 
@@ -673,8 +644,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_atTheFirstCellWithoutCircularScroll_findsNoFurtherCell() {
         final LayoutManager<View> manager = equalCellManager();
 
-        final long index =
-                manager.getPageCellIndexBackByViewport(A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE);
+        final long index = viewportBack(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE);
 
         assertThat(index).isEqualTo(-ONE_CELL_PER_GESTURE);
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(NO_DISTANCE);
@@ -684,9 +654,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_withCircularScroll_walksPastTheAdapterStart() {
         final LayoutManager<View> manager = circularFourCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
                 .isEqualTo(-THREE_CELLS_PER_GESTURE);
     }
 
@@ -694,9 +662,7 @@ public class LayoutManagerPagingMethodsTest {
     public void backByViewport_inAVerticalList_walksTheSameCells() {
         final LayoutManager<View> manager = verticalEqualCellManager();
 
-        assertThat(
-                        manager.getPageCellIndexBackByViewport(
-                                A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
+        assertThat(viewportBack(manager, A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE))
                 .isEqualTo(FIRST_CELL);
     }
 
@@ -704,51 +670,58 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void nextCellJoinsThePage_whenTheNextStartEqualsTheCurrentOne_hasNoFurtherCell() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.nextCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, NO_DISTANCE, CELL_SIZE, CELL_SIZE))
+                        ViewportPageInterval.nextCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                CELL_SIZE,
+                                CELL_SIZE))
                 .isFalse();
     }
 
     @Test
     public void nextCellJoinsThePage_whenTheNextStartIsOnTheWrongSide_hasNoFurtherCell() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.nextCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, NO_DISTANCE, CELL_SIZE, NO_DISTANCE))
+                        ViewportPageInterval.nextCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                CELL_SIZE,
+                                NO_DISTANCE))
                 .isFalse();
     }
 
     @Test
     public void nextCellJoinsThePage_withAFurtherCellThatFits_joinsThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.nextCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, NO_DISTANCE, CELL_SIZE, CELL_SIZE + CELL_SIZE))
+                        ViewportPageInterval.nextCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                CELL_SIZE,
+                                CELL_SIZE + CELL_SIZE))
                 .isTrue();
     }
 
     @Test
     public void nextCellJoinsThePage_withAFurtherCellThatFitsExactly_joinsThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.nextCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, NO_DISTANCE, CELL_SIZE, A_WHOLE_VIEWPORT))
+                        ViewportPageInterval.nextCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                CELL_SIZE,
+                                A_WHOLE_VIEWPORT))
                 .isTrue();
     }
 
     @Test
     public void nextCellJoinsThePage_withAFurtherCellThatDoesNotFit_doesNotJoinThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.nextCellJoinsThePage(
+                        ViewportPageInterval.nextCellJoinsThePage(
                                 A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
                                 NO_DISTANCE,
                                 CELL_SIZE,
                                 A_WHOLE_VIEWPORT + ONE_PIXEL))
@@ -758,21 +731,22 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void
             previousCellJoinsThePage_whenThePreviousStartEqualsTheCurrentOne_hasNoFurtherCell() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.previousCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, A_WHOLE_VIEWPORT, CELL_SIZE, CELL_SIZE))
+                        ViewportPageInterval.previousCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                A_WHOLE_VIEWPORT,
+                                CELL_SIZE,
+                                CELL_SIZE))
                 .isFalse();
     }
 
     @Test
     public void previousCellJoinsThePage_whenThePreviousStartIsOnTheWrongSide_hasNoFurtherCell() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.previousCellJoinsThePage(
+                        ViewportPageInterval.previousCellJoinsThePage(
                                 A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
                                 A_WHOLE_VIEWPORT,
                                 CELL_SIZE,
                                 CELL_SIZE + CELL_SIZE))
@@ -781,31 +755,37 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void previousCellJoinsThePage_withAFurtherCellThatFits_joinsThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.previousCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, A_WHOLE_VIEWPORT, CELL_SIZE, CELL_SIZE / 2))
+                        ViewportPageInterval.previousCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                A_WHOLE_VIEWPORT,
+                                CELL_SIZE,
+                                CELL_SIZE / 2))
                 .isTrue();
     }
 
     @Test
     public void previousCellJoinsThePage_withAFurtherCellThatFitsExactly_joinsThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.previousCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, A_WHOLE_VIEWPORT, CELL_SIZE, NO_DISTANCE))
+                        ViewportPageInterval.previousCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                A_WHOLE_VIEWPORT,
+                                CELL_SIZE,
+                                NO_DISTANCE))
                 .isTrue();
     }
 
     @Test
     public void previousCellJoinsThePage_withAFurtherCellThatDoesNotFit_doesNotJoinThePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
         assertThat(
-                        manager.previousCellJoinsThePage(
-                                A_WHOLE_VIEWPORT, A_WHOLE_VIEWPORT, CELL_SIZE, -ONE_PIXEL))
+                        ViewportPageInterval.previousCellJoinsThePage(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                A_WHOLE_VIEWPORT,
+                                CELL_SIZE,
+                                -ONE_PIXEL))
                 .isFalse();
     }
 
@@ -813,78 +793,94 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void pageFits_withAPageExactlyTheMaximumSize_fits() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, NO_DISTANCE, A_WHOLE_VIEWPORT)).isTrue();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT, NO_CELL_SPACING, NO_DISTANCE, A_WHOLE_VIEWPORT))
+                .isTrue();
     }
 
     @Test
     public void pageFits_withAPageOnePixelOverTheMaximum_doesNotFit() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, NO_DISTANCE, A_WHOLE_VIEWPORT + ONE_PIXEL))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                A_WHOLE_VIEWPORT + ONE_PIXEL))
                 .isFalse();
     }
 
     @Test
     public void pageFits_withAPageOnePixelUnderTheMaximum_fits() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, NO_DISTANCE, A_WHOLE_VIEWPORT - ONE_PIXEL))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                NO_DISTANCE,
+                                A_WHOLE_VIEWPORT - ONE_PIXEL))
                 .isTrue();
     }
 
     @Test
     public void pageFits_measuringBackwardsAtTheBoundary_fits() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, -A_WHOLE_VIEWPORT, NO_DISTANCE)).isTrue();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT, NO_CELL_SPACING, -A_WHOLE_VIEWPORT, NO_DISTANCE))
+                .isTrue();
     }
 
     @Test
     public void pageFits_measuringBackwardsOnePixelOverTheMaximum_doesNotFit() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, -A_WHOLE_VIEWPORT - ONE_PIXEL, NO_DISTANCE))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT,
+                                NO_CELL_SPACING,
+                                -A_WHOLE_VIEWPORT - ONE_PIXEL,
+                                NO_DISTANCE))
                 .isFalse();
     }
 
     @Test
     public void pageFits_withANegativePageSize_fits() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(NO_PAGE_ROOM, A_WHOLE_VIEWPORT, NO_DISTANCE)).isTrue();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                NO_PAGE_ROOM, NO_CELL_SPACING, A_WHOLE_VIEWPORT, NO_DISTANCE))
+                .isTrue();
     }
 
     @Test
     public void pageFits_withANegativeMaximumPageSize_rejectsAPageOfNoSize() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(-ONE_PIXEL, NO_DISTANCE, NO_DISTANCE)).isFalse();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                -ONE_PIXEL, NO_CELL_SPACING, NO_DISTANCE, NO_DISTANCE))
+                .isFalse();
     }
 
     @Test
     public void pageFits_withANegativeMaximumPageSize_stillFitsAPageThatMeasuresLessThanIt() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(NEGATIVE_PAGE_ROOM, A_WHOLE_VIEWPORT, NO_DISTANCE)).isTrue();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                NEGATIVE_PAGE_ROOM, NO_CELL_SPACING, A_WHOLE_VIEWPORT, NO_DISTANCE))
+                .isTrue();
     }
 
     @Test
     public void pageFits_withCellSpacing_takesTheSpacingOffTheEndOfThePage() {
-        final LayoutManager<View> manager = spacedCellManager();
-
-        assertThat(manager.pageFits(A_WHOLE_VIEWPORT, NO_DISTANCE, A_WHOLE_VIEWPORT + CELL_SPACING))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                A_WHOLE_VIEWPORT,
+                                CELL_SPACING,
+                                NO_DISTANCE,
+                                A_WHOLE_VIEWPORT + CELL_SPACING))
                 .isTrue();
     }
 
     @Test
     public void pageFits_withCellSpacing_rejectsThePixelPastTheSpacing() {
-        final LayoutManager<View> manager = spacedCellManager();
-
         assertThat(
-                        manager.pageFits(
+                        ViewportPageInterval.pageFits(
                                 A_WHOLE_VIEWPORT,
+                                CELL_SPACING,
                                 NO_DISTANCE,
                                 A_WHOLE_VIEWPORT + CELL_SPACING + ONE_PIXEL))
                 .isFalse();
@@ -892,21 +888,27 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void pageFits_withCellSpacingWiderThanTheGap_measuresANegativePageAndFits() {
-        final LayoutManager<View> manager = spacedCellManager();
-
-        assertThat(manager.pageFits(NO_PAGE_ROOM, NO_DISTANCE, CELL_SPACING / 2)).isTrue();
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                NO_PAGE_ROOM, CELL_SPACING, NO_DISTANCE, CELL_SPACING / 2))
+                .isTrue();
     }
 
     @Test
     public void pageFits_acrossTheWholeDrawableRange_measuresItWithoutOverflowing() {
-        final LayoutManager<View> manager = equalCellManager();
         final long wholeRange = (long) THE_DRAWABLE_LIMIT + THE_DRAWABLE_LIMIT;
 
-        assertThat(manager.pageFits(Integer.MAX_VALUE, -THE_DRAWABLE_LIMIT, THE_DRAWABLE_LIMIT))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                Integer.MAX_VALUE,
+                                NO_CELL_SPACING,
+                                -THE_DRAWABLE_LIMIT,
+                                THE_DRAWABLE_LIMIT))
                 .isTrue();
         assertThat(
-                        manager.pageFits(
+                        ViewportPageInterval.pageFits(
                                 (int) wholeRange - ONE_PIXEL,
+                                NO_CELL_SPACING,
                                 -THE_DRAWABLE_LIMIT,
                                 THE_DRAWABLE_LIMIT))
                 .isFalse();
@@ -914,17 +916,23 @@ public class LayoutManagerPagingMethodsTest {
 
     @Test
     public void pageFits_withStartsBeyondTheIntRange_doesNotWrapToASmallPage() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(Integer.MAX_VALUE, -BEYOND_THE_INT_RANGE, BEYOND_THE_INT_RANGE))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                Integer.MAX_VALUE,
+                                NO_CELL_SPACING,
+                                -BEYOND_THE_INT_RANGE,
+                                BEYOND_THE_INT_RANGE))
                 .isFalse();
     }
 
     @Test
     public void pageFits_withABackwardsPageBeyondTheIntRange_doesNotWrapToALargePage() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(manager.pageFits(NO_PAGE_ROOM, BEYOND_THE_INT_RANGE, -BEYOND_THE_INT_RANGE))
+        assertThat(
+                        ViewportPageInterval.pageFits(
+                                NO_PAGE_ROOM,
+                                NO_CELL_SPACING,
+                                BEYOND_THE_INT_RANGE,
+                                -BEYOND_THE_INT_RANGE))
                 .isTrue();
     }
 
@@ -1297,13 +1305,51 @@ public class LayoutManagerPagingMethodsTest {
     // ------------------------------------------------------------------------- harnesses
 
     private static long forward(final LayoutManager<View> manager, final int viewPagerInterval) {
-        return manager.getPageCellIndexForward(
-                viewPagerInterval, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE);
+        final PageIntervalInterface<View> pageInterval =
+                PageIntervalSelector.getPageIntervalInterface(viewPagerInterval);
+        return pageInterval.getPageCellIndexForward(
+                manager, A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE);
     }
 
     private static long back(final LayoutManager<View> manager, final int viewPagerInterval) {
-        return manager.getPageCellIndexBack(
-                viewPagerInterval, A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE);
+        final PageIntervalInterface<View> pageInterval =
+                PageIntervalSelector.getPageIntervalInterface(viewPagerInterval);
+        return pageInterval.getPageCellIndexBack(
+                manager, A_WHOLE_VIEWPORT, FOURTH_CELL, FOURTH_CELL * CELL_SIZE);
+    }
+
+    private static long viewportForward(
+            final LayoutManager<View> manager,
+            final int maximumPageSize,
+            final int anchorIndex,
+            final int anchorStart) {
+        final ViewportPageInterval<View> pageInterval = new ViewportPageInterval<View>();
+        return pageInterval.getPageCellIndexForward(
+                manager, maximumPageSize, anchorIndex, anchorStart);
+    }
+
+    private static long viewportBack(
+            final LayoutManager<View> manager,
+            final int maximumPageSize,
+            final int anchorIndex,
+            final int anchorStart) {
+        final ViewportPageInterval<View> pageInterval = new ViewportPageInterval<View>();
+        return pageInterval.getPageCellIndexBack(
+                manager, maximumPageSize, anchorIndex, anchorStart);
+    }
+
+    private static long forwardByCellCount(final int viewPagerInterval, final int anchorIndex) {
+        final CellCountPageInterval<View> pageInterval =
+                new CellCountPageInterval<View>(viewPagerInterval);
+        return pageInterval.getPageCellIndexForward(
+                NO_LAYOUT_MANAGER, NO_PAGE_ROOM, anchorIndex, NO_DISTANCE);
+    }
+
+    private static long backByCellCount(final int viewPagerInterval, final int anchorIndex) {
+        final CellCountPageInterval<View> pageInterval =
+                new CellCountPageInterval<View>(viewPagerInterval);
+        return pageInterval.getPageCellIndexBack(
+                NO_LAYOUT_MANAGER, NO_PAGE_ROOM, anchorIndex, NO_DISTANCE);
     }
 
     private static int intervalAfterAttributeParsing(final int viewPagerInterval) {
