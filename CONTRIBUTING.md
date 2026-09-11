@@ -97,15 +97,17 @@ a gate.
   documentation; the debugger can show each value; and a test can pin each
   step.
 - **One method, one flow.** When a method would hold two algorithms chosen
-  by a condition, the condition dispatches to two named methods that each do
-  one thing, and the dispatcher does nothing else:
+  by a condition, the condition dispatches to two named things that each do
+  one thing -- two methods, or two strategies that each hold one algorithm --
+  and the dispatcher does nothing else:
 
   ```java
-  long getPageCellIndexForward(...) {
+  public static <Cell> PageIntervalInterface<Cell> getPageIntervalInterface(
+          final int viewPagerInterval) {
       if (pagesByCellCount(viewPagerInterval)) {
-          return getPageCellIndexForwardByCellCount(viewPagerInterval, anchorIndex);
+          return new CellCountPageInterval<Cell>(viewPagerInterval);
       }
-      return getPageCellIndexForwardByViewport(maximumPageSize, anchorIndex, anchorStart);
+      return new ViewportPageInterval<Cell>();
   }
   ```
 
@@ -128,6 +130,11 @@ scroll frame.
 - Snap behaviour lives in `snapposition/`. A new snap mode is a new
   `SnapPositionInterface` implementation plus an enum value, not a branch
   in `LayoutManager`.
+- Paging behaviour lives in `pageinterval/`. A new way of deciding what a
+  page is is a new `PageIntervalInterface` implementation picked by
+  `PageIntervalSelector`, not a branch in `LayoutManager`. The strategy is
+  chosen once from `parchment_viewPagerInterval` and takes what it needs as
+  parameters, so none of it needs package-private access to test.
 - Circular scrolling wraps positions in the layout engine. Never leak
   wrapped positions to the adapter.
 

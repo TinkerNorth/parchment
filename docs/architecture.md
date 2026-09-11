@@ -92,9 +92,9 @@ a plain list (`GridPatternLayoutManagerNoDefinitionTest`).
 `snapposition/` holds one strategy per `parchment_snapPosition` value. Each answers
 two questions for a cell: where it should sit when snapped, and how far
 the content must move to get it there. `LayoutManager` picks the strategy
-once from the attributes; `onScreen` is the default for a view inflated
-from XML, `center` for one built in Java, and neither moves content on
-its own.
+once from the attributes and holds it as `mSnapPositionInterface`;
+`onScreen` is the default for a view inflated from XML, `center` for one
+built in Java, and neither moves content on its own.
 
 With `parchment_snapToPosition` on, a fling is retargeted when it starts:
 `LayoutManager.getFlingSnapAdjustment` takes the distance the fling would
@@ -143,9 +143,27 @@ on, in each direction separately (`mViewPageDistanceForward` and
 what makes cells of different sizes page correctly and puts the landing point
 on a cell boundary even when the gesture starts part-way through a cell.
 
-Only the choice of landing cell differs between the two modes, so one place
-decides where a page ends up. Counting mode takes the cell `N` along from the
-anchor. Viewport mode walks out from the anchor while the next cell still fits
+Only the choice of landing cell differs between the two modes, so that choice is
+all that a mode is. `pageinterval/` holds one strategy per mode, as
+`snapposition/` holds one per snap position: `PageIntervalInterface` asks for the
+cell index a page lands on in each direction, `CellCountPageInterval` answers it
+by counting and `ViewportPageInterval` by walking the viewport.
+`LayoutManager`'s constructor reads `parchment_viewPagerInterval` once, hands the
+value to `PageIntervalSelector` to pick between the two, and keeps the answer as
+`mPageIntervalInterface`. Nothing can set the interval afterwards, so choosing
+once gives the same answer the old per-call branch gave. That selection is a small
+public factory rather than the private switch `snapposition/` uses, which is the
+one place the two packages differ: it lets the tests exercise the real choice
+instead of a copy of it.
+
+`ViewportPageInterval` takes the anchor and the room a page has as parameters and
+calls back into `LayoutManager` for the drawn cells and the cell spacing, the way
+the snap strategies call back into it. `CellCountPageInterval` needs only the
+interval it was built with and touches no cell. Neither is consulted per frame:
+`setViewPageDistances` runs when a new animation id arrives, once per gesture.
+
+`CellCountPageInterval` takes the cell `N` along from the anchor.
+`ViewportPageInterval` walks out from the anchor while the next cell still fits
 entirely inside the viewport, and lands on the first one that does not; a cell
 larger than the viewport is simply the first cell that does not fit, which is
 why it stays one cell per gesture without a special case. The walk mirrors
@@ -199,4 +217,4 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
-| Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |
+| Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |

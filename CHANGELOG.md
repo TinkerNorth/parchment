@@ -103,6 +103,17 @@ everything around them is new.
   because the caption did not change as the cell did.
 - `AbstractAdapterView` invalidates the whole view after adding or removing
   a child instead of the deprecated `invalidate(Rect)`.
+- The two ViewPager paging modes are a strategy per mode in `pageinterval/`,
+  the way snapping has been one per mode in `snapposition/`:
+  `CellCountPageInterval` and `ViewportPageInterval` behind
+  `PageIntervalInterface`, picked once from `parchment_viewPagerInterval` by
+  `PageIntervalSelector` and held on `LayoutManager`. They had been methods
+  on `LayoutManager` with no access modifier so that unit tests in the same
+  package could reach them. Every remaining declaration in the library was
+  given an explicit `public`, `protected` or `private` at the same time, and
+  the unused `Animation.setId` was deleted rather than widened; none of them
+  was reachable from outside its package before, so no consumer loses a call.
+  Paging behaviour is unchanged.
 
 ### Added
 
