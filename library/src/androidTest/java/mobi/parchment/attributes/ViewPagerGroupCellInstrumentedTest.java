@@ -109,10 +109,6 @@ public final class ViewPagerGroupCellInstrumentedTest {
                 after.topOfAdapterPosition(FIRST_ITEM_OF_THE_SECOND_ROW));
     }
 
-    /**
-     * With the interval left at viewport a grid pages by the rows that fit whole, which is the run
-     * of rows on screen: three 200px rows in a 600px viewport.
-     */
     @Test
     public void aGridViewportFling_advancesEveryWholeRowThatFits() {
         final ParchmentViewHarness<GridView<BaseAdapter>> harness =
@@ -136,10 +132,6 @@ public final class ViewPagerGroupCellInstrumentedTest {
                 after.topOfAdapterPosition(FIRST_ITEM_OF_THE_THIRD_ROW));
     }
 
-    /**
-     * The same on a pattern view, where a cell is a whole pattern group: three one-unit groups fit
-     * the viewport, so one fling advances all three.
-     */
     @Test
     public void aGridPatternViewportFling_advancesEveryWholeGroupThatFits() {
         final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness =

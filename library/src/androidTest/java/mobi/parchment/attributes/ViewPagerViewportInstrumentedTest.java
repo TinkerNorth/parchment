@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import androidx.test.core.app.ApplicationProvider;
@@ -40,7 +41,6 @@ public final class ViewPagerViewportInstrumentedTest {
     private static final int CELLS_ON_SCREEN = VIEWPORT_HEIGHT / CELL_HEIGHT;
     private static final int UNEVEN_CELL_HEIGHT = 250;
     private static final int UNEVEN_CELLS_ON_SCREEN = VIEWPORT_HEIGHT / UNEVEN_CELL_HEIGHT;
-    private static final int TALL_CELL_HEIGHT = 200;
     private static final int SHORT_CELL_HEIGHT = 100;
     private static final int ALTERNATING_CELLS_ON_SCREEN = 4;
     private static final int OVERSIZED_CELL_HEIGHT = 900;
@@ -56,7 +56,6 @@ public final class ViewPagerViewportInstrumentedTest {
     private static final int CIRCULAR_ITEM_COUNT = 4;
     private static final int LAST_CIRCULAR_ITEM = CIRCULAR_ITEM_COUNT - 1;
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
-    private static final int SNAP_POSITION_TOP = 0;
     private static final int SNAP_POSITION_START = 0;
 
     private static final int GESTURE_X = VIEWPORT_WIDTH / 2;
@@ -89,7 +88,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "one fling should bring the fourth cell to the top: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(CELLS_ON_SCREEN));
         assertEquals(
                 "the content should have moved by a whole viewport: " + after,
@@ -105,7 +104,7 @@ public final class ViewPagerViewportInstrumentedTest {
         final LaidOutChildren forward = harness.settle();
         assertEquals(
                 "the forward fling should have paged a viewport: " + forward,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 forward.topOfAdapterPosition(CELLS_ON_SCREEN));
 
         flingBack(harness);
@@ -113,14 +112,10 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "one fling back should return the whole viewport: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(FIRST_ITEM));
     }
 
-    /**
-     * Cells that do not divide the viewport leave a partial cell behind rather than counting it:
-     * two 250px cells fit a 600px viewport whole and the third does not, so the page is 500px.
-     */
     @Test
     public void cellsThatDoNotDivideTheViewport_leaveThePartialCellForTheNextPage() {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
@@ -132,7 +127,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "the third cell should come to the top: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(UNEVEN_CELLS_ON_SCREEN));
         assertEquals(
                 "the page should be the two whole cells only: " + after,
@@ -140,10 +135,6 @@ public final class ViewPagerViewportInstrumentedTest {
                 after.topOfAdapterPosition(UNEVEN_CELLS_ON_SCREEN - 1));
     }
 
-    /**
-     * Cells of unequal size are measured, not counted: 200, 100, 200 and 100 fill exactly 600, so
-     * four of them make one page where a fixed cell size would give three or six.
-     */
     @Test
     public void cellsOfUnequalSize_advanceByTheCellsThatFitWhole() {
         final Context context = ApplicationProvider.getApplicationContext();
@@ -151,7 +142,7 @@ public final class ViewPagerViewportInstrumentedTest {
                 attach(R.layout.instrumented_view_pager_viewport);
         final AlternatingHeightAdapter adapter =
                 new AlternatingHeightAdapter(
-                        context, ITEM_COUNT, MATCH_PARENT, TALL_CELL_HEIGHT, SHORT_CELL_HEIGHT);
+                        context, ITEM_COUNT, MATCH_PARENT, CELL_HEIGHT, SHORT_CELL_HEIGHT);
         harness.setAdapter(adapter);
 
         flingForward(harness);
@@ -159,7 +150,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "the fifth cell should come to the top: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(ALTERNATING_CELLS_ON_SCREEN));
         assertEquals(
                 "the page should be the four cells that fit whole: " + after,
@@ -167,10 +158,6 @@ public final class ViewPagerViewportInstrumentedTest {
                 after.topOfAdapterPosition(ALTERNATING_CELLS_ON_SCREEN - 1));
     }
 
-    /**
-     * A cell taller than the viewport is the first cell that does not fit, so the page falls back
-     * to the one cell it always advances at least.
-     */
     @Test
     public void aCellTallerThanTheViewport_advancesExactlyThatOneCell() {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
@@ -189,14 +176,10 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "one fling should move by the oversized cell's own height: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(SECOND_ITEM));
     }
 
-    /**
-     * The last page is short when the cells left do not fill a viewport: five 200px cells page
-     * three, then the last two, rather than running off the end.
-     */
     @Test
     public void aPartialPageAtTheEnd_advancesOnlyAsFarAsTheLastCell() {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
@@ -208,7 +191,7 @@ public final class ViewPagerViewportInstrumentedTest {
         final LaidOutChildren firstPage = harness.settle();
         assertEquals(
                 "the first page should be the three cells that fit: " + firstPage,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 firstPage.topOfAdapterPosition(CELLS_ON_SCREEN));
 
         flingForward(harness);
@@ -216,7 +199,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "the last page should stop on the last cell: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(LAST_OF_THE_SHORT_LAST_PAGE));
     }
 
@@ -233,7 +216,7 @@ public final class ViewPagerViewportInstrumentedTest {
         final LaidOutChildren atTheEnd = harness.settle();
         assertEquals(
                 "paging to the end should rest the last cell on the snap position: " + atTheEnd,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 atTheEnd.topOfAdapterPosition(LAST_OF_THE_SHORT_LAST_PAGE));
 
         flingForward(harness);
@@ -241,7 +224,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "the last cell should still be on the snap position: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(LAST_OF_THE_SHORT_LAST_PAGE));
     }
 
@@ -255,7 +238,7 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertEquals(
                 "there is nothing before the first cell to page to: " + after,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 after.topOfAdapterPosition(FIRST_ITEM));
         assertEquals(
                 "and nothing behind it should have been drawn: " + after,
@@ -263,10 +246,6 @@ public final class ViewPagerViewportInstrumentedTest {
                 after.lowestAdapterPosition());
     }
 
-    /**
-     * The fit is measured against the size inside the padding, so a padded viewport pages fewer
-     * cells than its full height would allow: 500px of content fits two 200px cells, not three.
-     */
     @Test
     public void viewportPagingWithPadding_fitsTheCellsInsideThePaddingOnly() {
         final Context context = ApplicationProvider.getApplicationContext();
@@ -314,10 +293,6 @@ public final class ViewPagerViewportInstrumentedTest {
                 leftOfAdapterPosition(after, CELLS_ACROSS));
     }
 
-    /**
-     * Circular scrolling lifts the cap at the adapter's end, so a viewport page keeps advancing
-     * past the last cell instead of holding still the way the bounded list does.
-     */
     @Test
     public void circularViewportPaging_pastTheLastCell_keepsAdvancing() {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
@@ -329,7 +304,7 @@ public final class ViewPagerViewportInstrumentedTest {
         final LaidOutChildren firstPage = harness.settle();
         assertEquals(
                 "the first page should reach the last cell: " + firstPage,
-                SNAP_POSITION_TOP,
+                SNAP_POSITION_START,
                 firstPage.topOfAdapterPosition(LAST_CIRCULAR_ITEM));
 
         flingForward(harness);
@@ -337,10 +312,10 @@ public final class ViewPagerViewportInstrumentedTest {
 
         assertFalse(
                 "a second page should have carried on past the last cell: " + after,
-                after.isAdapterPositionAtTop(LAST_CIRCULAR_ITEM, SNAP_POSITION_TOP));
+                after.isAdapterPositionAtTop(LAST_CIRCULAR_ITEM, SNAP_POSITION_START));
         assertTrue(
                 "and it should have wrapped round rather than stopped: " + after,
-                after.hasChildWithTop(SNAP_POSITION_TOP));
+                after.hasChildWithTop(SNAP_POSITION_START));
     }
 
     private static int leftOfAdapterPosition(
@@ -353,11 +328,11 @@ public final class ViewPagerViewportInstrumentedTest {
         return children.left(index);
     }
 
-    private void flingForward(final ParchmentViewHarness<ListView<BaseAdapter>> harness) {
+    private static void flingForward(final ParchmentViewHarness<ListView<BaseAdapter>> harness) {
         harness.fling(GESTURE_X, GESTURE_START_Y, GESTURE_X, GESTURE_END_Y, GESTURE_STEPS);
     }
 
-    private void flingBack(final ParchmentViewHarness<ListView<BaseAdapter>> harness) {
+    private static void flingBack(final ParchmentViewHarness<ListView<BaseAdapter>> harness) {
         harness.fling(GESTURE_X, GESTURE_END_Y, GESTURE_X, GESTURE_START_Y, GESTURE_STEPS);
     }
 
@@ -376,7 +351,7 @@ public final class ViewPagerViewportInstrumentedTest {
                 mActivityRule.getScenario(), layoutResource, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
     }
 
-    private static final class SetViewportPadding<VIEW extends android.view.View>
+    private static final class SetViewportPadding<VIEW extends View>
             implements ParchmentViewHarness.ViewSetup<VIEW> {
 
         private final int mPadding;

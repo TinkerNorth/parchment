@@ -218,16 +218,11 @@ public final class ViewPagerIntervalInstrumentedTest {
         assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_no_interval);
     }
 
-    /** The viewport constant is aapt2 resolving a name to the same zero a literal gives. */
     @Test
     public void theViewportConstantInXml_pagesByTheWholeViewport() {
         assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_viewport);
     }
 
-    /**
-     * A negative interval is not a number of cells, so it falls back to the default rather than
-     * paging backwards when the finger goes forwards.
-     */
     @Test
     public void aNegativeIntervalInXml_pagesByTheWholeViewport() {
         assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_interval_negative);
