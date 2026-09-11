@@ -46,6 +46,11 @@ everything around them is new.
   cell sizes themselves; the three that a layout dimension already states
   alias it rather than repeating the number. Requests are in device pixels,
   so density is applied once by `getDimensionPixelSize`.
+- Sample: Picasso 2.8 (was 2.71828). Same okhttp, but it depends on
+  `androidx.exifinterface` instead of `com.android.support:exifinterface` and
+  `support-annotations`, which were the last `com.android.support` artifacts
+  in the build.
+
 - Sample: Picasso is built with a memory cache of a third of the heap instead
   of the seventh it sizes itself at. A photo requested at the size of the view
   is several times larger than the fixed 800px one it replaces, and on a
