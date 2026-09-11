@@ -83,6 +83,17 @@ public class LayoutManagerPagingMethodsTest {
     private static final int THE_CENTRE_SNAP_POSITION = (THREE_CELL_VIEWPORT - CELL_SIZE) / 2;
     private static final int THE_END_SNAP_POSITION = THREE_CELL_VIEWPORT - CELL_SIZE;
 
+    private static final int A_DISTANCE_NOTHING_WOULD_MEASURE = 4321;
+    private static final int A_SECOND_DISTANCE_NOTHING_WOULD_MEASURE = 8765;
+
+    /** A cell size that makes two cells plus the padding fill the viewport exactly. */
+    private static final int PADDING_FIT_CELL_SIZE = THE_VIEWPORT_INSIDE_THE_PADDING / 2;
+
+    /** A cell size that puts a cell start between the snapped and the unsnapped page limit. */
+    private static final int OFF_SNAP_CELL_SIZE = 110;
+
+    private static final int CELLS_THAT_FIT_FROM_AN_OFF_SNAP_ANCHOR = 2;
+
     private static final int[] UNEQUAL_CELL_SIZES = {
         100, 50, 150, 100, 100, 100, 100, 100, 100, 100
     };
@@ -434,16 +445,6 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void forwardByViewport_withoutCellSpacing_fitsEveryCellTheViewportHolds() {
-        final LayoutManager<View> manager = equalCellManager();
-
-        assertThat(
-                        manager.getPageCellIndexForwardByViewport(
-                                A_WHOLE_VIEWPORT, FIRST_CELL, NO_DISTANCE))
-                .isEqualTo(FOURTH_CELL);
-    }
-
-    @Test
     public void forwardByViewport_withCellSpacing_countsTheSpacingThatComesWithEachCell() {
         final LayoutManager<View> manager = spacedCellManager();
 
@@ -519,6 +520,20 @@ public class LayoutManagerPagingMethodsTest {
 
         assertThat(index).isEqualTo(ONE_PAST_TEN_CELLS);
         assertThat(manager.getCellStartAtIndex(index)).isEqualTo(lastCellStart);
+    }
+
+    @Test
+    public void forwardByViewport_walkingIntoTheAdapterEnd_stopsWhenTheCapFreezesTheCellStarts() {
+        final LayoutManager<View> manager = equalCellManager();
+        final int anchorIndex = LAST_OF_TEN_CELLS - TWO_CELLS_PER_GESTURE;
+        final int anchorStart = anchorIndex * CELL_SIZE;
+
+        final long index =
+                manager.getPageCellIndexForwardByViewport(
+                        A_WHOLE_VIEWPORT, anchorIndex, anchorStart);
+
+        assertThat(index).isEqualTo(LAST_OF_TEN_CELLS);
+        assertThat(manager.getCellStartAtIndex(index)).isEqualTo(LAST_OF_TEN_CELLS * CELL_SIZE);
     }
 
     @Test
@@ -887,7 +902,6 @@ public class LayoutManagerPagingMethodsTest {
         final LayoutManager<View> manager = equalCellManager();
         final long wholeRange = (long) THE_DRAWABLE_LIMIT + THE_DRAWABLE_LIMIT;
 
-        assertThat(wholeRange).isLessThanOrEqualTo(Integer.MAX_VALUE);
         assertThat(manager.pageFits(Integer.MAX_VALUE, -THE_DRAWABLE_LIMIT, THE_DRAWABLE_LIMIT))
                 .isTrue();
         assertThat(
@@ -931,7 +945,7 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void getCellStartAtIndex_pastTheDrawnCells_extrapolatesFromTheLastDrawnCell() {
+    public void getCellStartAtIndex_pastTheDrawnCells_continuesTheCellRun() {
         final LayoutManager<View> manager = equalCellManager();
         final int fifthCell = FOURTH_CELL + ONE_CELL_PER_GESTURE;
 
@@ -939,7 +953,7 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void getCellStartAtIndex_atTheLastAdapterCell_extrapolatesToItsStart() {
+    public void getCellStartAtIndex_atTheLastAdapterCell_isThatCellsStart() {
         final LayoutManager<View> manager = equalCellManager();
 
         assertThat(manager.getCellStartAtIndex(LAST_OF_TEN_CELLS))
@@ -1045,7 +1059,7 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void getCellStartExtrapolatedBeforeFirst_stepsBackByTheFirstCellSizeAndSpacing() {
+    public void getCellStartExtrapolatedBeforeFirst_stepsBackByTheFirstCellSize() {
         final LayoutManager<View> manager = circularEqualCellManager();
 
         assertThat(manager.getCellStartExtrapolatedBeforeFirst(-ONE_CELL_PER_GESTURE))
@@ -1053,11 +1067,36 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void getCellStartExtrapolatedAfterLast_stepsOnByTheLastCellSizeAndSpacing() {
+    public void getCellStartExtrapolatedBeforeFirst_withCellSpacing_stepsBackBySizeAndSpacing() {
+        final LayoutManager<View> manager = circularSpacedCellManager();
+
+        assertThat(manager.getCellStartExtrapolatedBeforeFirst(-ONE_CELL_PER_GESTURE))
+                .isEqualTo(-(CELL_SIZE + CELL_SPACING));
+    }
+
+    @Test
+    public void
+            getCellStartAtIndex_withCellSpacingAndCircularScroll_extrapolatesBackBySizeAndSpacing() {
+        final LayoutManager<View> manager = circularSpacedCellManager();
+
+        assertThat(manager.getCellStartAtIndex(-MORE_CELLS_THAN_THE_ADAPTER_HAS))
+                .isEqualTo(-MORE_CELLS_THAN_THE_ADAPTER_HAS * (CELL_SIZE + CELL_SPACING));
+    }
+
+    @Test
+    public void getCellStartExtrapolatedAfterLast_stepsOnByTheLastCellSize() {
         final LayoutManager<View> manager = circularEqualCellManager();
 
         assertThat(manager.getCellStartExtrapolatedAfterLast(MORE_CELLS_THAN_THE_ADAPTER_HAS))
                 .isEqualTo(MORE_CELLS_THAN_THE_ADAPTER_HAS * CELL_SIZE);
+    }
+
+    @Test
+    public void getCellStartExtrapolatedAfterLast_withCellSpacing_stepsOnBySizeAndSpacing() {
+        final LayoutManager<View> manager = circularSpacedCellManager();
+
+        assertThat(manager.getCellStartExtrapolatedAfterLast(MORE_CELLS_THAN_THE_ADAPTER_HAS))
+                .isEqualTo(MORE_CELLS_THAN_THE_ADAPTER_HAS * (CELL_SIZE + CELL_SPACING));
     }
 
     // ---------------------------------------------------------------- getSnapDisplacement
@@ -1116,7 +1155,7 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void getSnapDisplacement_forACellOfZeroSizedViews_isZeroRatherThanACrash() {
+    public void getSnapDisplacement_forAGroupOfZeroSizedViews_findsNoRepresentativeAndIsZero() {
         final LayoutManager<Group> manager = groupManager();
         final Group zeroSizedGroup = new Group(HORIZONTAL);
         zeroSizedGroup.addView(new View(ApplicationProvider.getApplicationContext()));
@@ -1131,11 +1170,14 @@ public class LayoutManagerPagingMethodsTest {
     @Test
     public void setViewPageDistances_whenTheViewIsNotAViewPager_leavesTheDistancesAlone() {
         final LayoutManager<View> manager = notAViewPagerManager();
+        manager.mViewPageDistanceForward = A_DISTANCE_NOTHING_WOULD_MEASURE;
+        manager.mViewPageDistanceBack = A_SECOND_DISTANCE_NOTHING_WOULD_MEASURE;
 
         manager.setViewPageDistances(A_WHOLE_VIEWPORT);
 
-        assertThat(manager.mViewPageDistanceForward).isEqualTo(NO_DISTANCE);
-        assertThat(manager.mViewPageDistanceBack).isEqualTo(NO_DISTANCE);
+        assertThat(manager.mViewPageDistanceForward).isEqualTo(A_DISTANCE_NOTHING_WOULD_MEASURE);
+        assertThat(manager.mViewPageDistanceBack)
+                .isEqualTo(A_SECOND_DISTANCE_NOTHING_WOULD_MEASURE);
     }
 
     @Test
@@ -1205,6 +1247,35 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
+    public void setViewPageDistances_withViewportPadding_startsTheViewportAtThePaddingNotAtZero() {
+        final LayoutManager<View> manager = paddedCellsThatFillInsideThePaddingManager();
+
+        assertThat(manager.getCellStartAtIndex(FIRST_CELL)).isEqualTo(VIEWPORT_PADDING);
+
+        manager.setViewPageDistances(THE_VIEWPORT_INSIDE_THE_PADDING);
+
+        assertThat(manager.mViewPageDistanceForward)
+                .isEqualTo(TWO_CELLS_PER_GESTURE * PADDING_FIT_CELL_SIZE);
+    }
+
+    @Test
+    public void setViewPageDistances_fromAnAnchorPartWayThroughACell_countsFromWhereItSitsNow() {
+        final PagingHarness harness = offSnapCellHarness();
+        harness.dragBy(A_REST_PART_WAY_THROUGH_A_CELL);
+        final LayoutManager<View> manager = harness.manager();
+
+        assertThat(manager.getCellStartAtIndex(FIRST_CELL))
+                .isEqualTo(A_REST_PART_WAY_THROUGH_A_CELL);
+
+        manager.setViewPageDistances(A_WHOLE_VIEWPORT);
+
+        assertThat(manager.mViewPageDistanceForward)
+                .isEqualTo(
+                        CELLS_THAT_FIT_FROM_AN_OFF_SNAP_ANCHOR * OFF_SNAP_CELL_SIZE
+                                + A_REST_PART_WAY_THROUGH_A_CELL);
+    }
+
+    @Test
     public void setViewPageDistances_withASizeThePaddingHasEatenAway_stillAdvancesOneCell() {
         final LayoutManager<View> manager = equalCellManager();
 
@@ -1215,11 +1286,12 @@ public class LayoutManagerPagingMethodsTest {
     }
 
     @Test
-    public void paddingLargerThanTheViewport_leavesTheLayoutANegativeSizeToPageIn() {
+    public void paddingLargerThanTheViewport_leavesANegativePageRoomAndStillAdvancesOneCell() {
         final LayoutManager<View> manager = paddingLargerThanTheViewportManager();
         final int paddingTotal = manager.getStartSizePadding() + manager.getEndSizePadding();
 
         assertThat(paddingTotal).isGreaterThan(SMALL_VIEWPORT);
+        assertThat(manager.mViewPageDistanceForward).isEqualTo(CELL_SIZE);
     }
 
     // ------------------------------------------------------------------------- harnesses
@@ -1328,6 +1400,41 @@ public class LayoutManagerPagingMethodsTest {
                         CIRCULAR,
                         SnapPosition.start)
                 .manager();
+    }
+
+    private static LayoutManager<View> circularSpacedCellManager() {
+        return new PagingHarness(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(CELL_SIZE, TEN_CELLS),
+                        CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        CIRCULAR,
+                        SnapPosition.start)
+                .manager();
+    }
+
+    private static LayoutManager<View> paddedCellsThatFillInsideThePaddingManager() {
+        return new PagingHarness(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(PADDING_FIT_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start,
+                        VIEWPORT_PADDING,
+                        HORIZONTAL,
+                        IS_A_VIEW_PAGER)
+                .manager();
+    }
+
+    private static PagingHarness offSnapCellHarness() {
+        return new PagingHarness(
+                THREE_CELL_VIEWPORT,
+                equalSizes(OFF_SNAP_CELL_SIZE, TEN_CELLS),
+                NO_CELL_SPACING,
+                VIEWPORT_PAGING,
+                NOT_CIRCULAR,
+                SnapPosition.start);
     }
 
     private static LayoutManager<View> circularFourCellManager() {
