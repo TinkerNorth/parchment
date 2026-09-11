@@ -7,10 +7,16 @@ All notable changes to Parchment, newest first. The format follows
 
 ## [Unreleased]
 
-The first work on Parchment since 2014. Behaviour of the views is unchanged;
-everything around them is new.
+The first work on Parchment since 2014. Apart from the new cell divider,
+behaviour of the views is unchanged; everything around them is new.
 
 ### Changed
+
+- **Breaking:** `AbstractAdapterView.createAdapterViewInitializer` takes two
+  more parameters, the divider drawable and its size. It is `protected` and
+  an implementation detail, but a subclass that overrides it — the pattern
+  the in-tree test views use to reach the gesture listener — has to take the
+  two new parameters and pass them on.
 
 - `GridView` rows report their bounds without allocating. `Group.getTop`,
   `getBottom`, `getLeft` and `getRight` walked their views with an iterator
@@ -130,11 +136,30 @@ everything around them is new.
 
 ### Added
 
+- `parchment_divider` and `parchment_dividerSize` draw a divider between
+  adjacent cells in all three views, the thing the platform `ListView` has
+  and Parchment did not (#25). There is one fewer divider than there are
+  cells on screen: never before the first, never after the last. A cell is
+  one view in `ListView` and a whole group in `GridView` and
+  `GridPatternView`, so a divider separates rows rather than the items
+  inside a row. The divider is decoration and takes no space of its own: it
+  is centred in the `parchment_cellSpacing` gap, so the spacing is what you
+  size to make room for it, and a divider thicker than the spacing overflows
+  evenly onto both cells and is painted over them — which is also what makes
+  one visible when the spacing is zero. Along the breadth it runs inside
+  `android:padding*`; `android:clipToPadding` is applied to the cells inside
+  `ViewGroup.dispatchDraw` and restored before it returns, so it never
+  reaches the divider under either setting. Without `parchment_dividerSize`
+  the drawable's intrinsic size along the scroll axis is used, and a colour
+  has none, so a colour divider with no size paints nothing, as with the
+  platform widget. The divider is drawn as it is given: drawable state and
+  animation are not driven, as with the platform widget.
 - An instrumented harness, `ParchmentViewHarness`, that inflates a view
   from a layout with a real `LayoutInflater`, attaches it to an Activity at
   an exact pixel size, drives real measure and layout passes, dispatches
   real gestures, and hands a test an immutable snapshot of where the
-  children landed. All eleven `parchment_` attributes are covered by
+  children landed. All eleven `parchment_`
+  attributes are covered by
   on-device tests built on it, asserting geometry rather than getters, as is
   paging in both modes: a real fling and a real slow drag each page by the
   cells that fit the viewport, or by `parchment_viewPagerInterval` cells, with

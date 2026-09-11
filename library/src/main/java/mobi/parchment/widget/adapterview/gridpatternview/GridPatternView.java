@@ -4,6 +4,7 @@
 package mobi.parchment.widget.adapterview.gridpatternview;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -49,6 +50,8 @@ public class GridPatternView<ADAPTER extends Adapter>
         final SnapPosition snapPosition = gridPatternAttributes.getSnapPosition();
         final boolean selectOnSnap = gridPatternAttributes.selectOnSnap();
         final boolean selectWhileScrolling = gridPatternAttributes.selectWhileScrolling();
+        final Drawable divider = gridPatternAttributes.getDivider();
+        final int dividerSize = gridPatternAttributes.getDividerSize();
         final float ratio = gridPatternAttributes.getRatio();
         mIsVerticalScroll = gridPatternAttributes.isVertical();
 
@@ -75,7 +78,9 @@ public class GridPatternView<ADAPTER extends Adapter>
                         isViewPager,
                         adapterViewManager,
                         mGridPatternLayoutManager,
-                        mIsVerticalScroll);
+                        mIsVerticalScroll,
+                        divider,
+                        dividerSize);
         return adapterViewAdapterInitializer;
     }
 

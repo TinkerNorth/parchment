@@ -24,6 +24,8 @@ every child in memory. The story, and a feature-by-feature comparison with
 - ViewPager behaviour on the same ListView and the same adapter: one
   completed gesture advances a whole viewport of cells, or exactly
   `parchment_viewPagerInterval` of them
+- A divider drawn between adjacent cells, in either orientation and in all
+  three views
 - GridView whose rows wrap to the tallest cell
 - GridPatternView: declare a repeating pattern of mixed-span cells and let
   the engine tile your data through it
@@ -106,6 +108,47 @@ cd parchment
     parchment:parchment_viewPagerInterval="viewport" />
 ```
 
+### Dividers
+
+`parchment_divider` paints a drawable or a colour between adjacent cells,
+one fewer divider than there are cells on screen: never before the first
+cell or after the last. In a `ListView` a cell is one view, so a divider
+sits between items. In `GridView` and `GridPatternView` a cell is a whole
+group, so a divider separates rows (or columns, scrolling horizontally),
+never the items inside a row.
+
+The divider is decoration and takes no space of its own: it is centred in
+the `parchment_cellSpacing` gap between the two cells, so the gap is what
+you size to make room for it. A divider thicker than the spacing overflows
+evenly onto both cells and is painted over them, which is also what makes
+one visible when the spacing is zero. Along the breadth it runs from
+`android:paddingLeft` to `android:paddingRight` (from `paddingTop` to
+`paddingBottom` scrolling horizontally). `android:clipToPadding` decides
+whether a cell is clipped at the padding; either way it never reaches the
+divider, which is painted inside the padding regardless.
+
+`parchment_dividerSize` gives the thickness along the scroll axis. Leave it
+out and the drawable's intrinsic size along that axis is used instead — but
+a colour has no intrinsic size, so a colour divider with no
+`parchment_dividerSize` paints nothing, the same as the platform `ListView`.
+A `parchment_dividerSize` of zero or less paints nothing either; that is not
+the same as leaving the attribute out, which is what asks for the intrinsic
+size.
+
+The drawable is drawn as it is given: its state is not tracked and an
+`AnimationDrawable` will not animate, again as with the platform `ListView`.
+
+```xml
+<mobi.parchment.widget.adapterview.listview.ListView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:parchment="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_cellSpacing="8dp"
+    parchment:parchment_divider="#33000000"
+    parchment:parchment_dividerSize="1dp" />
+```
+
 ### Java
 
 ```java
@@ -145,6 +188,8 @@ All views:
 | `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
 | `parchment_isViewPager` | boolean | One page per gesture, ViewPager style |
 | `parchment_viewPagerInterval` | integer, or `viewport` | How far one ViewPager gesture pages. `viewport` (or `0`, or unset, the default) advances every cell that fits the viewport whole; `N` advances exactly N cells. Values below zero are read as `viewport` |
+| `parchment_divider` | drawable or colour | Drawn between adjacent cells, never before the first or after the last |
+| `parchment_dividerSize` | dimension | Divider thickness along the scroll axis; without it the drawable's intrinsic size along that axis is used, and a colour has none, so a colour divider with no size paints nothing |
 
 GridView:
 

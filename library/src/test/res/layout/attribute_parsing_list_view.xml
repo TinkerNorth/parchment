@@ -13,4 +13,6 @@
         parchment:parchment_isViewPager="true"
         parchment:parchment_viewPagerInterval="3"
         parchment:parchment_snapPosition="end"
-        parchment:parchment_selectWhileScrolling="true"/>
+        parchment:parchment_selectWhileScrolling="true"
+        parchment:parchment_divider="#ff112233"
+        parchment:parchment_dividerSize="@dimen/divider_test_size"/>
