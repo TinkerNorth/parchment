@@ -150,7 +150,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         return mState;
     }
 
-    void setState(final State state) {
+    private void setState(final State state) {
         if (!mScrollAnimator.isFinished()) mScrollAnimator.forceFinished(true);
 
         final boolean isNotMoving = mState.equals(State.notMoving);

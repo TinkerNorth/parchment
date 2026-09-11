@@ -8,15 +8,11 @@ public class Animation {
     private int mId;
     private int mDisplacement;
 
-    void setId(final int id) {
-        mId = id;
-    }
-
     public int getId() {
         return mId;
     }
 
-    void setDisplacement(final int displacemente) {
+    protected void setDisplacement(final int displacemente) {
         mDisplacement = displacemente;
     }
 
@@ -24,7 +20,7 @@ public class Animation {
         return mDisplacement;
     }
 
-    void newAnimation() {
+    protected void newAnimation() {
         mId = (mId + 1) % ANIMATION_ID_LIMIT;
         mDisplacement = 0;
     }

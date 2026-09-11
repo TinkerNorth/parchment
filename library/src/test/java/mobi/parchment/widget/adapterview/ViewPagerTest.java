@@ -28,6 +28,43 @@ public class ViewPagerTest {
     public static final int VIEW_GROUP_SIZE = 100;
     public static final int VIEW_SIZE = 100;
     public static final int CELL_SPACING = 10;
+
+    private static final int THREE_CELL_VIEWPORT = 300;
+    private static final int TWO_AND_A_HALF_CELL_VIEWPORT = 250;
+    private static final int SMALL_CELL_SIZE = 100;
+    private static final int LARGE_CELL_SIZE = 250;
+    private static final int SMALL_VIEWPORT = 100;
+    private static final int NO_CELL_SPACING = 0;
+    private static final int ONE_CELL_PER_GESTURE = 1;
+    private static final int THREE_CELLS_PER_GESTURE = 3;
+    private static final int MORE_CELLS_THAN_THE_ADAPTER_HAS = 10;
+    private static final int VIEWPORT_PAGING = 0;
+    private static final int NEGATIVE_INTERVAL = -2;
+    private static final boolean CIRCULAR = true;
+    private static final boolean NOT_CIRCULAR = false;
+    private static final int TEN_CELLS = 10;
+    private static final int LAST_OF_TEN_CELLS = TEN_CELLS - 1;
+    private static final int FOUR_CELLS = 4;
+    private static final int LAST_OF_FOUR_CELLS = FOUR_CELLS - 1;
+    private static final int FIVE_CELLS = 5;
+    private static final int LAST_OF_FIVE_CELLS = FIVE_CELLS - 1;
+    private static final int TWO_CELLS = 2;
+    private static final int UNEQUAL_CELLS_THAT_FIT = 225;
+    private static final boolean HORIZONTAL = false;
+    private static final boolean VERTICAL = true;
+    private static final int START_OF_THE_VIEWPORT = 0;
+    private static final int NOT_DRAWN = Integer.MIN_VALUE;
+    private static final int NO_VIEWPORT_PADDING = 0;
+    private static final int ENORMOUS_INTERVAL = Integer.MAX_VALUE;
+    private static final int HUGE_INTERVAL = 30000000;
+    private static final int VIEWPORT_PADDING = 20;
+    private static final int A_REST_PART_WAY_THROUGH_A_CELL = -50;
+    private static final int CELLS_FULLY_VISIBLE_FROM_A_CENTRED_ANCHOR = 2;
+    private static final int CELLS_FULLY_VISIBLE_FROM_AN_END_ANCHOR = 1;
+    private static final int THE_END_SNAP_POSITION = THREE_CELL_VIEWPORT - SMALL_CELL_SIZE;
+    private static final int THE_CENTRE_SNAP_POSITION = (THREE_CELL_VIEWPORT - SMALL_CELL_SIZE) / 2;
+    private static final int UNEQUAL_CELLS_EXTRAPOLATED_BACK = 300;
+
     final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
     TestAdapter mTestAdapter;
@@ -41,7 +78,7 @@ public class ViewPagerTest {
                         true,
                         true,
                         true,
-                        0,
+                        VIEWPORT_PAGING,
                         SnapPosition.onScreen,
                         CELL_SPACING,
                         true,
@@ -106,6 +143,823 @@ public class ViewPagerTest {
         assertThat(currentView.getBottom()).isEqualTo(100);
     }
 
+    @Test
+    public void viewPagerGesture_withThreeCellsOnScreen_advancesOneCellForward() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withThreeCellsOnScreen_advancesOneCellBack() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(2)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(SMALL_CELL_SIZE);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withAnIntervalOfThree_advancesThreeCells() {
+        final Pager pager =
+                new Pager(
+                        TWO_AND_A_HALF_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        THREE_CELLS_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-THREE_CELLS_PER_GESTURE * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withCellsOfUnequalSize_advancesByEachCellsOwnSize() {
+        final int[] cellSizes = new int[] {50, 75, 100, 125, 150, 175, 200, 225, 250, 275};
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        cellSizes,
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-50);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-75);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(2)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withACellLargerThanTheViewport_advancesOneCell() {
+        final Pager pager =
+                new Pager(
+                        SMALL_VIEWPORT,
+                        equalSizes(LARGE_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-LARGE_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withCellSpacing_advancesOneCellAndOneSpacing() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-(SMALL_CELL_SIZE + CELL_SPACING));
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_startingPartWayThroughACell_landsOnACellBoundary() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        pager.startGesture();
+        pager.dragBy(-40);
+
+        assertThat(pager.startOf(2)).isEqualTo(-40);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-60);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_atTheFirstCellWithoutCircularScroll_staysOnTheFirstCell() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(0);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_atTheLastCellWithoutCircularScroll_stopsAtTheLastCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, FOUR_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.startOf(0)).isEqualTo(NOT_DRAWN);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_pastTheLastCellWithCircularScroll_wrapsToTheFirstCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, FOUR_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withAnIntervalLargerThanTheAdapter_stopsAtTheLastCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, FOUR_CELLS),
+                        NO_CELL_SPACING,
+                        MORE_CELLS_THAN_THE_ADAPTER_HAS,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewPagerGesture_withAnIntervalOfZero_advancesAWholeViewport() {
+        final Pager pager = equalCellPager(VIEWPORT_PAGING, NOT_CIRCULAR);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.startOf(2)).isEqualTo(-SMALL_CELL_SIZE);
+    }
+
+    @Test
+    public void viewPagerGesture_withANegativeInterval_advancesAWholeViewport() {
+        final Pager pager = equalCellPager(NEGATIVE_INTERVAL, NOT_CIRCULAR);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withCellsThatDoNotDivideTheViewport_leavesThePartialCellBehind() {
+        final Pager pager =
+                new Pager(
+                        TWO_AND_A_HALF_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-TWO_CELLS * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(2)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.startOf(1)).isEqualTo(-SMALL_CELL_SIZE);
+    }
+
+    @Test
+    public void viewportPaging_withCellsOfUnequalSize_advancesEveryCellThatFitsWhole() {
+        final int[] cellSizes = new int[] {50, 75, 100, 125, 150, 175, 200, 225, 250, 275};
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        cellSizes,
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-UNEQUAL_CELLS_THAT_FIT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withACellLargerThanTheViewport_advancesThatOneCell() {
+        final Pager pager =
+                new Pager(
+                        SMALL_VIEWPORT,
+                        equalSizes(LARGE_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-LARGE_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withCellSpacing_countsTheSpacingThatComesWithEachCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-TWO_CELLS * (SMALL_CELL_SIZE + CELL_SPACING));
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(2)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.startOf(3)).isEqualTo(SMALL_CELL_SIZE + CELL_SPACING);
+    }
+
+    @Test
+    public void viewportPaging_atTheFirstCellWithoutCircularScroll_staysOnTheFirstCell() {
+        final Pager pager = equalCellPager(VIEWPORT_PAGING, NOT_CIRCULAR);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(0);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withAPartialPageLeftAtTheEnd_advancesOnlyAsFarAsTheLastCell() {
+        final Pager pager = fiveCellPager();
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(LAST_OF_FIVE_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_atTheLastCellWithoutCircularScroll_asksForNoMovement() {
+        final Pager pager = fiveCellPager();
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(LAST_OF_FIVE_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewportPaging_back_returnsTheViewportItCameForwardOver() {
+        final Pager pager = equalCellPager(VIEWPORT_PAGING, NOT_CIRCULAR);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(6)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(THREE_CELL_VIEWPORT);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_pastTheAdapterEndWithCircularScroll_stillAdvancesAWholeViewport() {
+        final Pager pager = fourCellCircularPager();
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(LAST_OF_FOUR_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_backFromTheFirstCellWithCircularScroll_wrapsRoundToTheLastCells() {
+        final Pager pager = fourCellCircularPager();
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(THREE_CELL_VIEWPORT);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withViewportPadding_fitsTheCellsInsideThePaddingOnly() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start,
+                        VIEWPORT_PADDING,
+                        HORIZONTAL);
+
+        assertThat(pager.startOf(0)).isEqualTo(VIEWPORT_PADDING);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-TWO_CELLS * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(2)).isEqualTo(VIEWPORT_PADDING);
+    }
+
+    @Test
+    public void viewportPaging_inAVerticalList_advancesAWholeViewport() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start,
+                        NO_VIEWPORT_PADDING,
+                        VERTICAL);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewportPaging_withACentreSnapPosition_advancesOnlyTheCellsFullyVisible() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.center);
+
+        assertThat(pager.startOf(0)).isEqualTo(THE_CENTRE_SNAP_POSITION);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-CELLS_FULLY_VISIBLE_FROM_A_CENTRED_ANCHOR * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(CELLS_FULLY_VISIBLE_FROM_A_CENTRED_ANCHOR))
+                .isEqualTo(THE_CENTRE_SNAP_POSITION);
+    }
+
+    @Test
+    public void viewportPaging_withAnEndSnapPosition_advancesOnlyTheCellsFullyVisible() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.end);
+
+        assertThat(pager.startOf(0)).isEqualTo(THE_END_SNAP_POSITION);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-CELLS_FULLY_VISIBLE_FROM_AN_END_ANCHOR * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(CELLS_FULLY_VISIBLE_FROM_AN_END_ANCHOR))
+                .isEqualTo(THE_END_SNAP_POSITION);
+    }
+
+    @Test
+    public void viewportPaging_fromARestPartWayThroughACell_leavesNoCellUnshown() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.onScreen);
+
+        pager.startGesture();
+        pager.dragBy(A_REST_PART_WAY_THROUGH_A_CELL);
+
+        assertThat(pager.startOf(0)).isEqualTo(A_REST_PART_WAY_THROUGH_A_CELL);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-TWO_CELLS * SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(SMALL_CELL_SIZE + A_REST_PART_WAY_THROUGH_A_CELL);
+    }
+
+    @Test
+    public void viewportPaging_backOverCellsNoLongerDrawn_extrapolatesTheFirstDrawnCellSize() {
+        final int[] cellSizes = new int[] {50, 75, 100, 125, 150, 175, 200, 225, 250, 275};
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        cellSizes,
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.startOf(0)).isEqualTo(NOT_DRAWN);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(UNEQUAL_CELLS_EXTRAPOLATED_BACK);
+    }
+
+    @Test
+    public void viewportPaging_withAnOnScreenSnapPosition_advancesAWholeViewport() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        VIEWPORT_PAGING,
+                        NOT_CIRCULAR,
+                        SnapPosition.onScreen);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-THREE_CELL_VIEWPORT);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withACentreSnapPosition_advancesOneCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.center);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(SMALL_CELL_SIZE);
+    }
+
+    @Test
+    public void viewPagerGesture_withAnOnScreenSnapPosition_advancesOneCell() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.onScreen);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(SMALL_CELL_SIZE);
+
+        pager.page(Move.back);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void viewPagerGesture_withAnEnormousIntervalAtTheLastCell_asksForNoMovement() {
+        final Pager pager = equalCellPager(ENORMOUS_INTERVAL, NOT_CIRCULAR);
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(TEN_CELLS - 1)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewPagerGesture_withAHugeIntervalAndCircularScroll_stillPagesForward() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        CELL_SPACING,
+                        HUGE_INTERVAL,
+                        CIRCULAR,
+                        SnapPosition.start);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isLessThan(0);
+        assertThat(pager.pageDistance(Move.back)).isGreaterThan(0);
+    }
+
+    @Test
+    public void
+            viewPagerGesture_withViewportPaddingAndAStartSnap_advancesOneCellInsideThePadding() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.start,
+                        VIEWPORT_PADDING,
+                        HORIZONTAL);
+
+        assertThat(pager.startOf(0)).isEqualTo(VIEWPORT_PADDING);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(VIEWPORT_PADDING);
+    }
+
+    @Test
+    public void viewPagerGesture_withViewportPaddingAndACentreSnap_centresInsideThePadding() {
+        final Pager pager =
+                new Pager(
+                        THREE_CELL_VIEWPORT,
+                        equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                        NO_CELL_SPACING,
+                        ONE_CELL_PER_GESTURE,
+                        NOT_CIRCULAR,
+                        SnapPosition.center,
+                        VIEWPORT_PADDING,
+                        HORIZONTAL);
+
+        final int sizeInsidePadding = THREE_CELL_VIEWPORT - VIEWPORT_PADDING - VIEWPORT_PADDING;
+        final int centredStart = VIEWPORT_PADDING + (sizeInsidePadding - SMALL_CELL_SIZE) / 2;
+
+        pager.startGesture();
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(1)).isEqualTo(centredStart);
+    }
+
+    /**
+     * A gesture whose very first frame is held by the bounds must not count the movement it was
+     * denied. The distance a page asks for is measured from where the gesture started, so a first
+     * frame that carried a drag the start of the list refused used to leave that drag in the
+     * running total, and the page that followed was short by it in one direction and long by it in
+     * the other. Whether a gesture's first frame carries a drag at all depends on whether a touch
+     * move and an animation frame land in the same pass, which is why this only ever showed up on a
+     * device.
+     */
+    @Test
+    public void aGestureWhoseFirstFrameIsHeldAtTheStart_doesNotCountTheHeldMovementAsTravelled() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGestureWith(SMALL_CELL_SIZE);
+
+        assertThat(pager.startOf(0)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(0);
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+    }
+
+    /**
+     * The other end of the same clamp. The end of the list is held by a different method with a
+     * different limit than the start, so it needs its own case: a forward gesture there answered
+     * with the negative of the drag it was denied, moving the content backwards.
+     */
+    @Test
+    public void aGestureWhoseFirstFrameIsHeldAtTheEnd_doesNotCountTheHeldMovementAsTravelled() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+        for (int page = 0; page < LAST_OF_TEN_CELLS; page++) {
+            pager.startGesture();
+            pager.page(Move.forward);
+        }
+        assertThat(pager.startOf(LAST_OF_TEN_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGestureWith(-SMALL_CELL_SIZE);
+
+        assertThat(pager.startOf(LAST_OF_TEN_CELLS)).isEqualTo(START_OF_THE_VIEWPORT);
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(0);
+        assertThat(pager.pageDistance(Move.back)).isEqualTo(SMALL_CELL_SIZE);
+    }
+
+    private static Pager equalCellPager(final int viewPagerInterval, final boolean isCircular) {
+        return new Pager(
+                THREE_CELL_VIEWPORT,
+                equalSizes(SMALL_CELL_SIZE, TEN_CELLS),
+                NO_CELL_SPACING,
+                viewPagerInterval,
+                isCircular,
+                SnapPosition.start);
+    }
+
+    private static Pager fiveCellPager() {
+        return new Pager(
+                THREE_CELL_VIEWPORT,
+                equalSizes(SMALL_CELL_SIZE, FIVE_CELLS),
+                NO_CELL_SPACING,
+                VIEWPORT_PAGING,
+                NOT_CIRCULAR,
+                SnapPosition.start);
+    }
+
+    private static Pager fourCellCircularPager() {
+        return new Pager(
+                THREE_CELL_VIEWPORT,
+                equalSizes(SMALL_CELL_SIZE, FOUR_CELLS),
+                NO_CELL_SPACING,
+                VIEWPORT_PAGING,
+                CIRCULAR,
+                SnapPosition.start);
+    }
+
+    private static int[] equalSizes(final int cellSize, final int cellCount) {
+        final int[] sizes = new int[cellCount];
+        for (int index = 0; index < cellCount; index++) {
+            sizes[index] = cellSize;
+        }
+        return sizes;
+    }
+
     private void doLayout() {
         doLayout(new Animation());
     }
@@ -121,7 +975,116 @@ public class ViewPagerTest {
         mViewGroup.layout(0, 0, viewGroupSize, viewGroupSize);
     }
 
-    public class MyViewGroup extends LinearLayout implements AdapterViewHandler {
+    private static final class Pager {
+        private final MyViewGroup mPagerViewGroup;
+        private final ListLayoutManager mPagerLayoutManager;
+        private final Animation mPagerAnimation = new Animation();
+        private final int mViewportSize;
+        private final boolean mIsVertical;
+
+        private Pager(
+                final int viewportSize,
+                final int[] cellSizes,
+                final int cellSpacing,
+                final int viewPagerInterval,
+                final boolean isCircularScroll,
+                final SnapPosition snapPosition) {
+            this(
+                    viewportSize,
+                    cellSizes,
+                    cellSpacing,
+                    viewPagerInterval,
+                    isCircularScroll,
+                    snapPosition,
+                    NO_VIEWPORT_PADDING,
+                    HORIZONTAL);
+        }
+
+        private Pager(
+                final int viewportSize,
+                final int[] cellSizes,
+                final int cellSpacing,
+                final int viewPagerInterval,
+                final boolean isCircularScroll,
+                final SnapPosition snapPosition,
+                final int viewportPadding,
+                final boolean isVertical) {
+            mViewportSize = viewportSize;
+            mIsVertical = isVertical;
+            mPagerViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
+            final AdapterViewManager pagerAdapterViewManager = new AdapterViewManager();
+            final LayoutManagerAttributes pagerAttributes =
+                    new LayoutManagerAttributes(
+                            isCircularScroll,
+                            false,
+                            true,
+                            viewPagerInterval,
+                            snapPosition,
+                            cellSpacing,
+                            false,
+                            false,
+                            isVertical);
+            mPagerLayoutManager =
+                    new ListLayoutManager(
+                            mPagerViewGroup, null, pagerAdapterViewManager, pagerAttributes);
+            pagerAdapterViewManager.setAdapter(new TestAdapter(cellSizes));
+
+            mPagerViewGroup.setPadding(
+                    viewportPadding, viewportPadding, viewportPadding, viewportPadding);
+            final int measureSpec =
+                    View.MeasureSpec.makeMeasureSpec(viewportSize, View.MeasureSpec.EXACTLY);
+            mPagerViewGroup.measure(measureSpec, measureSpec);
+            mPagerViewGroup.layout(0, 0, viewportSize, viewportSize);
+
+            layout();
+        }
+
+        private void layout() {
+            mPagerLayoutManager.layout(
+                    mPagerViewGroup, mPagerAnimation, 0, 0, mViewportSize, mViewportSize);
+        }
+
+        private void startGesture() {
+            mPagerAnimation.newAnimation();
+            layout();
+        }
+
+        /** Starts a gesture whose first frame already carries a drag, as one on a device can. */
+        private void startGestureWith(final int displacement) {
+            mPagerAnimation.newAnimation();
+            mPagerAnimation.setDisplacement(displacement);
+            layout();
+        }
+
+        private void dragBy(final int displacement) {
+            mPagerAnimation.setDisplacement(displacement);
+            layout();
+        }
+
+        private int pageDistance(final Move move) {
+            return mPagerLayoutManager.getViewPagerScrollDistance(move);
+        }
+
+        private void page(final Move move) {
+            dragBy(pageDistance(move));
+        }
+
+        private int startOf(final int adapterPosition) {
+            for (final View view : mPagerViewGroup.mViews) {
+                final Object tag = view.getTag();
+                final boolean isTheWantedView = tag.equals(Integer.valueOf(adapterPosition));
+                if (isTheWantedView) return startOfView(view);
+            }
+            return NOT_DRAWN;
+        }
+
+        private int startOfView(final View view) {
+            if (mIsVertical) return view.getTop();
+            return view.getLeft();
+        }
+    }
+
+    public static class MyViewGroup extends LinearLayout implements AdapterViewHandler {
         public final List<View> mViews = new ArrayList<View>();
 
         public MyViewGroup(Context context) {
@@ -129,14 +1092,7 @@ public class ViewPagerTest {
         }
 
         public View forPosition(int position) {
-            Collections.sort(
-                    mViews,
-                    new Comparator<View>() {
-                        @Override
-                        public int compare(View lhs, View rhs) {
-                            return lhs.getLeft() - rhs.getLeft();
-                        }
-                    });
+            Collections.sort(mViews, new LeftToRightComparator());
 
             return mViews.get(position);
         }
@@ -154,12 +1110,27 @@ public class ViewPagerTest {
         }
     }
 
-    public class TestAdapter extends BaseAdapter {
+    private static final class LeftToRightComparator implements Comparator<View> {
+        @Override
+        public int compare(final View lhs, final View rhs) {
+            return lhs.getLeft() - rhs.getLeft();
+        }
+    }
+
+    public static class TestAdapter extends BaseAdapter {
+        private final int[] mCellSizes;
+        private final int mViewSize;
         private int mAdapterSize;
-        private int mViewSize;
 
         public TestAdapter(int viewSize) {
             mViewSize = viewSize;
+            mCellSizes = null;
+        }
+
+        private TestAdapter(final int[] cellSizes) {
+            mCellSizes = cellSizes;
+            mViewSize = 0;
+            mAdapterSize = cellSizes.length;
         }
 
         public void setAdapterSize(final int adapterSize) {
@@ -182,15 +1153,21 @@ public class ViewPagerTest {
             return position;
         }
 
+        private int getViewSize(final int position) {
+            if (mCellSizes == null) return mViewSize;
+            return mCellSizes[position];
+        }
+
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
+            final int viewSize = getViewSize(position);
             FrameLayout outer = new FrameLayout(ApplicationProvider.getApplicationContext());
             outer.setTag(position);
-            outer.setLayoutParams(new android.view.ViewGroup.LayoutParams(mViewSize, mViewSize));
+            outer.setLayoutParams(new android.view.ViewGroup.LayoutParams(viewSize, viewSize));
 
             // TODO: necessary to have an outer and an inner?
             final FrameLayout inner = new FrameLayout(ApplicationProvider.getApplicationContext());
-            inner.setLayoutParams(new android.view.ViewGroup.LayoutParams(mViewSize, mViewSize));
+            inner.setLayoutParams(new android.view.ViewGroup.LayoutParams(viewSize, viewSize));
             outer.addView(inner);
             return outer;
         }

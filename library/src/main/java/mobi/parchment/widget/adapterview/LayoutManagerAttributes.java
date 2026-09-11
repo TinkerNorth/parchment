@@ -7,17 +7,18 @@ public class LayoutManagerAttributes {
 
     private static class DefaultValues {
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
+        private static final int VIEW_PAGER_INTERVAL = 0;
     }
 
-    private boolean mIsCircularScroll;
-    private boolean mIsViewPager;
-    private boolean mIsVertical;
-    private int mViewPagerInterval;
-    private boolean mSnapToPosition;
-    private SnapPosition mSnapPosition;
-    private int mCellSpacing;
-    private boolean mSelectOnSnap;
-    private boolean mSelectWhileScrolling;
+    private final boolean mIsCircularScroll;
+    private final boolean mIsViewPager;
+    private final boolean mIsVertical;
+    private final int mViewPagerInterval;
+    private final boolean mSnapToPosition;
+    private final SnapPosition mSnapPosition;
+    private final int mCellSpacing;
+    private final boolean mSelectOnSnap;
+    private final boolean mSelectWhileScrolling;
 
     public LayoutManagerAttributes(
             final boolean isCircularScroll,
@@ -34,7 +35,7 @@ public class LayoutManagerAttributes {
         if (snapPosition != null) mSnapPosition = snapPosition;
         else mSnapPosition = DefaultValues.SNAP_POSITION;
 
-        mViewPagerInterval = viewPagerInterval;
+        mViewPagerInterval = Math.max(viewPagerInterval, DefaultValues.VIEW_PAGER_INTERVAL);
         mIsViewPager = isViewPager;
         mIsCircularScroll = isCircularScroll;
         mSnapToPosition = snapToPosition;

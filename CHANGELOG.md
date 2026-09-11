@@ -26,7 +26,7 @@ everything around them is new.
   byte-for-byte identical. Format, meaning, and the enum and flag values
   are unchanged, and the old names are not kept as deprecated aliases:
   2.0 is the breaking window and reading both would double the parsing
-  code. The README tables list all eleven names. Substituting your own
+  code. The README tables list them all. Substituting your own
   res-auto prefix for `parchment` below — never `android`, whose own
   `orientation` and `gravity` are a different namespace and must not be
   touched — this is the whole migration:
@@ -83,12 +83,37 @@ everything around them is new.
 - Tests: Robolectric 4.16.1, AssertJ 3.27, androidx.test 1.7; the old
   `integration` Maven module lives in `library/src/test` now.
 - Sample: targets SDK 37, Material theme, RTL-aware padding, Picasso 2.71828.
+- `parchment_isViewPager="true"` still advances a whole viewport of cells per
+  gesture by default, and it is now measured rather than summed. A page runs
+  from the cell nearest the snap position to the first cell that does not fit
+  the viewport whole, in each direction separately, so cells of different sizes
+  page by their own sizes, the landing point is a cell boundary even when the
+  gesture starts part-way through a cell, and a padded view counts only what
+  fits inside its padding. The room a page has is measured from where the
+  anchor cell settles, so `center` and `end` snapping page fewer cells than the
+  viewport would hold and no cell is skipped between pages. A cell larger than
+  the viewport is the first cell that does not fit, so it is still one page on
+  its own (fixed in 1.6.6) without a case of its own. Paging back is the mirror
+  of paging forward instead of reusing the forward distance, exactly for cells
+  still drawn and extrapolated from the first drawn cell's size for those
+  behind them.
 - Sample: the demo photo set moved from imgur to the Unsplash CDN, and each
   of the 21 photos now carries its own caption. Eighteen of them read
   "National photo contest", which made paging and snapping hard to follow
   because the caption did not change as the cell did.
 - `AbstractAdapterView` invalidates the whole view after adding or removing
   a child instead of the deprecated `invalidate(Rect)`.
+- The two ViewPager paging modes are a strategy per mode in `pageinterval/`,
+  the way snapping has been one per mode in `snapposition/`:
+  `CellCountPageInterval` and `ViewportPageInterval` behind
+  `PageIntervalInterface`, picked once from `parchment_viewPagerInterval` by
+  `PageIntervalSelector` and held on `LayoutManager`. They had been methods
+  on `LayoutManager` with no access modifier so that unit tests in the same
+  package could reach them. Every remaining declaration in the library was
+  given an explicit `public`, `protected` or `private` at the same time, and
+  the unused `Animation.setId` was deleted rather than widened; none of them
+  was reachable from outside its package before, so no consumer loses a call.
+  Paging behaviour is unchanged.
 
 ### Added
 
@@ -97,7 +122,15 @@ everything around them is new.
   an exact pixel size, drives real measure and layout passes, dispatches
   real gestures, and hands a test an immutable snapshot of where the
   children landed. All eleven `parchment_` attributes are covered by
-  on-device tests built on it, asserting geometry rather than getters.
+  on-device tests built on it, asserting geometry rather than getters, as is
+  paging in both modes: a real fling and a real slow drag each page by the
+  cells that fit the viewport, or by `parchment_viewPagerInterval` cells, with
+  several cells on screen, with cells that do not divide the viewport, with
+  cells of unequal size, with a cell taller than the viewport, from a resting
+  position part-way through a cell, inside `android:padding`, in both
+  orientations, at both ends of the adapter, wrapping with
+  `parchment_isCircularScroll`, and on `GridView` and `GridPatternView` where
+  a cell is a whole group.
 - Spotless (google-java-format, AOSP style) with SPDX license headers on
   every Java file; `javac -Xlint:all -Werror`; Android Lint with warnings
   as errors and no baseline.
@@ -105,6 +138,19 @@ everything around them is new.
   instrumented tests (`android-ci.yml`), security gates (`security.yml`:
   action-pin lint, allowlist expiry, OSV-Scanner, dependency review,
   gitleaks), and CodeQL (`codeql.yml`). Dependabot for Gradle and Actions.
+- `parchment_viewPagerInterval`, on all three views, for how far one ViewPager
+  gesture pages. It carries an integer plus a named constant the way
+  `layout_width` carries a dimension plus `match_parent`: `viewport`, or the
+  literal `0`, or leaving the attribute out, keeps the viewport paging
+  Parchment has always done, while `N` advances exactly N cells from the cell
+  nearest the snap position, which is the carousel issue #26 asked for. Zero
+  is both the default and the value an absent attribute already yields, so
+  unset and `viewport` are one state and upgrading changes nothing until the
+  attribute is set. A negative interval is not a number of cells — it would
+  page backwards when the finger went forwards — so it is read as `viewport`
+  too. The attribute was named in `LayoutManagerAttributes` since 2014 and
+  carried as far as the layout manager, but nothing ever declared it in XML
+  or assigned it, so it always arrived as 0.
 - An instrumented smoke test that inflates a `ListView` from XML on a real
   framework.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
@@ -113,6 +159,17 @@ everything around them is new.
 
 ### Fixed
 
+- A gesture whose first frame is held by the start or the end of the list no
+  longer counts the movement it was denied. The layout pass folded the
+  clamp's correction back into the distance a gesture has travelled only
+  while an animation continued, never on the frame that began it, so a first
+  frame carrying a drag the bounds refused left that drag in the running
+  total. In ViewPager mode the page that followed was then short by it in one
+  direction and long by it in the other: a backward swipe at the first cell
+  crept forward by the first frame's drag instead of holding still. Whether a
+  gesture's first frame carries a drag at all depends on whether a touch move
+  and an animation frame land in the same pass, which made it intermittent
+  and invisible to a unit test that drives layout by hand.
 - A fling, page, or programmatic scroll that ends hands off to its snap in
   the same frame, after that frame's layout. The snap used to start one frame
   later and was started twice, which left a frame with no motion at the

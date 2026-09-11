@@ -6,6 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     parchment:parchment_orientation="vertical"
-    parchment:parchment_snapPosition="start"
     parchment:parchment_isViewPager="true"
-    parchment:parchment_viewPagerInterval="1" />
+    parchment:parchment_isCircularScroll="true"
+    parchment:parchment_viewPagerInterval="viewport" />

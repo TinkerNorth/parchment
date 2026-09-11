@@ -11,6 +11,9 @@
         <attr name="parchment_snapToPosition" format="boolean"/>
         <attr name="parchment_selectOnSnap" format="boolean"/>
         <attr name="parchment_isViewPager" format="boolean"/>
+        <attr name="parchment_viewPagerInterval" format="integer">
+            <enum name="viewport" value="0"/>
+        </attr>
         <attr name="parchment_snapPosition" format="enum">
             <enum name="center" value="0"/>
             <enum name="start" value="1"/>

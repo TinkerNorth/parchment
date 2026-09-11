@@ -8,4 +8,4 @@
     parchment:parchment_orientation="vertical"
     parchment:parchment_snapPosition="start"
     parchment:parchment_isViewPager="true"
-    parchment:parchment_viewPagerInterval="1" />
+    parchment:parchment_viewPagerInterval="2" />

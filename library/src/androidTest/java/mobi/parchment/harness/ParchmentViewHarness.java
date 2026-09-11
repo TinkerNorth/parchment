@@ -30,6 +30,7 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
     private static final int MINIMUM_SETTLE_MILLISECONDS = 250;
     private static final int SLOP_CROSSINGS_IN_THE_FIRST_MOVE = 2;
     private static final int FIRST_STEP = 1;
+    private static final int ONE_STEP = 1;
     private static final float WHOLE_GESTURE = 1f;
     private static final int FRAME_MILLISECONDS = 16;
     private static final int NO_META_STATE = 0;
@@ -123,6 +124,13 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
      * Dispatches one touch event per main-thread pass, waiting a frame between them. The waiting is
      * the point: Parchment applies a scroll on the animation frame that follows it, so a gesture
      * delivered without frames in between never reaches a layout pass.
+     *
+     * <p>The moves stop one step short of the target and the event that ends the gesture carries
+     * the last of the travel, so the final stretch of the gesture is still moving when the finger
+     * leaves. A move that already sat on the target followed by a lift at the same place gives the
+     * platform detector a stationary frame to end on, and the velocity it derives from that is too
+     * near zero to have a reliable sign: the same upward gesture was read as a fling one way from a
+     * cell boundary and the other way from a resting position part-way through a cell.
      */
     private void performGesture(
             final int fromX,
@@ -132,10 +140,11 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
             final int steps,
             final int holdSteps) {
         final float firstProgress = firstMoveProgress(fromX, fromY, toX, toY, steps);
+        final int movesBeforeTheLastEvent = Math.max(FIRST_STEP, steps - ONE_STEP);
         final long downTime = SystemClock.uptimeMillis();
         long eventTime = downTime;
         dispatch(downTime, eventTime, MotionEvent.ACTION_DOWN, fromX, fromY);
-        for (int step = FIRST_STEP; step <= steps; step++) {
+        for (int step = FIRST_STEP; step <= movesBeforeTheLastEvent; step++) {
             sleepOneFrame();
             eventTime = eventTime + FRAME_MILLISECONDS;
             final float progress = progressAt(step, steps, firstProgress);
@@ -186,7 +195,12 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         return firstProgress + remaining * (stepsTaken / stepsAfterTheFirst);
     }
 
-    private int touchSlop() {
+    /**
+     * The platform touch slop for this view, so a test that depends on a gesture shorter than one
+     * cell can state the premise its numbers rest on rather than failing obscurely on a device with
+     * a different density.
+     */
+    public int touchSlop() {
         final ReadTouchSlop<VIEW> readTouchSlop = new ReadTouchSlop<>(mView);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(readTouchSlop);
         return readTouchSlop.touchSlop();

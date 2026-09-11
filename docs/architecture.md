@@ -80,7 +80,7 @@ The `Cell` type parameter is what differs between the three views:
 |---|---|---|
 | `ListView` | `View` | the view's measured size along the scroll axis |
 | `GridView` | `Group` | `parchment_numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `parchment_gravity` places the rest |
-| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(left, top, width, height)` in grid units; `parchment_ratio` fixes the unit's aspect |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units; `parchment_ratio` fixes the unit's aspect |
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
@@ -92,9 +92,9 @@ a plain list (`GridPatternLayoutManagerNoDefinitionTest`).
 `snapposition/` holds one strategy per `parchment_snapPosition` value. Each answers
 two questions for a cell: where it should sit when snapped, and how far
 the content must move to get it there. `LayoutManager` picks the strategy
-once from the attributes; `onScreen` is the default for a view inflated
-from XML, `center` for one built in Java, and neither moves content on
-its own.
+once from the attributes and holds it as `mSnapPositionInterface`;
+`onScreen` is the default for a view inflated from XML, `center` for one
+built in Java, and neither moves content on its own.
 
 With `parchment_snapToPosition` on, a fling is retargeted when it starts:
 `LayoutManager.getFlingSnapAdjustment` takes the distance the fling would
@@ -117,9 +117,82 @@ positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
 ## ViewPager mode
 
 `parchment_isViewPager` changes the gesture interpretation, not the layout: a
-completed gesture advances exactly one cell in the fling direction
-(`AdapterAnimator` with the `mViewPageDistance`), and the snap position is
-forced to `start` so pages align. It composes with `parchment_isCircularScroll`.
+completed gesture advances one page in the fling direction, however far the
+finger travelled. `parchment_viewPagerInterval` says what a page is. Zero, the
+value an absent attribute already yields and the name `viewport` also resolves
+to, pages by the run of cells that fit the viewport whole; a positive N pages
+by exactly N cells.
+
+`AdapterAnimator.onFling` asks `LayoutManagerBridge` for the distance instead
+of handing the velocity to the scroller. What the scroller is handed is that
+distance *minus* how far the gesture has already dragged the content, so the
+finger and the animation together move exactly one page from where the gesture
+started. That running total counts only movement the bounds actually allowed:
+a frame the over-draw clamp refuses adds nothing to it, or a gesture held at
+either end of the list would answer with the drag it was denied.
+
+`LayoutManager` measures that distance in `layout`, only when
+`parchment_isViewPager` is on, whenever a new animation id arrives and before
+that frame's displacement is applied. A new id arrives when a gesture starts
+and again on every layout taken while the view is at rest, so the distance is
+always the one measured from the layout the gesture started from. It takes the
+cell nearest the snap position as the anchor, and the distance is the gap
+between the anchor's snapped start and the start of the cell the page lands
+on, in each direction separately (`mViewPageDistanceForward` and
+`mViewPageDistanceBack`). Measuring from starts rather than summing sizes is
+what makes cells of different sizes page correctly and puts the landing point
+on a cell boundary even when the gesture starts part-way through a cell.
+
+Only the choice of landing cell differs between the two modes, so that choice is
+all that a mode is. `pageinterval/` holds one strategy per mode, as
+`snapposition/` holds one per snap position: `PageIntervalInterface` asks for the
+cell index a page lands on in each direction, `CellCountPageInterval` answers it
+by counting and `ViewportPageInterval` by walking the viewport.
+`LayoutManager`'s constructor reads `parchment_viewPagerInterval` once, hands the
+value to `PageIntervalSelector` to pick between the two, and keeps the answer as
+`mPageIntervalInterface`. Nothing can set the interval afterwards, so choosing
+once gives the same answer the old per-call branch gave. That selection is a small
+public factory rather than the private switch `snapposition/` uses, which is the
+one place the two packages differ: it lets the tests exercise the real choice
+instead of a copy of it.
+
+`ViewportPageInterval` takes the anchor and the room a page has as parameters and
+calls back into `LayoutManager` for the drawn cells and the cell spacing, the way
+the snap strategies call back into it. `CellCountPageInterval` needs only the
+interval it was built with and touches no cell. Neither is consulted per frame:
+`setViewPageDistances` runs when a new animation id arrives, once per gesture.
+
+`CellCountPageInterval` takes the cell `N` along from the anchor.
+`ViewportPageInterval` walks out from the anchor while the next cell still fits
+entirely inside the viewport, and lands on the first one that does not; a cell
+larger than the viewport is simply the first cell that does not fit, which is
+why it stays one cell per gesture without a special case. The walk mirrors
+backwards, so a page back covers the run of cells that would fill one viewport
+ending at the anchor. A page always advances at least one cell.
+
+The room a page has is `maximumPageSize`: the distance from where the anchor
+will sit once snapped to the end of the size inside the padding, not the whole
+of that size. The two are the same only when the anchor snaps to the start
+edge. With `center` or `end`, or with `onScreen` resting part-way through a
+cell, the anchor sits further in and less of the viewport is left for the page,
+so measuring against the whole size would count a cell that is only partly
+visible and skip it for good.
+
+Cells past the ends of the visible run are extrapolated from the edge cell's
+size plus spacing and capped at the adapter's ends, the same way
+`getFlingSnapAdjustment` extrapolates, so a gesture at the last cell asks for
+no movement rather than running off the end. Circular scrolling lifts that cap
+and the positions wrap, which is also why the cap is not what ends the walk:
+the walk stops when the page no longer fits, and the guard that the next index
+names a further cell is what stops it when the cap, a zero cell size or a
+negative `parchment_cellSpacing` leaves the start where it was. Because the
+extrapolation knows only the edge cell's size, a page back over cells that are
+no longer drawn is exact only while those cells match it.
+
+The snap position is *not* forced: `parchment_snapPosition` applies as it does
+everywhere else (`onScreen` for a view inflated from XML), and the anchor is
+found through the same `SnapPositionInterface` the snaps use, so paging works
+from wherever a cell rests. It composes with `parchment_isCircularScroll`.
 
 ## Touch
 
@@ -144,4 +217,4 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
-| Why does the ViewPager page twice? | `AdapterAnimator` + `ViewPagerTest` |
+| Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |

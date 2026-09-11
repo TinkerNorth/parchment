@@ -8,6 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -43,6 +44,12 @@ public class HorizontalListViewTest {
     private static final float TEST_RATIO = 1.5f;
     private static final float DEFAULT_CELL_SPACING = 0f;
     private static final int DEFAULT_VIEWS_PER_CELL = 1;
+    private static final int TEST_VIEW_PAGER_INTERVAL = 3;
+    private static final int VIEWPORT_VIEW_PAGER_INTERVAL = 0;
+    private static final int ONE_CELL_VIEW_PAGER_INTERVAL = 1;
+    private static final int NO_SUCH_INTERVAL = Integer.MIN_VALUE;
+    private static final int TEST_GRID_VIEW_PAGER_INTERVAL = 4;
+    private static final int TEST_GRID_PATTERN_VIEW_PAGER_INTERVAL = 2;
     private static final float DEFAULT_RATIO = 1.0f;
     private static final int NO_ID_RESOURCE = 0;
     private static final String ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android";
@@ -163,6 +170,7 @@ public class HorizontalListViewTest {
                         "parchment_snapToPosition",
                         "parchment_selectOnSnap",
                         "parchment_isViewPager",
+                        "parchment_viewPagerInterval",
                         "parchment_snapPosition",
                         "parchment_selectWhileScrolling",
                         "parchment_numberOfViewsPerCell",
@@ -184,6 +192,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.isSnapToPosition()).isTrue();
         assertThat(attributes.selectOnSnap()).isTrue();
         assertThat(attributes.isViewPager()).isTrue();
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(TEST_VIEW_PAGER_INTERVAL);
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.end);
         assertThat(attributes.selectWhileScrolling()).isTrue();
     }
@@ -248,6 +257,87 @@ public class HorizontalListViewTest {
     }
 
     @Test
+    public void viewPagerIntervalOfZeroInXml_isReadAsViewportPaging() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_zero);
+
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void theViewportConstantInXml_resolvesToZeroBeforeAnyClampSeesIt() {
+        final int rawInterval =
+                rawViewPagerIntervalFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_viewport);
+
+        assertThat(rawInterval).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void anAbsentViewPagerIntervalInXml_isNotPresentInTheTypedArrayAtAll() {
+        final int rawInterval =
+                rawViewPagerIntervalFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_no_interval);
+
+        assertThat(rawInterval).isEqualTo(NO_SUCH_INTERVAL);
+    }
+
+    @Test
+    public void theViewportConstantInXml_readsAsTheSameValueAsALiteralZero() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_viewport);
+
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void aViewPagerIntervalOfOneInXml_survivesTheClampAsOne() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_one);
+
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(ONE_CELL_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void aNegativeViewPagerIntervalInXml_isReadAsViewportPaging() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_negative);
+
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void viewPagerIntervalSetInXml_reachesTheGridAttributesGetter() {
+        final GridAttributes gridAttributes =
+                gridAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_grid_view);
+
+        assertThat(gridAttributes.getViewPagerInterval()).isEqualTo(TEST_GRID_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
+    public void viewPagerIntervalSetInXml_reachesTheGridPatternAttributesGetter() {
+        final GridPatternAttributes gridPatternAttributes =
+                gridPatternAttributesFrom(
+                        R.layout.attribute_parsing_view_pager_intervals,
+                        R.id.view_pager_interval_grid_pattern_view);
+
+        assertThat(gridPatternAttributes.getViewPagerInterval())
+                .isEqualTo(TEST_GRID_PATTERN_VIEW_PAGER_INTERVAL);
+    }
+
+    @Test
     public void gridPatternViewRatioSetInXml_reachesTheRatioGetter() {
         final GridPatternAttributes gridPatternAttributes =
                 gridPatternAttributesFrom(
@@ -270,6 +360,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.isSnapToPosition()).isFalse();
         assertThat(attributes.selectOnSnap()).isFalse();
         assertThat(attributes.isViewPager()).isFalse();
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.onScreen);
     }
@@ -285,6 +376,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.isSnapToPosition()).isFalse();
         assertThat(attributes.selectOnSnap()).isFalse();
         assertThat(attributes.isViewPager()).isFalse();
+        assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.center);
     }
@@ -354,6 +446,27 @@ public class HorizontalListViewTest {
         try {
             final AttributeSet attributeSet = advanceToTagWithId(parser, idResource);
             return new Attributes(context, attributeSet);
+        } finally {
+            parser.close();
+        }
+    }
+
+    private static int rawViewPagerIntervalFrom(final int layoutId, final int idResource) {
+        final Context context = RuntimeEnvironment.getApplication();
+        final XmlResourceParser parser = context.getResources().getLayout(layoutId);
+        try {
+            final AttributeSet attributeSet = advanceToTagWithId(parser, idResource);
+            final TypedArray typedArray =
+                    context.getTheme()
+                            .obtainStyledAttributes(
+                                    attributeSet, mobi.parchment.R.styleable.ListView, 0, 0);
+            try {
+                return typedArray.getInteger(
+                        mobi.parchment.R.styleable.ListView_parchment_viewPagerInterval,
+                        NO_SUCH_INTERVAL);
+            } finally {
+                typedArray.recycle();
+            }
         } finally {
             parser.close();
         }

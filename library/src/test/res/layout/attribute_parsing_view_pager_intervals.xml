@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:parchment="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_interval_zero"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="0"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_interval_viewport"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="viewport"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_interval_negative"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="-2"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_interval_one"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="1"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_interval_two"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="2"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/view_pager_no_interval"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_orientation="horizontal"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_isViewPager="true"/>
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/view_pager_interval_grid_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="4"/>
+
+    <mobi.parchment.widget.adapterview.gridpatternview.GridPatternView
+            android:id="@+id/view_pager_interval_grid_pattern_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_isViewPager="true"
+            parchment:parchment_viewPagerInterval="2"/>
+</LinearLayout>

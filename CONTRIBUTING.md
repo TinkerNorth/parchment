@@ -96,6 +96,26 @@ a gate.
   not `if (cellStart + getCellSize(cell) < 0)`. The names are the
   documentation; the debugger can show each value; and a test can pin each
   step.
+- **One method, one flow.** When a method would hold two algorithms chosen
+  by a condition, the condition dispatches to two named things that each do
+  one thing -- two methods, or two strategies that each hold one algorithm --
+  and the dispatcher does nothing else:
+
+  ```java
+  public static <Cell> PageIntervalInterface<Cell> getPageIntervalInterface(
+          final int viewPagerInterval) {
+      if (pagesByCellCount(viewPagerInterval)) {
+          return new CellCountPageInterval<Cell>(viewPagerInterval);
+      }
+      return new ViewportPageInterval<Cell>();
+  }
+  ```
+
+  not an early return with the second algorithm falling through underneath
+  it. The name says which algorithm it is, not which branch it came from, so
+  the dispatcher reads as a table of contents and each algorithm can be read
+  and tested on its own. A guard clause is not an algorithm: do not invent
+  indirection where there is only one flow.
 
 ### Layout engine
 
@@ -110,6 +130,11 @@ scroll frame.
 - Snap behaviour lives in `snapposition/`. A new snap mode is a new
   `SnapPositionInterface` implementation plus an enum value, not a branch
   in `LayoutManager`.
+- Paging behaviour lives in `pageinterval/`. A new way of deciding what a
+  page is is a new `PageIntervalInterface` implementation picked by
+  `PageIntervalSelector`, not a branch in `LayoutManager`. The strategy is
+  chosen once from `parchment_viewPagerInterval` and takes what it needs as
+  parameters, so none of it needs package-private access to test.
 - Circular scrolling wraps positions in the layout engine. Never leak
   wrapped positions to the adapter.
 
