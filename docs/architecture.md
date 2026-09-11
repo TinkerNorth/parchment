@@ -146,19 +146,30 @@ on a cell boundary even when the gesture starts part-way through a cell.
 Only the choice of landing cell differs between the two modes, so one place
 decides where a page ends up. Counting mode takes the cell `N` along from the
 anchor. Viewport mode walks out from the anchor while the next cell still fits
-entirely inside the size within the padding, and lands on the first one that
-does not; a cell larger than the viewport is simply the first cell that does
-not fit, which is why it stays one cell per gesture without a special case.
-The walk mirrors backwards, so a page back covers the run of cells that would
-fill one viewport ending at the anchor. A page always advances at least one
-cell.
+entirely inside the viewport, and lands on the first one that does not; a cell
+larger than the viewport is simply the first cell that does not fit, which is
+why it stays one cell per gesture without a special case. The walk mirrors
+backwards, so a page back covers the run of cells that would fill one viewport
+ending at the anchor. A page always advances at least one cell.
+
+The room a page has is `maximumPageSize`: the distance from where the anchor
+will sit once snapped to the end of the size inside the padding, not the whole
+of that size. The two are the same only when the anchor snaps to the start
+edge. With `center` or `end`, or with `onScreen` resting part-way through a
+cell, the anchor sits further in and less of the viewport is left for the page,
+so measuring against the whole size would count a cell that is only partly
+visible and skip it for good.
 
 Cells past the ends of the visible run are extrapolated from the edge cell's
 size plus spacing and capped at the adapter's ends, the same way
 `getFlingSnapAdjustment` extrapolates, so a gesture at the last cell asks for
-no movement rather than running off the end, and viewport mode's walk stops
-when the cap means the next index names the same cell again. Circular
-scrolling lifts that cap and the positions wrap.
+no movement rather than running off the end. Circular scrolling lifts that cap
+and the positions wrap, which is also why the cap is not what ends the walk:
+the walk stops when the page no longer fits, and the guard that the next index
+names a further cell is what stops it when the cap, a zero cell size or a
+negative `parchment_cellSpacing` leaves the start where it was. Because the
+extrapolation knows only the edge cell's size, a page back over cells that are
+no longer drawn is exact only while those cells match it.
 
 The snap position is *not* forced: `parchment_snapPosition` applies as it does
 everywhere else (`onScreen` for a view inflated from XML), and the anchor is

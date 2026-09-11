@@ -86,21 +86,21 @@ everything around them is new.
 - `parchment_isViewPager="true"` still advances a whole viewport of cells per
   gesture by default, and it is now measured rather than summed. A page runs
   from the cell nearest the snap position to the first cell that does not fit
-  the size inside the padding whole, in each direction separately, so cells of
-  different sizes page correctly, the landing point is a cell boundary even
-  when the gesture starts part-way through a cell, and a padded view counts
-  only what fits inside its padding. A cell larger than the viewport is
-  the first cell that does not fit, so it is still one page on its own
-  (fixed in 1.6.6) without a case of its own. Paging back is the mirror of
-  paging forward instead of reusing the forward distance.
+  the viewport whole, in each direction separately, so cells of different sizes
+  page by their own sizes, the landing point is a cell boundary even when the
+  gesture starts part-way through a cell, and a padded view counts only what
+  fits inside its padding. The room a page has is measured from where the
+  anchor cell settles, so `center` and `end` snapping page fewer cells than the
+  viewport would hold and no cell is skipped between pages. A cell larger than
+  the viewport is the first cell that does not fit, so it is still one page on
+  its own (fixed in 1.6.6) without a case of its own. Paging back is the mirror
+  of paging forward instead of reusing the forward distance, exactly for cells
+  still drawn and extrapolated from the first drawn cell's size for those
+  behind them.
 - Sample: the demo photo set moved from imgur to the Unsplash CDN, and each
   of the 21 photos now carries its own caption. Eighteen of them read
   "National photo contest", which made paging and snapping hard to follow
   because the caption did not change as the cell did.
-- Sample: the ViewPager demo no longer declares `parchment_snapPosition`.
-  It also sets `parchment_isCircularScroll`, which the layout engine answers
-  with `onScreen` whatever the attribute says, so the line was dead
-  configuration that misread as the demo snapping to the start.
 - `AbstractAdapterView` invalidates the whole view after adding or removing
   a child instead of the deprecated `invalidate(Rect)`.
 

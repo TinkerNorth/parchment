@@ -185,9 +185,10 @@ plus `match_parent`:
 
 Viewport paging adapts to the screen with no configuration: three cells on a
 tablet, one on a phone, and a cell larger than the viewport is one page on its
-own. Pages do not overlap, so every cell is shown whole exactly once per pass.
-A partial cell left at the edge is not counted, and the last page is short
-rather than running off the end.
+own. A page is the run of cells that fit the viewport whole from wherever the
+nearest cell settles, so a partial cell at the edge is not counted this page
+and is the first cell of the next one. The last page is short rather than
+running off the end.
 
 An interval of `N` ignores what fits and advances N cells from the cell nearest
 the snap position, measured from each cell's own start, so cells of different
