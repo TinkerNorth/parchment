@@ -42,12 +42,15 @@ public final class ViewPagerGroupCellInstrumentedTest {
     private static final int GRID_ITEM_COUNT = 30;
     private static final int FIRST_ITEM_OF_THE_SECOND_ROW = VIEWS_PER_ROW;
     private static final int FIRST_ITEM_OF_THE_THIRD_ROW = VIEWS_PER_ROW * 2;
+    private static final int FIRST_ITEM_OF_THE_FOURTH_ROW = VIEWS_PER_ROW * 3;
 
     private static final int PATTERN_VIEWPORT_WIDTH = 600;
     private static final int UNITS_ACROSS = 3;
     private static final int UNIT_SIZE = PATTERN_VIEWPORT_WIDTH / UNITS_ACROSS;
     private static final int PATTERN_ITEM_COUNT = 30;
     private static final int FIRST_ITEM_OF_THE_SECOND_GROUP = UNITS_ACROSS;
+    private static final int FIRST_ITEM_OF_THE_THIRD_GROUP = UNITS_ACROSS * 2;
+    private static final int FIRST_ITEM_OF_THE_FOURTH_GROUP = UNITS_ACROSS * 3;
 
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int SNAP_POSITION_TOP = 0;
@@ -106,6 +109,61 @@ public final class ViewPagerGroupCellInstrumentedTest {
                 after.topOfAdapterPosition(FIRST_ITEM_OF_THE_SECOND_ROW));
     }
 
+    /**
+     * With the interval left at viewport a grid pages by the rows that fit whole, which is the run
+     * of rows on screen: three 200px rows in a 600px viewport.
+     */
+    @Test
+    public void aGridViewportFling_advancesEveryWholeRowThatFits() {
+        final ParchmentViewHarness<GridView<BaseAdapter>> harness =
+                attachGrid(R.layout.instrumented_view_pager_grid_viewport);
+        final LaidOutChildren before = harness.children();
+        assertEquals(
+                "three rows should fill the viewport: " + before,
+                VIEWPORT_HEIGHT - ROW_HEIGHT,
+                before.topOfAdapterPosition(FIRST_ITEM_OF_THE_THIRD_ROW));
+
+        flingForward(harness);
+        final LaidOutChildren after = harness.settle();
+
+        assertEquals(
+                "one fling should bring the fourth row to the top: " + after,
+                SNAP_POSITION_TOP,
+                after.topOfAdapterPosition(FIRST_ITEM_OF_THE_FOURTH_ROW));
+        assertEquals(
+                "the content should have moved by three whole rows: " + after,
+                -ROW_HEIGHT,
+                after.topOfAdapterPosition(FIRST_ITEM_OF_THE_THIRD_ROW));
+    }
+
+    /**
+     * The same on a pattern view, where a cell is a whole pattern group: three one-unit groups fit
+     * the viewport, so one fling advances all three.
+     */
+    @Test
+    public void aGridPatternViewportFling_advancesEveryWholeGroupThatFits() {
+        final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness =
+                attachPattern(R.layout.instrumented_view_pager_pattern_viewport);
+        final LaidOutChildren before = harness.children();
+        assertEquals(
+                "three groups should fill the viewport: " + before,
+                VIEWPORT_HEIGHT - UNIT_SIZE,
+                before.topOfAdapterPosition(FIRST_ITEM_OF_THE_THIRD_GROUP));
+
+        harness.fling(
+                PATTERN_VIEWPORT_WIDTH / 2,
+                GESTURE_START_Y,
+                PATTERN_VIEWPORT_WIDTH / 2,
+                GESTURE_END_Y,
+                GESTURE_STEPS);
+        final LaidOutChildren after = harness.settle();
+
+        assertEquals(
+                "one fling should bring the fourth group to the top: " + after,
+                SNAP_POSITION_TOP,
+                after.topOfAdapterPosition(FIRST_ITEM_OF_THE_FOURTH_GROUP));
+    }
+
     @Test
     public void aGridPatternFling_advancesExactlyOneGroupRatherThanTheGroupsOnScreen() {
         final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness = attachPattern();
@@ -157,11 +215,16 @@ public final class ViewPagerGroupCellInstrumentedTest {
     }
 
     private ParchmentViewHarness<GridPatternView<BaseAdapter>> attachPattern() {
+        return attachPattern(R.layout.instrumented_view_pager_pattern);
+    }
+
+    private ParchmentViewHarness<GridPatternView<BaseAdapter>> attachPattern(
+            final int layoutResource) {
         final Context context = ApplicationProvider.getApplicationContext();
         final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness =
                 ParchmentViewHarness.attach(
                         mActivityRule.getScenario(),
-                        R.layout.instrumented_view_pager_pattern,
+                        layoutResource,
                         PATTERN_VIEWPORT_WIDTH,
                         VIEWPORT_HEIGHT);
         harness.apply(new AddARowOfUnitSquares());

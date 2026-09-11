@@ -25,10 +25,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Proves on a real framework that a ViewPager gesture advances exactly parchment_viewPagerInterval
- * cells, whatever else is on screen. Every cell here is a third of the viewport, so three of them
- * are visible at once: that is the arrangement issue #26 reported, where one swipe jumped three
- * cells because the page was the whole run of visible cells rather than one of them.
+ * Proves on a real framework that a ViewPager gesture with a positive parchment_viewPagerInterval
+ * advances exactly that many cells, whatever else is on screen. Every cell here is a third of the
+ * viewport, so three of them are visible at once: that is the arrangement issue #26 reported, where
+ * one swipe jumped three cells because the page was the whole run of visible cells rather than one
+ * of them. An interval of one is what that reporter wants and every layout here declares it, since
+ * the attribute left unset still means viewport paging.
+ *
+ * <p>This class also pins which attribute values select which mode. The paging geometry of viewport
+ * mode is covered by ViewPagerViewportInstrumentedTest.
  *
  * <p>The distance is measured, not counted, so these tests assert where a named adapter position
  * came to rest in pixels rather than how many children are on screen.
@@ -199,22 +204,46 @@ public final class ViewPagerIntervalInstrumentedTest {
     }
 
     /**
-     * An interval of zero would ask a gesture to advance nothing and leave the view stuck, so the
-     * attribute is read as one. This is the clamp working through a real TypedArray rather than
-     * through the attribute getters.
+     * Zero is the value an absent attribute already yields, so "unset" and "viewport" are one
+     * state: both page by the whole run of cells that fit. This is the value arriving through a
+     * real TypedArray rather than through the attribute getters.
      */
     @Test
-    public void anIntervalOfZeroInXml_isReadAsOneCell() {
+    public void anIntervalOfZeroInXml_pagesByTheWholeViewport() {
+        assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_interval_zero);
+    }
+
+    @Test
+    public void noIntervalInXml_pagesByTheWholeViewport() {
+        assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_no_interval);
+    }
+
+    /** The viewport constant is aapt2 resolving a name to the same zero a literal gives. */
+    @Test
+    public void theViewportConstantInXml_pagesByTheWholeViewport() {
+        assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_viewport);
+    }
+
+    /**
+     * A negative interval is not a number of cells, so it falls back to the default rather than
+     * paging backwards when the finger goes forwards.
+     */
+    @Test
+    public void aNegativeIntervalInXml_pagesByTheWholeViewport() {
+        assertPagesByTheWholeViewport(R.layout.instrumented_view_pager_interval_negative);
+    }
+
+    private void assertPagesByTheWholeViewport(final int layoutResource) {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
-                attachList(R.layout.instrumented_view_pager_interval_zero, ITEM_COUNT, CELL_HEIGHT);
+                attachList(layoutResource, ITEM_COUNT, CELL_HEIGHT);
 
         flingForward(harness);
         final LaidOutChildren after = harness.settle();
 
         assertEquals(
-                "an interval of zero should still advance one cell: " + after,
+                "the page should be the whole run of cells that fit: " + after,
                 SNAP_POSITION_TOP,
-                after.topOfAdapterPosition(SECOND_ITEM));
+                after.topOfAdapterPosition(CELLS_ON_SCREEN));
     }
 
     /**

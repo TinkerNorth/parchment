@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mobi.parchment.widget.adapterview.gridview.GridView
+<mobi.parchment.widget.adapterview.listview.ListView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:parchment="http://schemas.android.com/apk/res-auto"
     android:id="@+id/parchment_view"
@@ -7,6 +7,5 @@
     android:layout_height="match_parent"
     parchment:parchment_orientation="vertical"
     parchment:parchment_snapPosition="start"
-    parchment:parchment_numberOfViewsPerCell="3"
     parchment:parchment_isViewPager="true"
-    parchment:parchment_viewPagerInterval="1" />
+    parchment:parchment_viewPagerInterval="viewport" />

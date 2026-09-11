@@ -83,22 +83,24 @@ everything around them is new.
 - Tests: Robolectric 4.16.1, AssertJ 3.27, androidx.test 1.7; the old
   `integration` Maven module lives in `library/src/test` now.
 - Sample: targets SDK 37, Material theme, RTL-aware padding, Picasso 2.71828.
-- **Breaking:** `parchment_isViewPager="true"` advances exactly one cell per
-  gesture, in both directions. It used to advance the whole run of cells
-  fully visible in the viewport, so with three 100px cells on a 300px
-  screen a single slow swipe jumped three cells; with two cells visible it
-  jumped two. A page is now measured from the cell at the snap position to
-  the cell `parchment_viewPagerInterval` away, using each cell's own size, so
-  cells of different sizes page correctly and the landing point is a cell
-  boundary even when the gesture starts part-way through a cell. Any layout
-  where more than one cell fits on screen will page differently; set
-  `parchment_viewPagerInterval` to the old visible-cell count to keep the
-  previous distance. Closes #26. A cell larger than the viewport already
-  paged one cell at a time (fixed in 1.6.6) and still does.
+- `parchment_isViewPager="true"` still advances a whole viewport of cells per
+  gesture by default, and it is now measured rather than summed. A page runs
+  from the cell nearest the snap position to the first cell that does not fit
+  the size inside the padding whole, in each direction separately, so cells of
+  different sizes page correctly, the landing point is a cell boundary even
+  when the gesture starts part-way through a cell, and a padded view counts
+  only what fits inside its padding. A cell larger than the viewport is
+  the first cell that does not fit, so it is still one page on its own
+  (fixed in 1.6.6) without a case of its own. Paging back is the mirror of
+  paging forward instead of reusing the forward distance.
 - Sample: the demo photo set moved from imgur to the Unsplash CDN, and each
   of the 21 photos now carries its own caption. Eighteen of them read
   "National photo contest", which made paging and snapping hard to follow
   because the caption did not change as the cell did.
+- Sample: the ViewPager demo no longer declares `parchment_snapPosition`.
+  It also sets `parchment_isCircularScroll`, which the layout engine answers
+  with `onScreen` whatever the attribute says, so the line was dead
+  configuration that misread as the demo snapping to the start.
 - `AbstractAdapterView` invalidates the whole view after adding or removing
   a child instead of the deprecated `invalidate(Rect)`.
 
@@ -110,10 +112,12 @@ everything around them is new.
   real gestures, and hands a test an immutable snapshot of where the
   children landed. All eleven `parchment_` attributes are covered by
   on-device tests built on it, asserting geometry rather than getters, as is
-  paging: a real fling and a real slow drag each advance
-  `parchment_viewPagerInterval` cells with several cells on screen, with cells
-  of unequal size, with a cell taller than the viewport, from a resting
-  position part-way through a cell, at both ends of the adapter, wrapping with
+  paging in both modes: a real fling and a real slow drag each page by the
+  cells that fit the viewport, or by `parchment_viewPagerInterval` cells, with
+  several cells on screen, with cells that do not divide the viewport, with
+  cells of unequal size, with a cell taller than the viewport, from a resting
+  position part-way through a cell, inside `android:padding`, in both
+  orientations, at both ends of the adapter, wrapping with
   `parchment_isCircularScroll`, and on `GridView` and `GridPatternView` where
   a cell is a whole group.
 - Spotless (google-java-format, AOSP style) with SPDX license headers on
@@ -123,11 +127,17 @@ everything around them is new.
   instrumented tests (`android-ci.yml`), security gates (`security.yml`:
   action-pin lint, allowlist expiry, OSV-Scanner, dependency review,
   gitleaks), and CodeQL (`codeql.yml`). Dependabot for Gradle and Actions.
-- `parchment_viewPagerInterval`, an integer on all three views, for how many
-  cells one ViewPager gesture advances. It defaults to 1 and clamps to 1: a
-  gesture that advanced no cells would leave the view stuck, so 0 and
-  negative values are read as 1, the same way `parchment_numberOfViewsPerCell`
-  clamps. The attribute was named in `LayoutManagerAttributes` since 2014 and
+- `parchment_viewPagerInterval`, on all three views, for how far one ViewPager
+  gesture pages. It carries an integer plus a named constant the way
+  `layout_width` carries a dimension plus `match_parent`: `viewport`, or the
+  literal `0`, or leaving the attribute out, keeps the viewport paging
+  Parchment has always done, while `N` advances exactly N cells from the cell
+  nearest the snap position, which is the carousel issue #26 asked for. Zero
+  is both the default and the value an absent attribute already yields, so
+  unset and `viewport` are one state and upgrading changes nothing until the
+  attribute is set. A negative interval is not a number of cells — it would
+  page backwards when the finger went forwards — so it is read as `viewport`
+  too. The attribute was named in `LayoutManagerAttributes` since 2014 and
   carried as far as the layout manager, but nothing ever declared it in XML
   or assigned it, so it always arrived as 0.
 - An instrumented smoke test that inflates a `ListView` from XML on a real

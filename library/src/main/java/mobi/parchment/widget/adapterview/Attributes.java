@@ -12,7 +12,7 @@ public class Attributes {
 
     private static class DefaultValues {
         private static final int CELL_SPACING = 0;
-        private static final int VIEW_PAGER_INTERVAL = 1;
+        private static final int VIEW_PAGER_INTERVAL = 0;
         private static final Orientation ORIENTATION = Orientation.vertical;
         private static final boolean IS_CIRCULAR_SCROLL = false;
         private static final boolean SNAP_TO_POSITION = false;

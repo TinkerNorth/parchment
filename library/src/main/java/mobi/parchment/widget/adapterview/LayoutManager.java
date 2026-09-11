@@ -20,6 +20,9 @@ import mobi.parchment.widget.adapterview.snapposition.StartSnapPosition;
 public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public static final int INVALID_POSITION = -1;
 
+    private static final int VIEWPORT_VIEW_PAGER_INTERVAL = 0;
+    private static final int ONE_CELL = 1;
+
     private final Map<View, Integer> mPositions = new HashMap<View, Integer>();
 
     private boolean mIsFirstLayout = true;
@@ -344,15 +347,97 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int anchorStart = getCellStart(anchorCell);
         final int anchorSnapDisplacement = getSnapDisplacement(size, anchorCell);
         final int anchorSnappedStart = anchorStart + anchorSnapDisplacement;
+        final int viewportEnd = getStartSizePadding() + size;
+        final int maximumPageSize = viewportEnd - anchorSnappedStart;
         final int viewPagerInterval = mLayoutManagerAttributes.getViewPagerInterval();
 
-        final long forwardCellIndex = (long) anchorIndex + viewPagerInterval;
+        final long forwardCellIndex =
+                getPageCellIndexForward(
+                        viewPagerInterval, maximumPageSize, anchorIndex, anchorStart);
         final int forwardCellStart = getCellStartAtIndex(forwardCellIndex);
         mViewPageDistanceForward = forwardCellStart - anchorSnappedStart;
 
-        final long backCellIndex = (long) anchorIndex - viewPagerInterval;
+        final long backCellIndex =
+                getPageCellIndexBack(viewPagerInterval, maximumPageSize, anchorIndex, anchorStart);
         final int backCellStart = getCellStartAtIndex(backCellIndex);
         mViewPageDistanceBack = anchorSnappedStart - backCellStart;
+    }
+
+    private static boolean pagesByCellCount(final int viewPagerInterval) {
+        return viewPagerInterval != VIEWPORT_VIEW_PAGER_INTERVAL;
+    }
+
+    private long getPageCellIndexForward(
+            final int viewPagerInterval,
+            final int maximumPageSize,
+            final int anchorIndex,
+            final int anchorStart) {
+        if (pagesByCellCount(viewPagerInterval)) return (long) anchorIndex + viewPagerInterval;
+
+        long pageCellIndex = anchorIndex + ONE_CELL;
+        int pageCellStart = getCellStartAtIndex(pageCellIndex);
+        long nextCellIndex = pageCellIndex + ONE_CELL;
+        int nextCellStart = getCellStartAtIndex(nextCellIndex);
+
+        while (nextCellJoinsThePage(maximumPageSize, anchorStart, pageCellStart, nextCellStart)) {
+            pageCellIndex = nextCellIndex;
+            pageCellStart = nextCellStart;
+            nextCellIndex = pageCellIndex + ONE_CELL;
+            nextCellStart = getCellStartAtIndex(nextCellIndex);
+        }
+
+        return pageCellIndex;
+    }
+
+    private long getPageCellIndexBack(
+            final int viewPagerInterval,
+            final int maximumPageSize,
+            final int anchorIndex,
+            final int anchorStart) {
+        if (pagesByCellCount(viewPagerInterval)) return (long) anchorIndex - viewPagerInterval;
+
+        long pageCellIndex = anchorIndex - ONE_CELL;
+        int pageCellStart = getCellStartAtIndex(pageCellIndex);
+        long previousCellIndex = pageCellIndex - ONE_CELL;
+        int previousCellStart = getCellStartAtIndex(previousCellIndex);
+
+        while (previousCellJoinsThePage(
+                maximumPageSize, anchorStart, pageCellStart, previousCellStart)) {
+            pageCellIndex = previousCellIndex;
+            pageCellStart = previousCellStart;
+            previousCellIndex = pageCellIndex - ONE_CELL;
+            previousCellStart = getCellStartAtIndex(previousCellIndex);
+        }
+
+        return pageCellIndex;
+    }
+
+    private boolean nextCellJoinsThePage(
+            final int maximumPageSize,
+            final int pageStart,
+            final int pageCellStart,
+            final int nextCellStart) {
+        final boolean hasAFurtherCell = nextCellStart > pageCellStart;
+        if (!hasAFurtherCell) return false;
+        return pageFits(maximumPageSize, pageStart, nextCellStart);
+    }
+
+    private boolean previousCellJoinsThePage(
+            final int maximumPageSize,
+            final int pageLimitStart,
+            final int pageCellStart,
+            final int previousCellStart) {
+        final boolean hasAFurtherCell = previousCellStart < pageCellStart;
+        if (!hasAFurtherCell) return false;
+        return pageFits(maximumPageSize, previousCellStart, pageLimitStart);
+    }
+
+    private boolean pageFits(
+            final int maximumPageSize, final long pageStart, final long pageLimitStart) {
+        final int cellSpacing = getCellSpacing();
+        final long pageEnd = pageLimitStart - cellSpacing;
+        final long pageSize = pageEnd - pageStart;
+        return pageSize <= maximumPageSize;
     }
 
     private int getSnapDisplacement(final int size, final Cell cell) {

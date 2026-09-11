@@ -7,7 +7,7 @@ public class LayoutManagerAttributes {
 
     private static class DefaultValues {
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
-        private static final int VIEW_PAGER_INTERVAL = 1;
+        private static final int VIEW_PAGER_INTERVAL = 0;
     }
 
     private boolean mIsCircularScroll;

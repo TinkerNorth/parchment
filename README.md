@@ -22,8 +22,8 @@ every child in memory. The story, and a feature-by-feature comparison with
   `onScreen`
 - Circular (infinite) scrolling with a single boolean, no adapter tricks
 - ViewPager behaviour on the same ListView and the same adapter: one
-  completed gesture advances exactly one cell, or `parchment_viewPagerInterval`
-  of them
+  completed gesture advances a whole viewport of cells, or exactly
+  `parchment_viewPagerInterval` of them
 - GridView whose rows wrap to the tallest cell
 - GridPatternView: declare a repeating pattern of mixed-span cells and let
   the engine tile your data through it
@@ -103,7 +103,7 @@ cd parchment
     parchment:parchment_snapToPosition="true"
     parchment:parchment_isCircularScroll="false"
     parchment:parchment_isViewPager="false"
-    parchment:parchment_viewPagerInterval="1" />
+    parchment:parchment_viewPagerInterval="viewport" />
 ```
 
 ### Java
@@ -143,8 +143,8 @@ All views:
 | `parchment_snapPosition` | `center`, `start`, `end`, `onScreen` | Where a cell settles |
 | `parchment_selectOnSnap` | boolean | Fire `OnItemSelectedListener` when a snap completes |
 | `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
-| `parchment_isViewPager` | boolean | One cell per gesture, ViewPager style |
-| `parchment_viewPagerInterval` | integer | Cells a ViewPager gesture advances; defaults to 1, values below 1 are read as 1 |
+| `parchment_isViewPager` | boolean | One page per gesture, ViewPager style |
+| `parchment_viewPagerInterval` | integer, or `viewport` | How far one ViewPager gesture pages. `viewport` (or `0`, or unset, the default) advances every cell that fits the viewport whole; `N` advances exactly N cells. Values below zero are read as `viewport` |
 
 GridView:
 
@@ -158,6 +158,42 @@ GridPatternView:
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `parchment_ratio` | float | Aspect ratio of one grid cell |
+
+### Paging
+
+`parchment_isViewPager="true"` turns a completed gesture into a page, however
+far the finger travelled. `parchment_viewPagerInterval` says how far a page is,
+and it carries two kinds of value in the way `layout_width` carries a dimension
+plus `match_parent`:
+
+```xml
+<!-- Magazine spread: advance every cell that fits the viewport whole.
+     This is the default, so the attribute can be left out entirely. -->
+<mobi.parchment.widget.adapterview.gridpatternview.GridPatternView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_isViewPager="true"
+    parchment:parchment_viewPagerInterval="viewport" />
+
+<!-- Carousel: advance exactly one cell, whatever else is on screen. -->
+<mobi.parchment.widget.adapterview.listview.ListView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_isViewPager="true"
+    parchment:parchment_viewPagerInterval="1" />
+```
+
+Viewport paging adapts to the screen with no configuration: three cells on a
+tablet, one on a phone, and a cell larger than the viewport is one page on its
+own. Pages do not overlap, so every cell is shown whole exactly once per pass.
+A partial cell left at the edge is not counted, and the last page is short
+rather than running off the end.
+
+An interval of `N` ignores what fits and advances N cells from the cell nearest
+the snap position, measured from each cell's own start, so cells of different
+sizes still land on a cell boundary. Both modes wrap when
+`parchment_isCircularScroll` is on and stop at the adapter's ends when it is
+not.
 
 ## Project layout
 

@@ -35,6 +35,8 @@ public class ListViewViewPagerIntervalTest {
     private static final int CELL_SIZE = 100;
     private static final int ADAPTER_SIZE = 10;
     private static final int TWO_CELLS_PER_GESTURE = 2;
+    private static final int ONE_CELL_PER_GESTURE = 1;
+    private static final int CELLS_THAT_FIT_THE_VIEWPORT = VIEWPORT_SIZE / CELL_SIZE;
     private static final int START_OF_THE_VIEWPORT = 0;
     private static final int NOT_DRAWN = Integer.MIN_VALUE;
     private static final int NO_ID_RESOURCE = 0;
@@ -55,14 +57,44 @@ public class ListViewViewPagerIntervalTest {
     }
 
     @Test
-    public void noIntervalInXml_makesOneGestureAdvanceOneCell() {
-        final PagingListView listView = pagingListViewFrom(R.id.view_pager_no_interval);
+    public void anIntervalOfOneInXml_makesOneGestureAdvanceOneCell() {
+        final PagingListView listView = pagingListViewFrom(R.id.view_pager_interval_one);
 
         assertThat(listView.pageDistance(Move.forward)).isEqualTo(-CELL_SIZE);
 
         listView.page(Move.forward);
 
         assertThat(listView.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void noIntervalInXml_makesOneGestureAdvanceAWholeViewport() {
+        assertAdvancesAWholeViewport(R.id.view_pager_no_interval);
+    }
+
+    @Test
+    public void anIntervalOfZeroInXml_makesOneGestureAdvanceAWholeViewport() {
+        assertAdvancesAWholeViewport(R.id.view_pager_interval_zero);
+    }
+
+    @Test
+    public void theViewportConstantInXml_makesOneGestureAdvanceAWholeViewport() {
+        assertAdvancesAWholeViewport(R.id.view_pager_interval_viewport);
+    }
+
+    @Test
+    public void aNegativeIntervalInXml_makesOneGestureAdvanceAWholeViewport() {
+        assertAdvancesAWholeViewport(R.id.view_pager_interval_negative);
+    }
+
+    private static void assertAdvancesAWholeViewport(final int idResource) {
+        final PagingListView listView = pagingListViewFrom(idResource);
+
+        assertThat(listView.pageDistance(Move.forward)).isEqualTo(-VIEWPORT_SIZE);
+
+        listView.page(Move.forward);
+
+        assertThat(listView.startOf(CELLS_THAT_FIT_THE_VIEWPORT)).isEqualTo(START_OF_THE_VIEWPORT);
     }
 
     private static PagingListView pagingListViewFrom(final int idResource) {

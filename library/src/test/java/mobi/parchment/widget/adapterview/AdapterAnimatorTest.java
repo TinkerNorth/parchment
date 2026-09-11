@@ -31,6 +31,8 @@ public class AdapterAnimatorTest {
     private static final int ADAPTER_SIZE = 10;
     private static final float FLING_VELOCITY = -1000f;
     private static final int FLING_DISTANCE = -194;
+    private static final int VIEWPORT_PAGING = 0;
+    private static final int ONE_CELL_PER_GESTURE = 1;
     private static final long FLING_DURATION = 555;
     private static final long MAX_SNAP_DURATION = 500;
 
@@ -48,19 +50,20 @@ public class AdapterAnimatorTest {
     }
 
     private void setup(final boolean snapToPosition, final SnapPosition snapPosition) {
-        setup(snapToPosition, snapPosition, false);
+        setup(snapToPosition, snapPosition, false, VIEWPORT_PAGING);
     }
 
     private void setup(
             final boolean snapToPosition,
             final SnapPosition snapPosition,
-            final boolean isViewPager) {
+            final boolean isViewPager,
+            final int viewPagerInterval) {
         final LayoutManagerAttributes attributes =
                 new LayoutManagerAttributes(
                         false,
                         snapToPosition,
                         isViewPager,
-                        0,
+                        viewPagerInterval,
                         snapPosition,
                         0,
                         false,
@@ -83,14 +86,15 @@ public class AdapterAnimatorTest {
     }
 
     private void layOutCenterSnappingList() {
-        layOutList(true, SnapPosition.center, false);
+        layOutList(true, SnapPosition.center, false, VIEWPORT_PAGING);
     }
 
     private void layOutList(
             final boolean snapToPosition,
             final SnapPosition snapPosition,
-            final boolean isViewPager) {
-        setup(snapToPosition, snapPosition, isViewPager);
+            final boolean isViewPager,
+            final int viewPagerInterval) {
+        setup(snapToPosition, snapPosition, isViewPager, viewPagerInterval);
         final TestAdapter adapter = new TestAdapter();
         mAdapterViewManager.setAdapter(adapter);
         adapter.setAdapterSize(ADAPTER_SIZE);
@@ -151,7 +155,7 @@ public class AdapterAnimatorTest {
 
     @Test
     public void onFling_withoutSnapping_keepsTheNaturalFlingEnd() {
-        layOutList(false, SnapPosition.onScreen, false);
+        layOutList(false, SnapPosition.onScreen, false, VIEWPORT_PAGING);
         mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);
         mAdapterAnimator.onUp();
         ShadowSystemClock.advanceBy(Duration.ofMillis(FLING_DURATION + 1));
@@ -165,7 +169,7 @@ public class AdapterAnimatorTest {
 
     @Test
     public void onFling_asAViewPager_movesExactlyOnePage() {
-        layOutList(true, SnapPosition.start, true);
+        layOutList(true, SnapPosition.start, true, ONE_CELL_PER_GESTURE);
         layout();
         mFrameScheduler.mRequests = 0;
 
@@ -179,7 +183,7 @@ public class AdapterAnimatorTest {
 
     @Test
     public void onFling_asAViewPagerInTheOtherDirection_movesExactlyOneCellBack() {
-        layOutList(true, SnapPosition.start, true);
+        layOutList(true, SnapPosition.start, true, ONE_CELL_PER_GESTURE);
         layout();
 
         mAdapterAnimator.onFling(down(), up(), FLING_VELOCITY, 0f);

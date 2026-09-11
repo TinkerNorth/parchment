@@ -117,8 +117,12 @@ positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
 ## ViewPager mode
 
 `parchment_isViewPager` changes the gesture interpretation, not the layout: a
-completed gesture advances exactly `parchment_viewPagerInterval` cells (one by
-default) in the fling direction, however far the finger travelled.
+completed gesture advances one page in the fling direction, however far the
+finger travelled. `parchment_viewPagerInterval` says what a page is. Zero, the
+value an absent attribute already yields and the name `viewport` also resolves
+to, pages by the run of cells that fit the viewport whole; a positive N pages
+by exactly N cells.
+
 `AdapterAnimator.onFling` asks `LayoutManagerBridge` for the distance instead
 of handing the velocity to the scroller. What the scroller is handed is that
 distance *minus* how far the gesture has already dragged the content, so the
@@ -133,16 +137,28 @@ that frame's displacement is applied. A new id arrives when a gesture starts
 and again on every layout taken while the view is at rest, so the distance is
 always the one measured from the layout the gesture started from. It takes the
 cell nearest the snap position as the anchor, and the distance is the gap
-between the anchor's snapped start and the start of the cell the interval
-away, in each direction separately (`mViewPageDistanceForward` and
+between the anchor's snapped start and the start of the cell the page lands
+on, in each direction separately (`mViewPageDistanceForward` and
 `mViewPageDistanceBack`). Measuring from starts rather than summing sizes is
-what makes cells of different sizes page correctly, puts the landing point on
-a cell boundary even when the gesture starts part-way through a cell, and
-keeps a cell wider than the viewport to one cell per gesture. Cells past the
-ends of the visible run are extrapolated from the edge cell's size plus
-spacing and capped at the adapter's ends, the same way `getFlingSnapAdjustment`
-extrapolates, so a gesture at the last cell asks for no movement rather than
-running off the end. Circular scrolling lifts that cap and the positions wrap.
+what makes cells of different sizes page correctly and puts the landing point
+on a cell boundary even when the gesture starts part-way through a cell.
+
+Only the choice of landing cell differs between the two modes, so one place
+decides where a page ends up. Counting mode takes the cell `N` along from the
+anchor. Viewport mode walks out from the anchor while the next cell still fits
+entirely inside the size within the padding, and lands on the first one that
+does not; a cell larger than the viewport is simply the first cell that does
+not fit, which is why it stays one cell per gesture without a special case.
+The walk mirrors backwards, so a page back covers the run of cells that would
+fill one viewport ending at the anchor. A page always advances at least one
+cell.
+
+Cells past the ends of the visible run are extrapolated from the edge cell's
+size plus spacing and capped at the adapter's ends, the same way
+`getFlingSnapAdjustment` extrapolates, so a gesture at the last cell asks for
+no movement rather than running off the end, and viewport mode's walk stops
+when the cap means the next index names the same cell again. Circular
+scrolling lifts that cap and the positions wrap.
 
 The snap position is *not* forced: `parchment_snapPosition` applies as it does
 everywhere else (`onScreen` for a view inflated from XML), and the anchor is

@@ -31,6 +31,10 @@ public class GridLayoutManagerTest {
     public static final int CELL_SPACING = 10;
     public static final int NUMBER_OF_COLUMNS = 2;
     private static final int ONE_GROUP_PER_GESTURE = 1;
+    private static final int VIEWPORT_PAGING = 0;
+    private static final int TWO_GROUPS = 2;
+    private static final int FIRST_VIEW_OF_THE_THIRD_GROUP = 4;
+    private static final int SECOND_VIEW_OF_THE_THIRD_GROUP = 5;
     private static final int THREE_GROUPS_PER_GESTURE = 3;
     private static final int PAGER_ADAPTER_SIZE = 10;
     private static final int NOT_DRAWN = Integer.MIN_VALUE;
@@ -472,6 +476,21 @@ public class GridLayoutManagerTest {
         pager.page(Move.forward);
 
         assertThat(pager.topOf(6)).isEqualTo(0);
+    }
+
+    @Test
+    public void viewportPaging_onAGrid_advancesEveryWholeGroupThatFits() {
+        final GridPager pager = new GridPager(VIEWPORT_PAGING);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward))
+                .isEqualTo(-TWO_GROUPS * (VIEW_SIZE + CELL_SPACING));
+
+        pager.page(Move.forward);
+
+        assertThat(pager.topOf(FIRST_VIEW_OF_THE_THIRD_GROUP)).isEqualTo(0);
+        assertThat(pager.topOf(SECOND_VIEW_OF_THE_THIRD_GROUP)).isEqualTo(0);
     }
 
     private static final class GridPager {
