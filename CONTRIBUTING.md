@@ -96,6 +96,24 @@ a gate.
   not `if (cellStart + getCellSize(cell) < 0)`. The names are the
   documentation; the debugger can show each value; and a test can pin each
   step.
+- **One method, one flow.** When a method would hold two algorithms chosen
+  by a condition, the condition dispatches to two named methods that each do
+  one thing, and the dispatcher does nothing else:
+
+  ```java
+  long getPageCellIndexForward(...) {
+      if (pagesByCellCount(viewPagerInterval)) {
+          return getPageCellIndexForwardByCellCount(viewPagerInterval, anchorIndex);
+      }
+      return getPageCellIndexForwardByViewport(maximumPageSize, anchorIndex, anchorStart);
+  }
+  ```
+
+  not an early return with the second algorithm falling through underneath
+  it. The name says which algorithm it is, not which branch it came from, so
+  the dispatcher reads as a table of contents and each algorithm can be read
+  and tested on its own. A guard clause is not an algorithm: do not invent
+  indirection where there is only one flow.
 
 ### Layout engine
 
