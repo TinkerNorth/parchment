@@ -4,5 +4,5 @@
 package mobi.parchment.widget.adapterview;
 
 public interface AnimationFrameScheduler {
-    void requestAnimationFrame();
+    public void requestAnimationFrame();
 }

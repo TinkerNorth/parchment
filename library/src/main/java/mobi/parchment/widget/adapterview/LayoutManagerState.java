@@ -12,7 +12,8 @@ public class LayoutManagerState<Cell> extends View.BaseSavedState {
     private final int mOffset;
     private final int mStartCellPosition;
 
-    LayoutManagerState(final Parcelable superState, final int offset, final int startOffset) {
+    protected LayoutManagerState(
+            final Parcelable superState, final int offset, final int startOffset) {
         super(superState);
         mOffset = offset;
         mStartCellPosition = startOffset;

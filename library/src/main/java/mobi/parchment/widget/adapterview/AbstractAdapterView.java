@@ -429,7 +429,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
     private static final class AnimationFrameRunnable implements Runnable {
         private final AbstractAdapterView<?, ?> mView;
 
-        AnimationFrameRunnable(final AbstractAdapterView<?, ?> view) {
+        private AnimationFrameRunnable(final AbstractAdapterView<?, ?> view) {
             mView = view;
         }
 
