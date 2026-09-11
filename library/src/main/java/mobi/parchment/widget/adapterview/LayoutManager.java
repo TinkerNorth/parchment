@@ -32,8 +32,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     private int mAnimationId = -1;
     private int mOffset = 0;
     private int mStartCellPosition;
-    private int mViewPageDistanceForward;
-    private int mViewPageDistanceBack;
+    int mViewPageDistanceForward;
+    int mViewPageDistanceBack;
     private int mAnimationDisplacement;
     protected final ViewGroup mViewGroup;
     private final ScrollDirectionManager mScrollDirectionManager;
@@ -338,7 +338,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
     }
 
-    private void setViewPageDistances(final int size) {
+    void setViewPageDistances(final int size) {
         final boolean isViewPager = mLayoutManagerAttributes.isViewPager();
         if (!isViewPager) return;
 
@@ -363,17 +363,28 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mViewPageDistanceBack = anchorSnappedStart - backCellStart;
     }
 
-    private static boolean pagesByCellCount(final int viewPagerInterval) {
+    static boolean pagesByCellCount(final int viewPagerInterval) {
         return viewPagerInterval != VIEWPORT_VIEW_PAGER_INTERVAL;
     }
 
-    private long getPageCellIndexForward(
+    long getPageCellIndexForward(
             final int viewPagerInterval,
             final int maximumPageSize,
             final int anchorIndex,
             final int anchorStart) {
-        if (pagesByCellCount(viewPagerInterval)) return (long) anchorIndex + viewPagerInterval;
+        if (pagesByCellCount(viewPagerInterval)) {
+            return getPageCellIndexForwardByCellCount(viewPagerInterval, anchorIndex);
+        }
+        return getPageCellIndexForwardByViewport(maximumPageSize, anchorIndex, anchorStart);
+    }
 
+    static long getPageCellIndexForwardByCellCount(
+            final int viewPagerInterval, final int anchorIndex) {
+        return (long) anchorIndex + viewPagerInterval;
+    }
+
+    long getPageCellIndexForwardByViewport(
+            final int maximumPageSize, final int anchorIndex, final int anchorStart) {
         long pageCellIndex = anchorIndex + ONE_CELL;
         int pageCellStart = getCellStartAtIndex(pageCellIndex);
         long nextCellIndex = pageCellIndex + ONE_CELL;
@@ -389,13 +400,24 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return pageCellIndex;
     }
 
-    private long getPageCellIndexBack(
+    long getPageCellIndexBack(
             final int viewPagerInterval,
             final int maximumPageSize,
             final int anchorIndex,
             final int anchorStart) {
-        if (pagesByCellCount(viewPagerInterval)) return (long) anchorIndex - viewPagerInterval;
+        if (pagesByCellCount(viewPagerInterval)) {
+            return getPageCellIndexBackByCellCount(viewPagerInterval, anchorIndex);
+        }
+        return getPageCellIndexBackByViewport(maximumPageSize, anchorIndex, anchorStart);
+    }
 
+    static long getPageCellIndexBackByCellCount(
+            final int viewPagerInterval, final int anchorIndex) {
+        return (long) anchorIndex - viewPagerInterval;
+    }
+
+    long getPageCellIndexBackByViewport(
+            final int maximumPageSize, final int anchorIndex, final int anchorStart) {
         long pageCellIndex = anchorIndex - ONE_CELL;
         int pageCellStart = getCellStartAtIndex(pageCellIndex);
         long previousCellIndex = pageCellIndex - ONE_CELL;
@@ -412,7 +434,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return pageCellIndex;
     }
 
-    private boolean nextCellJoinsThePage(
+    boolean nextCellJoinsThePage(
             final int maximumPageSize,
             final int pageStart,
             final int pageCellStart,
@@ -422,7 +444,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return pageFits(maximumPageSize, pageStart, nextCellStart);
     }
 
-    private boolean previousCellJoinsThePage(
+    boolean previousCellJoinsThePage(
             final int maximumPageSize,
             final int pageLimitStart,
             final int pageCellStart,
@@ -432,41 +454,48 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return pageFits(maximumPageSize, previousCellStart, pageLimitStart);
     }
 
-    private boolean pageFits(
-            final int maximumPageSize, final long pageStart, final long pageLimitStart) {
+    boolean pageFits(final int maximumPageSize, final long pageStart, final long pageLimitStart) {
         final int cellSpacing = getCellSpacing();
         final long pageEnd = pageLimitStart - cellSpacing;
         final long pageSize = pageEnd - pageStart;
         return pageSize <= maximumPageSize;
     }
 
-    private int getSnapDisplacement(final int size, final Cell cell) {
+    int getSnapDisplacement(final int size, final Cell cell) {
         final View view = getView(cell);
         if (view == null) return 0;
         return getSnapToPixelDistance(size, view);
     }
 
-    private int getCellStartAtIndex(final long cellIndex) {
+    int getCellStartAtIndex(final long cellIndex) {
         final int lastCellIndex = mCells.size() - 1;
-        final int cellSpacing = getCellSpacing();
 
-        if (cellIndex < 0) {
-            final Cell firstCell = mCells.get(0);
-            final long step = getCellSize(firstCell) + cellSpacing;
-            final long steps = Math.min(-cellIndex, getCellsBeforeFirst());
-            final long cellStart = getCellStart(firstCell) - steps * step;
-            return getDrawableCellStart(cellStart);
-        }
+        final boolean isBeforeTheFirstCell = cellIndex < 0;
+        if (isBeforeTheFirstCell) return getCellStartExtrapolatedBeforeFirst(cellIndex);
 
-        if (cellIndex > lastCellIndex) {
-            final Cell lastCell = mCells.get(lastCellIndex);
-            final long step = getCellSize(lastCell) + cellSpacing;
-            final long steps = Math.min(cellIndex - lastCellIndex, getCellsAfterLast());
-            final long cellStart = getCellStart(lastCell) + steps * step;
-            return getDrawableCellStart(cellStart);
-        }
+        final boolean isAfterTheLastCell = cellIndex > lastCellIndex;
+        if (isAfterTheLastCell) return getCellStartExtrapolatedAfterLast(cellIndex);
 
         return getCellStart(mCells.get((int) cellIndex));
+    }
+
+    int getCellStartExtrapolatedBeforeFirst(final long cellIndex) {
+        final int cellSpacing = getCellSpacing();
+        final Cell firstCell = mCells.get(0);
+        final long step = getCellSize(firstCell) + cellSpacing;
+        final long steps = Math.min(-cellIndex, getCellsBeforeFirst());
+        final long cellStart = getCellStart(firstCell) - steps * step;
+        return getDrawableCellStart(cellStart);
+    }
+
+    int getCellStartExtrapolatedAfterLast(final long cellIndex) {
+        final int cellSpacing = getCellSpacing();
+        final int lastCellIndex = mCells.size() - 1;
+        final Cell lastCell = mCells.get(lastCellIndex);
+        final long step = getCellSize(lastCell) + cellSpacing;
+        final long steps = Math.min(cellIndex - lastCellIndex, getCellsAfterLast());
+        final long cellStart = getCellStart(lastCell) + steps * step;
+        return getDrawableCellStart(cellStart);
     }
 
     private int getDrawableCellStart(final long cellStart) {
