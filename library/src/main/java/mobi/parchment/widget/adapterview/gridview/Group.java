@@ -9,7 +9,11 @@ import java.util.List;
 
 public class Group {
 
-    private List<View> mViews = new ArrayList<View>();
+    private static final int NO_PIXEL = 0;
+    private static final int FIRST_VIEW_INDEX = 0;
+    private static final int SECOND_VIEW_INDEX = 1;
+
+    private final List<View> mViews = new ArrayList<View>();
 
     public List<View> getViews() {
         return new ArrayList<View>(mViews);
@@ -22,49 +26,45 @@ public class Group {
     }
 
     public int getTop() {
-        Integer lowestPixel = null;
-        for (final View view : mViews) {
-            final int top = view.getTop();
+        if (mViews.isEmpty()) return NO_PIXEL;
 
-            if (lowestPixel == null || top < lowestPixel) {
-                lowestPixel = top;
-            }
+        int lowestPixel = mViews.get(FIRST_VIEW_INDEX).getTop();
+        for (int viewIndex = SECOND_VIEW_INDEX; viewIndex < mViews.size(); viewIndex++) {
+            final int top = mViews.get(viewIndex).getTop();
+            if (top < lowestPixel) lowestPixel = top;
         }
         return lowestPixel;
     }
 
     public int getLeft() {
-        Integer lowestPixel = null;
-        for (final View view : mViews) {
-            final int left = view.getLeft();
+        if (mViews.isEmpty()) return NO_PIXEL;
 
-            if (lowestPixel == null || left < lowestPixel) {
-                lowestPixel = left;
-            }
+        int lowestPixel = mViews.get(FIRST_VIEW_INDEX).getLeft();
+        for (int viewIndex = SECOND_VIEW_INDEX; viewIndex < mViews.size(); viewIndex++) {
+            final int left = mViews.get(viewIndex).getLeft();
+            if (left < lowestPixel) lowestPixel = left;
         }
         return lowestPixel;
     }
 
     public int getBottom() {
-        Integer highestPixel = null;
-        for (final View view : mViews) {
-            final int bottom = view.getBottom();
+        if (mViews.isEmpty()) return NO_PIXEL;
 
-            if (highestPixel == null || bottom > highestPixel) {
-                highestPixel = bottom;
-            }
+        int highestPixel = mViews.get(FIRST_VIEW_INDEX).getBottom();
+        for (int viewIndex = SECOND_VIEW_INDEX; viewIndex < mViews.size(); viewIndex++) {
+            final int bottom = mViews.get(viewIndex).getBottom();
+            if (bottom > highestPixel) highestPixel = bottom;
         }
         return highestPixel;
     }
 
     public int getRight() {
-        Integer highestPixel = null;
-        for (final View view : mViews) {
-            final int right = view.getRight();
+        if (mViews.isEmpty()) return NO_PIXEL;
 
-            if (highestPixel == null || right > highestPixel) {
-                highestPixel = right;
-            }
+        int highestPixel = mViews.get(FIRST_VIEW_INDEX).getRight();
+        for (int viewIndex = SECOND_VIEW_INDEX; viewIndex < mViews.size(); viewIndex++) {
+            final int right = mViews.get(viewIndex).getRight();
+            if (right > highestPixel) highestPixel = right;
         }
         return highestPixel;
     }
@@ -153,7 +153,7 @@ public class Group {
         if (mViews.isEmpty()) {
             return null;
         }
-        return mViews.get(0);
+        return mViews.get(FIRST_VIEW_INDEX);
     }
 
     public void clear() {

@@ -12,6 +12,14 @@ everything around them is new.
 
 ### Changed
 
+- `GridView` rows report their bounds without allocating. `Group.getTop`,
+  `getBottom`, `getLeft` and `getRight` walked their views with an iterator
+  and a boxed `Integer` accumulator; they now index the list and accumulate
+  an `int`, because the divider pass reads a cell's bounds on every frame
+  while the view moves. An empty group reported those bounds by throwing a
+  `NullPointerException` and now reports 0, matching `getMeasuredWidth` and
+  `getMeasuredHeight`, which already did.
+
 - **Breaking:** every custom XML attribute now carries a `parchment_`
   prefix: `orientation` is `parchment_orientation`, `cellSpacing` is
   `parchment_cellSpacing`, and so on for all eleven. Custom attribute names
