@@ -158,10 +158,9 @@ behaviour of the views is unchanged; everything around them is new.
   from a layout with a real `LayoutInflater`, attaches it to an Activity at
   an exact pixel size, drives real measure and layout passes, dispatches
   real gestures, and hands a test an immutable snapshot of where the
-  children landed. All eleven `parchment_`
-  attributes are covered by
-  on-device tests built on it, asserting geometry rather than getters, as is
-  paging in both modes: a real fling and a real slow drag each page by the
+  children landed or of the pixels it painted. All fourteen `parchment_`
+  attributes are covered by on-device tests built on it, asserting geometry
+  and painted pixels rather than getters, as is paging in both modes: a real fling and a real slow drag each page by the
   cells that fit the viewport, or by `parchment_viewPagerInterval` cells, with
   several cells on screen, with cells that do not divide the viewport, with
   cells of unequal size, with a cell taller than the viewport, from a resting
