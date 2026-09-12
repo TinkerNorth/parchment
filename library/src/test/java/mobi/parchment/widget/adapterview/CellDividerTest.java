@@ -38,6 +38,10 @@ public class CellDividerTest {
     private static final int START_SIZE_PADDING = 30;
     private static final int END_SIZE_PADDING = 50;
     private static final int BREADTH_END = VIEW_GROUP_SIZE - END_BREADTH_PADDING;
+    private static final int PADDED_ROW_BREADTH =
+            VIEW_GROUP_SIZE - START_BREADTH_PADDING - END_BREADTH_PADDING;
+    private static final int PADDED_ROW_START = (VIEW_GROUP_SIZE - PADDED_ROW_BREADTH) / 2;
+    private static final int PADDED_ROW_END = PADDED_ROW_START + PADDED_ROW_BREADTH;
     private static final boolean IS_VERTICAL = true;
     private static final boolean IS_HORIZONTAL = false;
     private static final boolean CIRCULAR = true;
@@ -179,7 +183,7 @@ public class CellDividerTest {
     }
 
     @Test
-    public void divider_inAVerticalListWithPadding_staysInsideTheBreadthPadding() {
+    public void divider_inAVerticalListWithPadding_spansTheRowRatherThanThePaddingBox() {
         final Harness harness = new Harness(IS_VERTICAL, CELL_SPACING, NOT_CIRCULAR);
         harness.setPadding();
         harness.layout(SIX_CELLS);
@@ -189,13 +193,13 @@ public class CellDividerTest {
         harness.draw();
 
         assertThat(divider.getDrawnBounds(0))
-                .isEqualTo(new Rect(START_BREADTH_PADDING, 133, BREADTH_END, 137));
+                .isEqualTo(new Rect(PADDED_ROW_START, 133, PADDED_ROW_END, 137));
         assertThat(divider.getDrawnBounds(1))
-                .isEqualTo(new Rect(START_BREADTH_PADDING, 243, BREADTH_END, 247));
+                .isEqualTo(new Rect(PADDED_ROW_START, 243, PADDED_ROW_END, 247));
     }
 
     @Test
-    public void divider_inAHorizontalListWithPadding_staysInsideTheBreadthPadding() {
+    public void divider_inAHorizontalListWithPadding_spansTheRowRatherThanThePaddingBox() {
         final Harness harness = new Harness(IS_HORIZONTAL, CELL_SPACING, NOT_CIRCULAR);
         harness.setPadding();
         harness.layout(SIX_CELLS);
@@ -205,9 +209,9 @@ public class CellDividerTest {
         harness.draw();
 
         assertThat(divider.getDrawnBounds(0))
-                .isEqualTo(new Rect(133, START_BREADTH_PADDING, 137, BREADTH_END));
+                .isEqualTo(new Rect(133, PADDED_ROW_START, 137, PADDED_ROW_END));
         assertThat(divider.getDrawnBounds(1))
-                .isEqualTo(new Rect(243, START_BREADTH_PADDING, 247, BREADTH_END));
+                .isEqualTo(new Rect(243, PADDED_ROW_START, 247, PADDED_ROW_END));
     }
 
     @Test
@@ -409,7 +413,7 @@ public class CellDividerTest {
         private final MyViewGroup mViewGroup =
                 new MyViewGroup(ApplicationProvider.getApplicationContext());
         private final AdapterViewManager mAdapterViewManager = new AdapterViewManager();
-        private final TestAdapter mTestAdapter = new TestAdapter(VIEW_SIZE);
+        private final TestAdapter mTestAdapter;
         private final LayoutManager<View> mLayoutManager;
         private final Animation mAnimation = new Animation();
         private CellDivider mCellDivider;
@@ -417,6 +421,7 @@ public class CellDividerTest {
         private Harness(
                 final boolean isVertical, final int cellSpacing, final boolean isCircularScroll) {
             mIsVertical = isVertical;
+            mTestAdapter = new TestAdapter(VIEW_SIZE, isVertical);
             final LayoutManagerAttributes attributes =
                     new LayoutManagerAttributes(
                             isCircularScroll,
@@ -462,6 +467,7 @@ public class CellDividerTest {
                     View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_SIZE, View.MeasureSpec.EXACTLY);
             mViewGroup.measure(measureSpec, measureSpec);
             mViewGroup.layout(0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+            mLayoutManager.measure(mViewGroup, measureSpec, measureSpec);
             mTestAdapter.setAdapterSize(adapterSize);
             mAnimation.newAnimation();
             mLayoutManager.layout(mViewGroup, mAnimation, 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
@@ -480,7 +486,7 @@ public class CellDividerTest {
         }
 
         private void draw() {
-            mCellDivider.draw(mCanvas, mViewGroup, mLayoutManager);
+            mCellDivider.draw(mCanvas, mLayoutManager);
         }
 
         private int getDrawnCellCount() {
@@ -521,10 +527,12 @@ public class CellDividerTest {
 
     private static final class TestAdapter extends BaseAdapter {
         private final int mViewSize;
+        private final boolean mIsVertical;
         private int mAdapterSize;
 
-        private TestAdapter(final int viewSize) {
+        private TestAdapter(final int viewSize, final boolean isVertical) {
             mViewSize = viewSize;
+            mIsVertical = isVertical;
         }
 
         private void setAdapterSize(final int adapterSize) {
@@ -550,7 +558,12 @@ public class CellDividerTest {
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
             final FrameLayout view = new FrameLayout(parent.getContext());
-            view.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
+            final int fillsTheBreadth = ViewGroup.LayoutParams.MATCH_PARENT;
+            if (mIsVertical) {
+                view.setLayoutParams(new ViewGroup.LayoutParams(fillsTheBreadth, mViewSize));
+            } else {
+                view.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, fillsTheBreadth));
+            }
             return view;
         }
     }

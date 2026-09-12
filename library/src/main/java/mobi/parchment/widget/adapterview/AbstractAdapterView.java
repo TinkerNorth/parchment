@@ -255,7 +255,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         super.dispatchDraw(canvas);
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         final CellDivider cellDivider = mAdapterViewInitializer.getCellDivider();
-        cellDivider.draw(canvas, this, layoutManager);
+        cellDivider.draw(canvas, layoutManager);
     }
 
     @Override

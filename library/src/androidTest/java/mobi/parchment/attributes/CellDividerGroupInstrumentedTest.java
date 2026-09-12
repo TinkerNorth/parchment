@@ -29,10 +29,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Proves that in the two views whose cell is a whole group, parchment_divider separates the groups
- * and never the items inside one: a row of a GridView and one repeat of a GridPatternView pattern
- * each get a single divider after them, painted on a real framework canvas. Expected bands are
- * literal pixels, not a recomputation of the production formula.
+ * Proves that in the two views whose cell is a whole group, parchment_divider falls on every edge
+ * internal to the content and on none at its outer boundary: between the rows of a GridView and
+ * between one repeat of a GridPatternView pattern and the next, and also between the items stacked
+ * inside a single group, painted on a real framework canvas. Expected bands are literal pixels, not
+ * a recomputation of the production formula.
  */
 @RunWith(AndroidJUnit4.class)
 public final class CellDividerGroupInstrumentedTest {
@@ -46,7 +47,8 @@ public final class CellDividerGroupInstrumentedTest {
     private static final int CELL_SPACING = 24;
     private static final int CELL_COLOUR = 0xff0000ff;
     private static final int DIVIDER_COLOUR = 0xff00ff00;
-    private static final int NO_RUNS = 0;
+    private static final int THE_START_BREADTH_EDGE = 0;
+    private static final int ONE_PIXEL = 1;
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int A_COLUMN_INSIDE_THE_FIRST_ITEM = 20;
     private static final int INSIDE_THE_FIRST_ROW = 50;
@@ -56,6 +58,10 @@ public final class CellDividerGroupInstrumentedTest {
     private static final int[] GRID_BAND_ENDS = {116, 240, 364, 488};
     private static final int[] PATTERN_BAND_STARTS = {227, 470};
     private static final int[] PATTERN_BAND_ENDS = {235, 478};
+    private static final int[] GRID_COLUMN_BAND_STARTS = {292, 600};
+    private static final int[] GRID_COLUMN_BAND_ENDS = {300, 608};
+    private static final int[] PATTERN_COLUMN_BAND_STARTS = {446};
+    private static final int[] PATTERN_COLUMN_BAND_ENDS = {454};
 
     @Rule
     public final ActivityScenarioRule<HarnessActivity> mActivityRule =
@@ -83,16 +89,28 @@ public final class CellDividerGroupInstrumentedTest {
     }
 
     @Test
-    public void dividerInXmlOnAGridView_isNotPaintedBetweenTheItemsOfARow() {
+    public void dividerInXmlOnAGridView_isPaintedBetweenTheItemsOfARow() {
         final ParchmentViewHarness<GridView<BaseAdapter>> harness = attachGrid();
         final PaintedPixels pixels = harness.paint();
 
         final List<PixelRun> acrossTheRow =
                 pixels.runsAcrossRow(INSIDE_THE_FIRST_ROW, DIVIDER_COLOUR);
+        assertBands(acrossTheRow, GRID_COLUMN_BAND_STARTS, GRID_COLUMN_BAND_ENDS);
+    }
+
+    @Test
+    public void dividerInXmlOnAGridView_isNotPaintedAtTheOuterBreadthEdges() {
+        final ParchmentViewHarness<GridView<BaseAdapter>> harness = attachGrid();
+        final PaintedPixels pixels = harness.paint();
+
         assertEquals(
-                "a row of items must carry no divider between them: " + acrossTheRow,
-                NO_RUNS,
-                acrossTheRow.size());
+                "nothing may be painted on the first item's leading breadth edge",
+                CELL_COLOUR,
+                pixels.colourAt(THE_START_BREADTH_EDGE, INSIDE_THE_FIRST_ROW));
+        assertEquals(
+                "nothing may be painted on the last item's trailing breadth edge",
+                CELL_COLOUR,
+                pixels.colourAt(VIEWPORT_WIDTH - ONE_PIXEL, INSIDE_THE_FIRST_ROW));
     }
 
     @Test
@@ -113,16 +131,28 @@ public final class CellDividerGroupInstrumentedTest {
     }
 
     @Test
-    public void dividerInXmlOnAGridPatternView_isNotPaintedBetweenTheItemsOfAGroup() {
+    public void dividerInXmlOnAGridPatternView_isPaintedBetweenTheItemsOfAGroup() {
         final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness = attachGridPattern();
         final PaintedPixels pixels = harness.paint();
 
         final List<PixelRun> acrossTheGroup =
                 pixels.runsAcrossRow(INSIDE_THE_FIRST_PATTERN_GROUP, DIVIDER_COLOUR);
+        assertBands(acrossTheGroup, PATTERN_COLUMN_BAND_STARTS, PATTERN_COLUMN_BAND_ENDS);
+    }
+
+    @Test
+    public void dividerInXmlOnAGridPatternView_isNotPaintedAtTheOuterBreadthEdges() {
+        final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness = attachGridPattern();
+        final PaintedPixels pixels = harness.paint();
+
         assertEquals(
-                "a pattern group must carry no divider inside it: " + acrossTheGroup,
-                NO_RUNS,
-                acrossTheGroup.size());
+                "nothing may be painted on the first item's leading breadth edge",
+                CELL_COLOUR,
+                pixels.colourAt(THE_START_BREADTH_EDGE, INSIDE_THE_FIRST_PATTERN_GROUP));
+        assertEquals(
+                "nothing may be painted on the last item's trailing breadth edge",
+                CELL_COLOUR,
+                pixels.colourAt(VIEWPORT_WIDTH - ONE_PIXEL, INSIDE_THE_FIRST_PATTERN_GROUP));
     }
 
     private static List<PixelRun> dividersDownTheView(final PaintedPixels pixels) {

@@ -37,7 +37,12 @@ public class CellDividerPaintTest {
     private static final int NOTHING_PAINTED = 0;
     private static final int DIVIDER_SIZE = 6;
     private static final int NO_INTRINSIC_SIZE = -1;
-    private static final int OUTSIDE_EVERY_CELL = 5;
+    private static final int FILLS_THE_BREADTH = ViewGroup.LayoutParams.MATCH_PARENT;
+    private static final int NEAR_THE_START_OF_EVERY_CELL = 5;
+    private static final int BETWEEN_THE_GRID_COLUMNS = 150;
+    private static final int THE_START_BREADTH_EDGE = 0;
+    private static final int THE_END_BREADTH_EDGE = LIST_SIZE - 1;
+    private static final int PATTERN_GROUP_GAP_CENTRE = 150;
     private static final int INSIDE_A_LIST_CELL = 150;
     private static final int INSIDE_A_GRID_CELL = 100;
     private static final int FIRST_GAP_CENTRE = 105;
@@ -57,7 +62,8 @@ public class CellDividerPaintTest {
                 .isEqualTo(DIVIDER_COLOUR);
         assertThat(bitmap.getPixel(INSIDE_A_LIST_CELL, INSIDE_THE_FIRST_CELL))
                 .isEqualTo(CELL_COLOUR);
-        assertThat(countRowsOfColour(bitmap, OUTSIDE_EVERY_CELL)).isEqualTo(2 * DIVIDER_SIZE);
+        assertThat(countRowsOfColour(bitmap, NEAR_THE_START_OF_EVERY_CELL))
+                .isEqualTo(2 * DIVIDER_SIZE);
     }
 
     @Test
@@ -80,7 +86,7 @@ public class CellDividerPaintTest {
 
         assertThat(bitmap.getPixel(INSIDE_A_LIST_CELL, FIRST_GAP_CENTRE))
                 .isEqualTo(NOTHING_PAINTED);
-        assertThat(countRowsOfColour(bitmap, OUTSIDE_EVERY_CELL)).isEqualTo(0);
+        assertThat(countRowsOfColour(bitmap, NEAR_THE_START_OF_EVERY_CELL)).isEqualTo(0);
     }
 
     @Test
@@ -115,20 +121,56 @@ public class CellDividerPaintTest {
     }
 
     @Test
-    public void dividerInXmlOnAGridView_isPaintedBetweenRowsRatherThanBetweenItems() {
+    public void dividerInXmlOnAGridView_isPaintedBetweenTheItemsOfARowAsWellAsBetweenTheRows() {
         final Bitmap bitmap = paintList(R.id.divider_grid_view);
 
         assertThat(bitmap.getPixel(INSIDE_A_GRID_CELL, FIRST_GAP_CENTRE)).isEqualTo(DIVIDER_COLOUR);
+        assertThat(bitmap.getPixel(BETWEEN_THE_GRID_COLUMNS, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(DIVIDER_COLOUR);
         assertThat(bitmap.getPixel(INSIDE_A_GRID_CELL, INSIDE_THE_FIRST_CELL))
                 .isEqualTo(CELL_COLOUR);
-        assertThat(countRowsOfColour(bitmap, OUTSIDE_EVERY_CELL)).isEqualTo(2 * DIVIDER_SIZE);
+        assertThat(countRowsOfColour(bitmap, NEAR_THE_START_OF_EVERY_CELL))
+                .isEqualTo(2 * DIVIDER_SIZE);
+        assertThat(countColumnsOfColour(bitmap, INSIDE_THE_FIRST_CELL)).isEqualTo(DIVIDER_SIZE);
     }
 
     @Test
-    public void dividerInXmlOnAGridPatternView_isPaintedBetweenTheTwoPatternGroups() {
+    public void dividerInXmlOnAGridView_isNotPaintedAtTheOuterBreadthEdges() {
+        final Bitmap bitmap = paintList(R.id.divider_grid_view);
+
+        assertThat(bitmap.getPixel(THE_START_BREADTH_EDGE, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(CELL_COLOUR);
+        assertThat(bitmap.getPixel(THE_END_BREADTH_EDGE, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(CELL_COLOUR);
+    }
+
+    @Test
+    public void dividerInXmlOnAGridView_whereTwoGapsCross_paintsNothing() {
+        final Bitmap bitmap = paintList(R.id.divider_grid_view);
+
+        assertThat(bitmap.getPixel(BETWEEN_THE_GRID_COLUMNS, FIRST_GAP_CENTRE))
+                .isEqualTo(NOTHING_PAINTED);
+    }
+
+    @Test
+    public void dividerInXmlOnAGridPatternView_isPaintedInsideAGroupAsWellAsBetweenGroups() {
         final Bitmap bitmap = paintGridPattern();
 
-        assertThat(countRowsOfColour(bitmap, OUTSIDE_EVERY_CELL)).isEqualTo(DIVIDER_SIZE);
+        assertThat(bitmap.getPixel(BETWEEN_THE_GRID_COLUMNS, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(DIVIDER_COLOUR);
+        assertThat(bitmap.getPixel(INSIDE_A_GRID_CELL, PATTERN_GROUP_GAP_CENTRE))
+                .isEqualTo(DIVIDER_COLOUR);
+        assertThat(countRowsOfColour(bitmap, NEAR_THE_START_OF_EVERY_CELL)).isEqualTo(DIVIDER_SIZE);
+    }
+
+    @Test
+    public void dividerInXmlOnAGridPatternView_isNotPaintedAtTheOuterBreadthEdges() {
+        final Bitmap bitmap = paintGridPattern();
+
+        assertThat(bitmap.getPixel(THE_START_BREADTH_EDGE, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(CELL_COLOUR);
+        assertThat(bitmap.getPixel(THE_END_BREADTH_EDGE, INSIDE_THE_FIRST_CELL))
+                .isEqualTo(CELL_COLOUR);
     }
 
     private static int countRowsOfColour(final Bitmap bitmap, final int column) {
@@ -137,6 +179,14 @@ public class CellDividerPaintTest {
             if (bitmap.getPixel(column, row) == DIVIDER_COLOUR) rows++;
         }
         return rows;
+    }
+
+    private static int countColumnsOfColour(final Bitmap bitmap, final int row) {
+        int columns = 0;
+        for (int column = 0; column < LIST_SIZE; column++) {
+            if (bitmap.getPixel(column, row) == DIVIDER_COLOUR) columns++;
+        }
+        return columns;
     }
 
     private static boolean sameDividerRows(final Bitmap first, final Bitmap second) {
@@ -153,7 +203,8 @@ public class CellDividerPaintTest {
     private static Bitmap paintList(final int viewId) {
         final View root = inflate();
         final AbstractAdapterView<BaseAdapter, ?> adapterView = root.findViewById(viewId);
-        adapterView.setAdapter(new ColouredAdapter(CELL_SIZE, LIST_ADAPTER_SIZE));
+        adapterView.setAdapter(
+                new ColouredAdapter(FILLS_THE_BREADTH, CELL_SIZE, LIST_ADAPTER_SIZE));
         return paint(adapterView);
     }
 
@@ -170,7 +221,9 @@ public class CellDividerPaintTest {
                 new ArrayList<GridPatternItemDefinition>();
         tallGroup.add(new GridPatternItemDefinition(0, 0, 1, 2));
         gridPatternView.addGridPatternGroupDefinition(tallGroup);
-        gridPatternView.setAdapter(new ColouredAdapter(CELL_SIZE, GRID_PATTERN_ADAPTER_SIZE));
+        gridPatternView.setAdapter(
+                new ColouredAdapter(
+                        FILLS_THE_BREADTH, FILLS_THE_BREADTH, GRID_PATTERN_ADAPTER_SIZE));
         return paint(gridPatternView);
     }
 
@@ -192,11 +245,13 @@ public class CellDividerPaintTest {
     }
 
     private static final class ColouredAdapter extends BaseAdapter {
-        private final int mCellSize;
+        private final int mCellWidth;
+        private final int mCellHeight;
         private final int mAdapterSize;
 
-        private ColouredAdapter(final int cellSize, final int adapterSize) {
-            mCellSize = cellSize;
+        private ColouredAdapter(final int cellWidth, final int cellHeight, final int adapterSize) {
+            mCellWidth = cellWidth;
+            mCellHeight = cellHeight;
             mAdapterSize = adapterSize;
         }
 
@@ -219,7 +274,7 @@ public class CellDividerPaintTest {
         public View getView(final int position, final View convertView, final ViewGroup parent) {
             final View view = new View(parent.getContext());
             view.setBackgroundColor(CELL_COLOUR);
-            view.setLayoutParams(new ViewGroup.LayoutParams(mCellSize, mCellSize));
+            view.setLayoutParams(new ViewGroup.LayoutParams(mCellWidth, mCellHeight));
             return view;
         }
     }

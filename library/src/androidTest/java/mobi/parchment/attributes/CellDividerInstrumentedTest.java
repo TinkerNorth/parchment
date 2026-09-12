@@ -140,7 +140,7 @@ public final class CellDividerInstrumentedTest {
     }
 
     @Test
-    public void divider_spansTheBreadthInsideThePaddingAndNoFurther() {
+    public void divider_withPaddingSet_spansTheRowsItSeparatesAndNoFurther() {
         final ParchmentViewHarness<ListView<BaseAdapter>> harness =
                 attachVerticalList(R.layout.instrumented_divider_padded, ITEM_COUNT);
         final LaidOutChildren children = harness.children();
@@ -153,12 +153,12 @@ public final class CellDividerInstrumentedTest {
         final List<PixelRun> across = pixels.runsAcrossRow(insideADivider, DIVIDER_COLOUR);
         assertEquals("one unbroken divider across the breadth: " + across, ONE_RUN, across.size());
         assertEquals(
-                "the divider starts at the start breadth padding: " + across,
-                START_BREADTH_PADDING,
+                "the divider starts where the rows it separates start: " + across,
+                children.left(0),
                 across.get(0).start());
         assertEquals(
-                "the divider ends at the end breadth padding: " + across,
-                VIEWPORT_WIDTH - END_BREADTH_PADDING,
+                "the divider ends where the rows it separates end: " + across,
+                children.right(0),
                 across.get(0).end());
         assertEquals(
                 "nothing may be painted in the breadth padding",

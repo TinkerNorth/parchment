@@ -6,19 +6,24 @@ package mobi.parchment.widget.adapterview;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.view.ViewGroup;
+import android.view.View;
+import mobi.parchment.widget.adapterview.divideraxis.BreadthDividerAxis;
+import mobi.parchment.widget.adapterview.divideraxis.DividerAxisInterface;
+import mobi.parchment.widget.adapterview.divideraxis.SizeDividerAxis;
 
 public final class CellDivider {
 
     protected static final int INTRINSIC_SIZE = -1;
 
     private static final int NO_DIVIDER_SIZE = 0;
-    private static final int FIRST_CELL_WITH_A_DIVIDER_BEFORE_IT = 1;
+    private static final int FIRST_CELL = 0;
     private static final int ONE_CELL = 1;
+    private static final int FIRST_VIEW = 0;
     private static final int HALVES = 2;
 
     private final Rect mBounds = new Rect();
-    private final ScrollDirectionManager mScrollDirectionManager;
+    private final DividerAxisInterface mSizeAxis;
+    private final DividerAxisInterface mBreadthAxis;
     private final Drawable mDivider;
     private final int mDividerSize;
 
@@ -27,7 +32,8 @@ public final class CellDivider {
             final int dividerSize,
             final ScrollDirectionManager scrollDirectionManager) {
         mDivider = divider;
-        mScrollDirectionManager = scrollDirectionManager;
+        mSizeAxis = new SizeDividerAxis(scrollDirectionManager);
+        mBreadthAxis = new BreadthDividerAxis(scrollDirectionManager);
         mDividerSize = getResolvedDividerSize(divider, dividerSize, scrollDirectionManager);
     }
 
@@ -64,34 +70,141 @@ public final class CellDivider {
         return dividerStart;
     }
 
-    public void draw(
-            final Canvas canvas, final ViewGroup viewGroup, final LayoutManager<?> layoutManager) {
+    protected static int getLastCandidateCellIndex(final int cellIndex, final int cellCount) {
+        final int nextCellIndex = cellIndex + ONE_CELL;
+        final int lastCellIndex = cellCount - ONE_CELL;
+        return Math.min(nextCellIndex, lastCellIndex);
+    }
+
+    public void draw(final Canvas canvas, final LayoutManager<?> layoutManager) {
         if (mDividerSize == NO_DIVIDER_SIZE) return;
 
-        final int breadth =
-                mScrollDirectionManager.getDrawBreadth(
-                        viewGroup.getLeft(),
-                        viewGroup.getTop(),
-                        viewGroup.getRight(),
-                        viewGroup.getBottom());
-        final int breadthStart = layoutManager.getStartBreadthPadding();
-        final int endBreadthPadding = layoutManager.getEndBreadthPadding();
-        final int breadthEnd = breadth - endBreadthPadding;
         final int cellCount = layoutManager.getDrawnCellCount();
-
-        for (int cellIndex = FIRST_CELL_WITH_A_DIVIDER_BEFORE_IT;
-                cellIndex < cellCount;
-                cellIndex++) {
-            final int previousCellIndex = cellIndex - ONE_CELL;
-            final int gapStart = layoutManager.getDrawnCellEnd(previousCellIndex);
-            final int gapEnd = layoutManager.getDrawnCellStart(cellIndex);
-            final int dividerStart = getDividerStart(gapStart, gapEnd, mDividerSize);
-            final int dividerEnd = dividerStart + mDividerSize;
-
-            mScrollDirectionManager.setDrawBounds(
-                    mBounds, dividerStart, dividerEnd, breadthStart, breadthEnd);
-            mDivider.setBounds(mBounds);
-            mDivider.draw(canvas);
+        for (int cellIndex = FIRST_CELL; cellIndex < cellCount; cellIndex++) {
+            drawCellEdges(canvas, layoutManager, cellIndex, cellCount);
         }
+    }
+
+    private void drawCellEdges(
+            final Canvas canvas,
+            final LayoutManager<?> layoutManager,
+            final int cellIndex,
+            final int cellCount) {
+        final int viewCount = layoutManager.getDrawnCellViewCount(cellIndex);
+        for (int viewIndex = FIRST_VIEW; viewIndex < viewCount; viewIndex++) {
+            final View item = layoutManager.getDrawnCellView(cellIndex, viewIndex);
+            drawEdges(canvas, layoutManager, item, cellIndex, cellCount, mSizeAxis);
+            drawEdges(canvas, layoutManager, item, cellIndex, cellCount, mBreadthAxis);
+        }
+    }
+
+    private void drawEdges(
+            final Canvas canvas,
+            final LayoutManager<?> layoutManager,
+            final View item,
+            final int cellIndex,
+            final int cellCount,
+            final DividerAxisInterface axis) {
+        final int lastCellIndex = getLastCandidateCellIndex(cellIndex, cellCount);
+        for (int candidateCellIndex = cellIndex;
+                candidateCellIndex <= lastCellIndex;
+                candidateCellIndex++) {
+            final int candidateCount = layoutManager.getDrawnCellViewCount(candidateCellIndex);
+            for (int candidateIndex = FIRST_VIEW;
+                    candidateIndex < candidateCount;
+                    candidateIndex++) {
+                final View neighbour =
+                        layoutManager.getDrawnCellView(candidateCellIndex, candidateIndex);
+                drawEdge(canvas, layoutManager, item, neighbour, cellIndex, lastCellIndex, axis);
+            }
+        }
+    }
+
+    private void drawEdge(
+            final Canvas canvas,
+            final LayoutManager<?> layoutManager,
+            final View item,
+            final View neighbour,
+            final int cellIndex,
+            final int lastCellIndex,
+            final DividerAxisInterface axis) {
+        final int itemStart = axis.getStart(item);
+        final int itemEnd = axis.getEnd(item);
+        final int neighbourStart = axis.getStart(neighbour);
+        final int neighbourEnd = axis.getEnd(neighbour);
+        final boolean isAcrossTheEndEdge =
+                CellEdges.isAcrossTheEndEdge(itemStart, itemEnd, neighbourStart, neighbourEnd);
+        if (!isAcrossTheEndEdge) return;
+
+        final int itemBandStart = axis.getBandStart(item);
+        final int itemBandEnd = axis.getBandEnd(item);
+        final int neighbourBandStart = axis.getBandStart(neighbour);
+        final int neighbourBandEnd = axis.getBandEnd(neighbour);
+        final int bandStart = CellEdges.getOverlapStart(itemBandStart, neighbourBandStart);
+        final int bandEnd = CellEdges.getOverlapEnd(itemBandEnd, neighbourBandEnd);
+        if (!CellEdges.isAnOverlap(bandStart, bandEnd)) return;
+
+        final boolean isOccupied =
+                isGapOccupied(
+                        layoutManager,
+                        cellIndex,
+                        lastCellIndex,
+                        itemStart,
+                        itemEnd,
+                        neighbourStart,
+                        neighbourEnd,
+                        bandStart,
+                        bandEnd,
+                        axis);
+        if (isOccupied) return;
+
+        final int dividerStart = getDividerStart(itemEnd, neighbourStart, mDividerSize);
+        final int dividerEnd = dividerStart + mDividerSize;
+        axis.setDividerBounds(mBounds, dividerStart, dividerEnd, bandStart, bandEnd);
+        mDivider.setBounds(mBounds);
+        mDivider.draw(canvas);
+    }
+
+    private boolean isGapOccupied(
+            final LayoutManager<?> layoutManager,
+            final int cellIndex,
+            final int lastCellIndex,
+            final int itemStart,
+            final int itemEnd,
+            final int neighbourStart,
+            final int neighbourEnd,
+            final int bandStart,
+            final int bandEnd,
+            final DividerAxisInterface axis) {
+        for (int candidateCellIndex = cellIndex;
+                candidateCellIndex <= lastCellIndex;
+                candidateCellIndex++) {
+            final int candidateCount = layoutManager.getDrawnCellViewCount(candidateCellIndex);
+            for (int candidateIndex = FIRST_VIEW;
+                    candidateIndex < candidateCount;
+                    candidateIndex++) {
+                final View candidate =
+                        layoutManager.getDrawnCellView(candidateCellIndex, candidateIndex);
+                final int candidateStart = axis.getStart(candidate);
+                final int candidateEnd = axis.getEnd(candidate);
+                final boolean isInTheGap =
+                        CellEdges.isInTheGap(
+                                itemStart,
+                                itemEnd,
+                                neighbourStart,
+                                neighbourEnd,
+                                candidateStart,
+                                candidateEnd);
+                if (!isInTheGap) continue;
+
+                final int candidateBandStart = axis.getBandStart(candidate);
+                final int candidateBandEnd = axis.getBandEnd(candidate);
+                final boolean reachesTheBand =
+                        CellEdges.reachesTheBand(
+                                bandStart, bandEnd, candidateBandStart, candidateBandEnd);
+                if (reachesTheBand) return true;
+            }
+        }
+        return false;
     }
 }
