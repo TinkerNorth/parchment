@@ -40,6 +40,16 @@ public class ScrollDirectionManager {
         return view.getMeasuredWidth();
     }
 
+    public int getViewBreadthStart(final View view) {
+        if (isVerticalScroll()) return view.getLeft();
+        return view.getTop();
+    }
+
+    public int getViewBreadthEnd(final View view) {
+        if (isVerticalScroll()) return view.getRight();
+        return view.getBottom();
+    }
+
     public int getViewBreadth(final View view) {
         if (isVerticalScroll()) return view.getMeasuredWidth();
         return view.getMeasuredHeight();

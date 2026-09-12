@@ -19,6 +19,10 @@ public class Group {
         return new ArrayList<View>(mViews);
     }
 
+    public View getView(final int index) {
+        return mViews.get(index);
+    }
+
     private final boolean mIsVerticalScroll;
 
     public Group(final boolean isVerticalScroll) {
