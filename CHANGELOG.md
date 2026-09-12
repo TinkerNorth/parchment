@@ -18,6 +18,11 @@ behaviour of the views is unchanged; everything around them is new.
   the in-tree test views use to reach the gesture listener — has to take the
   two new parameters and pass them on.
 
+- The `GridPatternView` sample screen and the wrapping-height `GridView`
+  sample screen draw a divider, so the feature is visible in the app. A
+  colour has no intrinsic size, so both declare an explicit
+  `parchment_dividerSize`.
+
 - `GridView` rows report their bounds without allocating. `Group.getTop`,
   `getBottom`, `getLeft` and `getRight` walked their views with an iterator
   and a boxed `Integer` accumulator; they now index the list and accumulate
@@ -136,24 +141,34 @@ behaviour of the views is unchanged; everything around them is new.
 
 ### Added
 
-- `parchment_divider` and `parchment_dividerSize` draw a divider between
-  adjacent cells in all three views, the thing the platform `ListView` has
-  and Parchment did not (#25). There is one fewer divider than there are
-  cells on screen: never before the first, never after the last. A cell is
-  one view in `ListView` and a whole group in `GridView` and
-  `GridPatternView`, so a divider separates rows rather than the items
-  inside a row. The divider is decoration and takes no space of its own: it
-  is centred in the `parchment_cellSpacing` gap, so the spacing is what you
+- `parchment_divider` and `parchment_dividerSize` draw a divider in all
+  three views, the thing the platform `ListView` has and Parchment did not
+  (#25). A divider falls on every edge internal to the content and on none
+  at the content's outer boundary. Each drawn item is asked about its
+  trailing edge along each axis: where another item lies across the gap a
+  divider is painted there, spanning exactly the run the two items share
+  along the other axis, and an item with no neighbour on a side is at the
+  boundary and gets nothing. In a `ListView` that is one divider between
+  each pair of items and one fewer than there are cells on screen. In
+  `GridView` and `GridPatternView`, where a cell is a whole group, it is
+  also a divider between the items stacked inside one group, so a
+  `GridPatternView` pattern of mixed spans and T-junctions is divided
+  without rows or columns having to exist. Every shared edge is painted
+  once. The divider is decoration and takes no space of its own: it is
+  centred in the `parchment_cellSpacing` gap, so the spacing is what you
   size to make room for it, and a divider thicker than the spacing overflows
-  evenly onto both cells and is painted over them — which is also what makes
-  one visible when the spacing is zero. Along the breadth it runs inside
-  `android:padding*`; `android:clipToPadding` is applied to the cells inside
-  `ViewGroup.dispatchDraw` and restored before it returns, so it never
-  reaches the divider under either setting. Without `parchment_dividerSize`
-  the drawable's intrinsic size along the scroll axis is used, and a colour
-  has none, so a colour divider with no size paints nothing, as with the
-  platform widget. The divider is drawn as it is given: drawable state and
-  animation are not driven, as with the platform widget.
+  evenly onto both items and is painted over them — which is also what makes
+  one visible when the spacing is zero. Where a gap between rows crosses a
+  gap between columns nothing abuts either gap, so the crossing is left
+  unpainted. A divider begins and ends where the items it separates do, so
+  it stays inside `android:padding*` with them; `android:clipToPadding` is
+  applied to the cells inside `ViewGroup.dispatchDraw` and restored before
+  it returns, so it never reaches the divider under either setting. Without
+  `parchment_dividerSize` the drawable's intrinsic size along the scroll
+  axis is used, and a colour has none, so a colour divider with no size
+  paints nothing, as with the platform widget. The divider is drawn as it is
+  given: drawable state and animation are not driven, as with the platform
+  widget.
 - An instrumented harness, `ParchmentViewHarness`, that inflates a view
   from a layout with a real `LayoutInflater`, attaches it to an Activity at
   an exact pixel size, drives real measure and layout passes, dispatches
