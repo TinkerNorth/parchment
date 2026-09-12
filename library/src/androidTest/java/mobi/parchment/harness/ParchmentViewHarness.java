@@ -4,6 +4,8 @@
 package mobi.parchment.harness;
 
 import android.app.Instrumentation;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -34,6 +36,7 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
     private static final float WHOLE_GESTURE = 1f;
     private static final int FRAME_MILLISECONDS = 16;
     private static final int NO_META_STATE = 0;
+    private static final int NO_OFFSET = 0;
     private static final int NO_HOLD = 0;
     private static final int RELEASE_HOLD_STEPS = 10;
 
@@ -93,6 +96,16 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         final ReadSelectedPosition<VIEW> readSelectedPosition = new ReadSelectedPosition<>(mView);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(readSelectedPosition);
         return readSelectedPosition.selectedPosition();
+    }
+
+    /**
+     * Rasterises the view into a bitmap on the main thread and hands back an immutable snapshot of
+     * the pixels, so a test can assert what was painted and not only where the children landed.
+     */
+    public PaintedPixels paint() {
+        final DrawToBitmap<VIEW> drawToBitmap = new DrawToBitmap<>(mView);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(drawToBitmap);
+        return drawToBitmap.paintedPixels();
     }
 
     /** Reads every child's bounds and adapter position on the main thread. */
@@ -474,6 +487,39 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
                             adapterPositions,
                             mView.getWidth(),
                             mView.getHeight());
+        }
+    }
+
+    private static final class DrawToBitmap<VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            implements Runnable {
+
+        private final VIEW mView;
+        private PaintedPixels mPaintedPixels;
+
+        private DrawToBitmap(final VIEW view) {
+            mView = view;
+        }
+
+        private PaintedPixels paintedPixels() {
+            return mPaintedPixels;
+        }
+
+        @Override
+        public void run() {
+            final int width = mView.getWidth();
+            final int height = mView.getHeight();
+            final boolean hasSize = width > 0 && height > 0;
+            if (!hasSize) {
+                throw new AssertionError(
+                        "the view has no size to paint into: " + width + "x" + height);
+            }
+            final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            final Canvas canvas = new Canvas(bitmap);
+            mView.draw(canvas);
+            final int[] pixels = new int[width * height];
+            bitmap.getPixels(pixels, NO_OFFSET, width, NO_OFFSET, NO_OFFSET, width, height);
+            bitmap.recycle();
+            mPaintedPixels = new PaintedPixels(pixels, width, height);
         }
     }
 

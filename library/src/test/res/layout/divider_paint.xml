@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:parchment="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="6px"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/no_divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/sizeless_colour_divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/thick_divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="20px"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/padded_clipped_divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            android:padding="60px"
+            android:clipToPadding="true"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="6px"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/padded_unclipped_divider_list_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            android:padding="60px"
+            android:clipToPadding="false"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="6px"/>
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/divider_grid_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_numberOfViewsPerCell="2"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="6px"/>
+
+    <mobi.parchment.widget.adapterview.gridpatternview.GridPatternView
+            android:id="@+id/divider_grid_pattern_view"
+            android:layout_width="300px"
+            android:layout_height="300px"
+            parchment:parchment_orientation="vertical"
+            parchment:parchment_ratio="1"
+            parchment:parchment_cellSpacing="10px"
+            parchment:parchment_divider="#ff00ff00"
+            parchment:parchment_dividerSize="6px"/>
+
+</LinearLayout>

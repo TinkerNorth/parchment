@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.View;
@@ -57,6 +59,9 @@ public class HorizontalListViewTest {
     private static final String ID_ATTRIBUTE = "id";
     private static final String ORIENTATION_ATTRIBUTE = "parchment_orientation";
     private static final String SNAP_POSITION_ATTRIBUTE = "parchment_snapPosition";
+    private static final int TEST_DIVIDER_COLOUR = 0xff112233;
+    private static final int DEFAULT_DIVIDER_SIZE = -1;
+    private static final int NO_DIVIDER_SIZE = 0;
 
     @Test
     public void testBasicIntegration() {
@@ -173,6 +178,8 @@ public class HorizontalListViewTest {
                         "parchment_viewPagerInterval",
                         "parchment_snapPosition",
                         "parchment_selectWhileScrolling",
+                        "parchment_divider",
+                        "parchment_dividerSize",
                         "parchment_numberOfViewsPerCell",
                         "parchment_gravity",
                         "parchment_ratio");
@@ -195,6 +202,38 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(TEST_VIEW_PAGER_INTERVAL);
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.end);
         assertThat(attributes.selectWhileScrolling()).isTrue();
+    }
+
+    @Test
+    public void dividerAttributesSetInXml_reachTheAttributesGetters() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_list_view, R.id.horizontal_list_view);
+
+        final Drawable divider = attributes.getDivider();
+        assertThat(divider).isInstanceOf(ColorDrawable.class);
+        assertThat(((ColorDrawable) divider).getColor()).isEqualTo(TEST_DIVIDER_COLOUR);
+        assertThat(attributes.getDividerSize())
+                .isEqualTo(dimensionPixelSize(R.dimen.divider_test_size));
+    }
+
+    @Test
+    public void aNegativeDividerSizeInXml_isReadAsDeclaredAndNotAsAnAbsentAttribute() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_divider_sizes,
+                        R.id.negative_divider_size_list_view);
+
+        assertThat(attributes.getDividerSize()).isEqualTo(NO_DIVIDER_SIZE);
+    }
+
+    @Test
+    public void anAbsentDividerSizeInXml_leavesTheIntrinsicSizeMarker() {
+        final Attributes attributes =
+                listViewAttributesFrom(
+                        R.layout.attribute_parsing_divider_sizes, R.id.no_divider_size_list_view);
+
+        assertThat(attributes.getDividerSize()).isEqualTo(DEFAULT_DIVIDER_SIZE);
     }
 
     @Test
@@ -363,6 +402,8 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.onScreen);
+        assertThat(attributes.getDivider()).isNull();
+        assertThat(attributes.getDividerSize()).isEqualTo(DEFAULT_DIVIDER_SIZE);
     }
 
     @Test
@@ -379,6 +420,8 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.center);
+        assertThat(attributes.getDivider()).isNull();
+        assertThat(attributes.getDividerSize()).isEqualTo(DEFAULT_DIVIDER_SIZE);
     }
 
     @Test

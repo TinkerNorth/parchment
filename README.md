@@ -24,6 +24,9 @@ every child in memory. The story, and a feature-by-feature comparison with
 - ViewPager behaviour on the same ListView and the same adapter: one
   completed gesture advances a whole viewport of cells, or exactly
   `parchment_viewPagerInterval` of them
+- A divider drawn on every edge internal to the content, in either
+  orientation and in all three views, including between the items stacked
+  inside one `GridView` row or one `GridPatternView` group
 - GridView whose rows wrap to the tallest cell
 - GridPatternView: declare a repeating pattern of mixed-span cells and let
   the engine tile your data through it
@@ -106,6 +109,63 @@ cd parchment
     parchment:parchment_viewPagerInterval="viewport" />
 ```
 
+### Dividers
+
+`parchment_divider` paints a drawable or a colour on every edge internal to
+the content and on none at the content's outer boundary. Each drawn item is
+asked about its trailing edge along each axis: where another item lies across
+the gap, a divider is painted in that gap, spanning exactly the run the two
+items share along the other axis. An item with no neighbour on a side is at
+the boundary and gets nothing, so nothing is ever painted before the first
+cell, after the last, or down the outside of the content.
+
+In a `ListView` a cell is one view and there is one axis, so that is one
+divider between each pair of items and one fewer divider than there are cells
+on screen. In `GridView` and `GridPatternView` a cell is a whole group, so
+dividers fall both between the groups and between the items stacked inside
+one: scrolling vertically, a line between the rows and a line between the
+columns. Because a divider spans only what the two items it separates share,
+a `GridPatternView` pattern of mixed spans is divided correctly without rows
+or columns having to exist: an item that abuts two stacked ones is divided
+from each of them over its own share of the edge. Every shared edge is
+painted once.
+
+The divider is decoration and takes no space of its own: it is centred in
+the `parchment_cellSpacing` gap between the two items, so the gap is what
+you size to make room for it. A divider thicker than the spacing overflows
+evenly onto both items and is painted over them, which is also what makes
+one visible when the spacing is zero. Where two gaps cross — the corner at
+which a gap between rows meets a gap between columns — no item lies on either
+side of either gap, so the crossing is left unpainted.
+
+A divider follows the items it separates rather than the view's padding: it
+begins and ends where they do. Cells are laid out inside `android:padding*`,
+so a divider stays inside the padding with them. `android:clipToPadding`
+decides whether a cell is clipped at the padding; either way it never reaches
+the divider.
+
+`parchment_dividerSize` gives the thickness along the scroll axis. Leave it
+out and the drawable's intrinsic size along that axis is used instead — but
+a colour has no intrinsic size, so a colour divider with no
+`parchment_dividerSize` paints nothing, the same as the platform `ListView`.
+A `parchment_dividerSize` of zero or less paints nothing either; that is not
+the same as leaving the attribute out, which is what asks for the intrinsic
+size.
+
+The drawable is drawn as it is given: its state is not tracked and an
+`AnimationDrawable` will not animate, again as with the platform `ListView`.
+
+```xml
+<mobi.parchment.widget.adapterview.listview.ListView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:parchment="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_cellSpacing="8dp"
+    parchment:parchment_divider="#33000000"
+    parchment:parchment_dividerSize="1dp" />
+```
+
 ### Java
 
 ```java
@@ -145,6 +205,8 @@ All views:
 | `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
 | `parchment_isViewPager` | boolean | One page per gesture, ViewPager style |
 | `parchment_viewPagerInterval` | integer, or `viewport` | How far one ViewPager gesture pages. `viewport` (or `0`, or unset, the default) advances every cell that fits the viewport whole; `N` advances exactly N cells. Values below zero are read as `viewport` |
+| `parchment_divider` | drawable or colour | Drawn on every edge internal to the content and on none at its outer boundary: between adjacent cells and between the items stacked inside one |
+| `parchment_dividerSize` | dimension | Divider thickness along the scroll axis; without it the drawable's intrinsic size along that axis is used, and a colour has none, so a colour divider with no size paints nothing |
 
 GridView:
 
