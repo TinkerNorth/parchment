@@ -47,9 +47,10 @@ public class CellDividerGroupTest {
     private static final int TWO_DRAWN_GROUPS = 2;
     private static final float SQUARE_RATIO = 1f;
     private static final float QUARTER_RATIO = 0.25f;
+    private static final float TALL_RATIO = 1.1f;
     private static final int TWO_SHORT_ROWS_CENTRED_START = 93;
     private static final int FIVE_SHORT_ROWS_CENTRED_START = 40;
-    private static final int THREE_SHORT_ROWS_CENTRED_START = 1;
+    private static final int START_OF_A_GROUP_TALLER_THAN_THE_VIEW = 0;
     private static final boolean IS_VERTICAL = true;
     private static final boolean IS_HORIZONTAL = false;
     private static final boolean NOT_CIRCULAR = false;
@@ -82,7 +83,9 @@ public class CellDividerGroupTest {
     private static final int NEGATIVE_CELL_SPACING = -10;
     private static final int SECOND_CELL = 1;
     private static final int SECOND_VIEW = 1;
-    private static final int HALF_GRID_VIEW_SIZE = 50;
+    private static final int THIRD_CELL = 2;
+    private static final int A_SINGLE_ROW_CENTRED_START = 100;
+    private static final int SMALL_GRID_VIEW_SIZE = 20;
     private static final int MANY_ITEMS = 40;
 
     private final Canvas mCanvas = new Canvas();
@@ -93,7 +96,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_VERTICAL, GRAVITY_TOP);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(SIX_DRAWN_VIEWS);
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(THREE_DRAWN_GROUPS);
@@ -113,7 +116,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_HORIZONTAL, GRAVITY_TOP);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(SIX_DRAWN_VIEWS);
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(THREE_DRAWN_GROUPS);
@@ -133,22 +136,31 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutThreeColumnGrid(viewGroup);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
+        assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
+                .isEqualTo(A_SINGLE_ROW_CENTRED_START);
         assertThat(divider.getDrawCount()).isEqualTo(2);
-        assertThat(divider.getDrawnBounds(0).left).isEqualTo(96);
-        assertThat(divider.getDrawnBounds(0).right).isEqualTo(100);
-        assertThat(divider.getDrawnBounds(1).left).isEqualTo(199);
-        assertThat(divider.getDrawnBounds(1).right).isEqualTo(203);
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(96, 100, 100, 200));
+        assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(199, 100, 203, 200));
     }
 
     @Test
     public void gridDivider_withANegativeCellSpacing_isNotDrawn() {
+        assertNothingIsDrawnWithANegativeCellSpacing(IS_VERTICAL);
+    }
+
+    @Test
+    public void gridDivider_inAHorizontalGridWithANegativeCellSpacing_isNotDrawn() {
+        assertNothingIsDrawnWithANegativeCellSpacing(IS_HORIZONTAL);
+    }
+
+    private void assertNothingIsDrawnWithANegativeCellSpacing(final boolean isVertical) {
         final MyViewGroup viewGroup = newViewGroup();
-        final LayoutManager<?> layoutManager = layOutOverlappingGrid(viewGroup);
+        final LayoutManager<?> layoutManager = layOutOverlappingGrid(viewGroup, isVertical);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         final ScrollDirectionManager scrollDirectionManager =
                 layoutManager.getScrollDirectionManager();
@@ -156,22 +168,23 @@ public class CellDividerGroupTest {
         final View secondItem = layoutManager.getDrawnCellView(FIRST_CELL, SECOND_VIEW);
         final int firstItemBreadthEnd = scrollDirectionManager.getViewBreadthEnd(firstItem);
         final int secondItemBreadthStart = scrollDirectionManager.getViewBreadthStart(secondItem);
-        final int firstRowEnd = layoutManager.getDrawnCellEnd(FIRST_CELL);
-        final int secondRowStart = layoutManager.getDrawnCellStart(SECOND_CELL);
+        final int firstCellEnd = layoutManager.getDrawnCellEnd(FIRST_CELL);
+        final int secondCellStart = layoutManager.getDrawnCellStart(SECOND_CELL);
         assertThat(secondItemBreadthStart).isLessThan(firstItemBreadthEnd);
-        assertThat(secondRowStart).isLessThan(firstRowEnd);
+        assertThat(secondCellStart).isLessThan(firstCellEnd);
         assertThat(divider.getDrawCount()).isEqualTo(0);
     }
 
     @Test
     public void lastCandidateCellIndex_forACellBeforeTheLast_isTheNextCell() {
         assertThat(CellDivider.getLastCandidateCellIndex(FIRST_CELL, THREE_DRAWN_GROUPS))
-                .isEqualTo(1);
+                .isEqualTo(SECOND_CELL);
     }
 
     @Test
     public void lastCandidateCellIndex_forTheLastCell_isThatCellItself() {
-        assertThat(CellDivider.getLastCandidateCellIndex(2, THREE_DRAWN_GROUPS)).isEqualTo(2);
+        assertThat(CellDivider.getLastCandidateCellIndex(THIRD_CELL, THREE_DRAWN_GROUPS))
+                .isEqualTo(THIRD_CELL);
     }
 
     @Test
@@ -179,21 +192,24 @@ public class CellDividerGroupTest {
         final MyViewGroup smallViewGroup = newViewGroup();
         final CountingGridLayoutManager small = layOutCountingGrid(smallViewGroup, GRID_VIEW_SIZE);
         final MyViewGroup bigViewGroup = newViewGroup();
-        final CountingGridLayoutManager big = layOutCountingGrid(bigViewGroup, HALF_GRID_VIEW_SIZE);
+        final CountingGridLayoutManager big =
+                layOutCountingGrid(bigViewGroup, SMALL_GRID_VIEW_SIZE);
+        final RecordingDrawable smallDivider = new RecordingDrawable();
+        final RecordingDrawable bigDivider = new RecordingDrawable();
 
         small.resetCellViewReads();
-        draw(new RecordingDrawable(), smallViewGroup, small);
+        draw(smallDivider, small);
         big.resetCellViewReads();
-        draw(new RecordingDrawable(), bigViewGroup, big);
+        draw(bigDivider, big);
 
         final int smallItems = smallViewGroup.mViews.size();
         final int bigItems = bigViewGroup.mViews.size();
         final int smallReads = small.getCellViewReads();
         final int bigReads = big.getCellViewReads();
-        final int smallReadsPerItem = smallReads / smallItems;
-        final int bigReadsPerItem = bigReads / bigItems;
-        assertThat(bigItems).isGreaterThanOrEqualTo(smallItems * 2);
-        assertThat(bigReadsPerItem).isLessThan(smallReadsPerItem * 2);
+        final int bigReadsScaledToTheSmallCount = bigReads * smallItems;
+        final int smallReadsScaledToTheBigCount = smallReads * bigItems;
+        assertThat(bigItems).isGreaterThanOrEqualTo(smallItems * 3);
+        assertThat(bigReadsScaledToTheSmallCount).isLessThan(smallReadsScaledToTheBigCount * 2);
     }
 
     @Test
@@ -202,7 +218,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_VERTICAL, GRAVITY_TOP);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         final ScrollDirectionManager scrollDirectionManager =
                 layoutManager.getScrollDirectionManager();
@@ -232,7 +248,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_VERTICAL, GRAVITY_TOP);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         final List<Rect> drawn = new ArrayList<Rect>();
         for (int index = 0; index < divider.getDrawCount(); index++) {
@@ -266,7 +282,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGridPatternTee(viewGroup, IS_VERTICAL);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(THREE_ITEMS);
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(ONE_DRAWN_GROUP);
@@ -283,7 +299,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGridPatternTee(viewGroup, IS_HORIZONTAL);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(THREE_ITEMS);
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(ONE_DRAWN_GROUP);
@@ -299,7 +315,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutUnevenGrid(viewGroup);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(divider.getDrawCount()).isEqualTo(7);
         assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 103, 145, 107));
@@ -312,7 +328,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGridPatternWithAHole(viewGroup);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(divider.getDrawCount()).isEqualTo(1);
         assertThat(divider.getDrawnBounds(0).left).isEqualTo(147);
@@ -326,19 +342,19 @@ public class CellDividerGroupTest {
                 layOutGridPattern(
                         viewGroup,
                         IS_VERTICAL,
-                        SQUARE_RATIO,
+                        TALL_RATIO,
                         THREE_ITEMS,
                         newGroupDefinitionWithAHoleBesideAnItem());
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(THREE_ITEMS);
         assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
-                .isEqualTo(THREE_SHORT_ROWS_CENTRED_START);
+                .isEqualTo(START_OF_A_GROUP_TALLER_THAN_THE_VIEW);
         assertThat(divider.getDrawCount()).isEqualTo(2);
-        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 97, 93, 101));
-        assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(0, 200, 93, 204));
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 105, 93, 109));
+        assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(0, 217, 93, 221));
     }
 
     @Test
@@ -347,7 +363,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, NO_CELL_SPACING, EIGHT_ITEMS);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 98, 150, 102));
         assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(148, 0, 152, 100));
@@ -371,7 +387,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, CELL_SPACING, TWO_ITEMS);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(ONE_DRAWN_GROUP);
         assertThat(divider.getDrawCount()).isEqualTo(1);
@@ -384,7 +400,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, CELL_SPACING, ONE_ITEM);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(ONE_DRAWN_GROUP);
         assertThat(divider.getDrawCount()).isEqualTo(0);
@@ -396,7 +412,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, CELL_SPACING, NO_ITEMS);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(NO_ITEMS);
         assertThat(divider.getDrawCount()).isEqualTo(0);
@@ -409,7 +425,7 @@ public class CellDividerGroupTest {
         scroll(viewGroup, layoutManager, A_FORWARD_SCROLL);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         final int drawnCellCount = layoutManager.getDrawnCellCount();
         final int gapsBetweenDrawnRows = drawnCellCount - ONE_DRAWN_GROUP;
@@ -429,7 +445,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutCentredGrid(viewGroup);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(30, 133, 145, 137));
         assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(148, 30, 152, 130));
@@ -441,7 +457,7 @@ public class CellDividerGroupTest {
         final LayoutManager<?> layoutManager = layOutGridPatternPair(viewGroup);
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(layoutManager.getDrawnCellCount()).isEqualTo(TWO_DRAWN_GROUPS);
         assertThat(divider.getDrawCount()).isEqualTo(3);
@@ -463,7 +479,7 @@ public class CellDividerGroupTest {
                         newDiagonalAcrossTheBreadthDefinition());
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(TWO_ITEMS);
         assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
@@ -485,7 +501,7 @@ public class CellDividerGroupTest {
                         newDiagonalAlongTheSizeDefinition());
         final RecordingDrawable divider = new RecordingDrawable();
 
-        draw(divider, viewGroup, layoutManager);
+        draw(divider, layoutManager);
 
         assertThat(viewGroup.mViews).hasSize(TWO_ITEMS);
         assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
@@ -512,10 +528,7 @@ public class CellDividerGroupTest {
         }
     }
 
-    private void draw(
-            final RecordingDrawable divider,
-            final MyViewGroup viewGroup,
-            final LayoutManager<?> layoutManager) {
+    private void draw(final RecordingDrawable divider, final LayoutManager<?> layoutManager) {
         draw(divider, layoutManager, DIVIDER_SIZE);
     }
 
@@ -599,12 +612,13 @@ public class CellDividerGroupTest {
                 THREE_VIEWS_PER_CELL);
     }
 
-    private static LayoutManager<?> layOutOverlappingGrid(final MyViewGroup viewGroup) {
+    private static LayoutManager<?> layOutOverlappingGrid(
+            final MyViewGroup viewGroup, final boolean isVertical) {
         return newGridLayoutManager(
                 viewGroup,
-                IS_VERTICAL,
+                isVertical,
                 GRAVITY_TOP,
-                new TestAdapter(IS_VERTICAL),
+                new TestAdapter(isVertical),
                 NEGATIVE_CELL_SPACING,
                 NOT_CIRCULAR,
                 EIGHT_ITEMS,
