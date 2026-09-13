@@ -53,6 +53,14 @@ public class CellEdgesTest {
     }
 
     @Test
+    public void isAcrossTheEndEdge_forANeighbourStartingWithTheItemAndReachingFurther_isTrue() {
+        final boolean isAcross =
+                CellEdges.isAcrossTheEndEdge(ITEM_START, ITEM_END, ITEM_START, AFTER_A_GAP_END);
+
+        assertThat(isAcross).isTrue();
+    }
+
+    @Test
     public void isAcrossTheEndEdge_forTheItemItself_isFalse() {
         final boolean isAcross =
                 CellEdges.isAcrossTheEndEdge(ITEM_START, ITEM_END, ITEM_START, ITEM_END);
