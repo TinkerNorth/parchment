@@ -49,6 +49,7 @@ public class CellDividerGroupTest {
     private static final float QUARTER_RATIO = 0.25f;
     private static final int TWO_SHORT_ROWS_CENTRED_START = 93;
     private static final int FIVE_SHORT_ROWS_CENTRED_START = 40;
+    private static final int THREE_SHORT_ROWS_CENTRED_START = 1;
     private static final boolean IS_VERTICAL = true;
     private static final boolean IS_HORIZONTAL = false;
     private static final boolean NOT_CIRCULAR = false;
@@ -316,6 +317,28 @@ public class CellDividerGroupTest {
         assertThat(divider.getDrawCount()).isEqualTo(1);
         assertThat(divider.getDrawnBounds(0).left).isEqualTo(147);
         assertThat(divider.getDrawnBounds(0).right).isEqualTo(151);
+    }
+
+    @Test
+    public void gridPatternDivider_acrossAHoleWithAnItemBesideItInTheGap_isNotDrawn() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager =
+                layOutGridPattern(
+                        viewGroup,
+                        IS_VERTICAL,
+                        SQUARE_RATIO,
+                        THREE_ITEMS,
+                        newGroupDefinitionWithAHoleBesideAnItem());
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        assertThat(viewGroup.mViews).hasSize(THREE_ITEMS);
+        assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
+                .isEqualTo(THREE_SHORT_ROWS_CENTRED_START);
+        assertThat(divider.getDrawCount()).isEqualTo(2);
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 97, 93, 101));
+        assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(0, 200, 93, 204));
     }
 
     @Test
@@ -782,6 +805,15 @@ public class CellDividerGroupTest {
                 new ArrayList<GridPatternItemDefinition>();
         itemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 1));
         itemDefinitions.add(new GridPatternItemDefinition(0, 2, 1, 1));
+        return new GridPatternGroupDefinition(IS_VERTICAL, itemDefinitions);
+    }
+
+    private static GridPatternGroupDefinition newGroupDefinitionWithAHoleBesideAnItem() {
+        final List<GridPatternItemDefinition> itemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
+        itemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 3));
+        itemDefinitions.add(new GridPatternItemDefinition(1, 0, 1, 1));
+        itemDefinitions.add(new GridPatternItemDefinition(2, 0, 1, 3));
         return new GridPatternGroupDefinition(IS_VERTICAL, itemDefinitions);
     }
 

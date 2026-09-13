@@ -126,15 +126,37 @@ the nearest thing across a gap. Inside one cell there is no such bound, and a
 `GridPatternGroupDefinition` that leaves a grid position empty is divided across
 that empty position as though it were a gap, because nothing in the draw pass
 can tell a hole from spacing
-(`gridPatternDivider_acrossAHoleInThePattern_isStillDrawn` pins that). That makes
-the work per frame linear in the number of drawn items
-(`gridDivider_theWorkItDoes_growsWithTheDrawnItemsRatherThanTheirSquare`), with a
-constant set by the items in one cell — one for `ListView`, `parchment_numberOfViewsPerCell` for
-`GridView`, the pattern's item count for `GridPatternView` — and independent
-of the adapter's size and of how far the view has been scrolled. Nothing is
-computed once per layout pass and kept, because the layout pass runs on every
-frame too while scrolling, so a cache would save nothing and would have to be
-allocated and invalidated on every cell that is recycled or prepended
+(`gridPatternDivider_acrossAHoleInThePattern_isStillDrawn` pins that), but only
+while nothing stands anywhere in the gap inside the band: `isGapOccupied`
+answers for the whole edge, so an item beside the hole occludes the edge across
+the hole too and nothing is drawn there
+(`gridPatternDivider_acrossAHoleWithAnItemBesideItInTheGap_isNotDrawn`). In a
+pattern without holes that is the right answer, because whatever fills the rest
+of the band is a neighbour in its own right and gets its own divider.
+
+The work per frame is therefore linear in the number of drawn cells
+(`gridDivider_theWorkItDoes_growsWithTheDrawnItemsRatherThanTheirSquare`) and
+independent of the adapter's size and of how far the view has been scrolled,
+but the cost of one cell is cubic in the items of two adjacent cells, not
+linear in them: for each item and each axis the neighbour scan reads every
+item of this cell and the next, and for each neighbour that passes the cheap
+tests `isGapOccupied` reads them all again. A cell of n items with N items in
+it and the next together costs up to 2·n·N·(N+1) item reads — 12 for
+`ListView`, 80 for a `GridView` with two views per cell, 1,100 for one of the
+sample's five-item pattern groups. Measured rather than bounded, a frame that
+draws all three of the sample's pattern groups, eleven items, makes 384 item
+reads and paints 20 dividers, and each read is an indexed list lookup and two
+`View` getters, so the frame spends microseconds here against its 16 ms. A
+pattern of dozens of items per group would not: at thirty items per group the
+bound is 219,600 reads per cell. The fix for that is to take the occupancy scan
+out of the neighbour loop — only a candidate across the item's end edge can
+occlude it, and the neighbour loop already visits every one of those, so a
+sweep over them in order of their starts, marking the run of the band each
+covers into a reused array, finds the neighbours and the occluders in one pass.
+That is a follow-up, not part of the change that introduced the rule. Nothing
+is computed once per layout pass and kept, because the layout pass runs on
+every frame too while scrolling, so a cache would save nothing and would have
+to be allocated and invalidated on every cell that is recycled or prepended
 mid-gesture.
 
 Nothing on the path allocates: one `Rect` field is refilled per divider
