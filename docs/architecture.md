@@ -78,6 +78,24 @@ exactly once on a given axis: `CellEdges.isAcrossTheEndEdge` holds for at most
 one of an ordered pair, because it requires the neighbour to reach further than
 the item (`isAcrossTheEndEdge_forAPairOfItems_holdsInOneDirectionOnly`).
 
+A pass draws in a gap, so before anything else it asks whether there is one:
+`CellEdges.isAGap` holds when the neighbour starts no earlier than the item
+ends along this axis, and a pair that fails it overlaps on this axis and gets
+nothing from this pass. That is the whole of what keeps the two passes off the
+same pair. Ordering on an axis does not imply separation on it — a negative
+`parchment_cellSpacing` lays items over each other in both directions — so a
+pair can be across the end edge on both axes, and without the precondition each
+pass would divide it, at two different places. With it, a pair separated on one
+axis is drawn once, by that axis's pass, over the run the two share on the
+other; a pair overlapping on one axis and separated on the other gets exactly
+one segment, over the overlap
+(`gridPatternDivider_betweenDiagonalItemsOverlappingAcrossTheBreadth_dividesOnlyTheOverlap`);
+and a pair that overlaps on both axes has no gap for either pass to fill and
+gets no divider at all (`gridDivider_withANegativeCellSpacing_isNotDrawn`,
+`divider_withANegativeCellSpacing_isNotDrawn`). A gap of zero is still a gap,
+which is why a zero spacing still draws
+(`isAGap_forANeighbourTouchingTheEndEdge_isTrue`).
+
 The two passes are one method over a strategy, the way `snapposition/` and
 `pageinterval/` hold one algorithm each. They read the same four spans with the
 roles of the axes swapped and fill the `Rect` in opposite orders, so

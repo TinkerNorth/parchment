@@ -72,6 +72,8 @@ public class CellDividerTest {
     private static final int OVERLAPPING_GAP_END = 100;
     private static final int NEGATIVE_CELL_SPACING = -10;
     private static final int FEWER_CELLS = 2;
+    private static final int FIRST_CELL = 0;
+    private static final int SECOND_CELL = 1;
 
     @Test
     public void dividerStart_inAGapAwayFromTheOrigin_centresTheDividerInTheGap() {
@@ -114,7 +116,7 @@ public class CellDividerTest {
     }
 
     @Test
-    public void divider_withANegativeCellSpacing_isDrawnWhereTheCellsOverlap() {
+    public void divider_withANegativeCellSpacing_isNotDrawn() {
         final Harness harness = new Harness(IS_VERTICAL, NEGATIVE_CELL_SPACING, NOT_CIRCULAR);
         harness.layout(SIX_CELLS);
         final RecordingDrawable divider = new RecordingDrawable();
@@ -122,8 +124,10 @@ public class CellDividerTest {
 
         harness.draw();
 
-        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 93, VIEW_GROUP_SIZE, 97));
-        assertThat(divider.getDrawnBounds(1)).isEqualTo(new Rect(0, 183, VIEW_GROUP_SIZE, 187));
+        final int firstCellEnd = harness.getDrawnCellEnd(FIRST_CELL);
+        final int secondCellStart = harness.getDrawnCellStart(SECOND_CELL);
+        assertThat(secondCellStart).isLessThan(firstCellEnd);
+        assertThat(divider.getDrawCount()).isEqualTo(0);
     }
 
     @Test
@@ -512,6 +516,14 @@ public class CellDividerTest {
 
         private int getDrawnCellCount() {
             return mLayoutManager.getDrawnCellCount();
+        }
+
+        private int getDrawnCellStart(final int cellIndex) {
+            return mLayoutManager.getDrawnCellStart(cellIndex);
+        }
+
+        private int getDrawnCellEnd(final int cellIndex) {
+            return mLayoutManager.getDrawnCellEnd(cellIndex);
         }
 
         private int getAdapterPositionOfDrawnCell(final int cellIndex) {

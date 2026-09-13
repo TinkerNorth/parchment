@@ -29,6 +29,10 @@ public final class CellEdges {
         return overlapEnd > overlapStart;
     }
 
+    public static boolean isAGap(final int gapStart, final int gapEnd) {
+        return gapEnd >= gapStart;
+    }
+
     public static boolean isInTheGap(
             final int itemStart,
             final int itemEnd,

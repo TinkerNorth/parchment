@@ -158,9 +158,11 @@ behaviour of the views is unchanged; everything around them is new.
   centred in the `parchment_cellSpacing` gap, so the spacing is what you
   size to make room for it, and a divider thicker than the spacing overflows
   evenly onto both items and is painted over them — which is also what makes
-  one visible when the spacing is zero. Where a gap between rows crosses a
-  gap between columns nothing abuts either gap, so the crossing is left
-  unpainted. A divider begins and ends where the items it separates do, so
+  one visible when the spacing is zero. Two items that overlap, as a negative
+  `parchment_cellSpacing` lays them, have no gap and get no divider. Where a
+  gap between rows crosses a gap between columns nothing abuts either gap, so
+  the crossing is left unpainted. A divider begins and ends where the items it
+  separates do, so
   it stays inside `android:padding*` with them; `android:clipToPadding` is
   applied to the cells inside `ViewGroup.dispatchDraw` and restored before
   it returns, so it never reaches the divider under either setting. Without

@@ -134,9 +134,11 @@ The divider is decoration and takes no space of its own: it is centred in
 the `parchment_cellSpacing` gap between the two items, so the gap is what
 you size to make room for it. A divider thicker than the spacing overflows
 evenly onto both items and is painted over them, which is also what makes
-one visible when the spacing is zero. Where two gaps cross — the corner at
-which a gap between rows meets a gap between columns — no item lies on either
-side of either gap, so the crossing is left unpainted.
+one visible when the spacing is zero. Two items that overlap, as a negative
+`parchment_cellSpacing` lays them, have no gap between them and get no
+divider. Where two gaps cross — the corner at which a gap between rows meets
+a gap between columns — no item lies on either side of either gap, so the
+crossing is left unpainted.
 
 A divider follows the items it separates rather than the view's padding: it
 begins and ends where they do, so it is inside `android:padding*` exactly when

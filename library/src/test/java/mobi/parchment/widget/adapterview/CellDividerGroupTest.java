@@ -46,6 +46,9 @@ public class CellDividerGroupTest {
     private static final int ONE_DRAWN_GROUP = 1;
     private static final int TWO_DRAWN_GROUPS = 2;
     private static final float SQUARE_RATIO = 1f;
+    private static final float QUARTER_RATIO = 0.25f;
+    private static final int TWO_SHORT_ROWS_CENTRED_START = 93;
+    private static final int FIVE_SHORT_ROWS_CENTRED_START = 40;
     private static final boolean IS_VERTICAL = true;
     private static final boolean IS_HORIZONTAL = false;
     private static final boolean NOT_CIRCULAR = false;
@@ -75,6 +78,9 @@ public class CellDividerGroupTest {
     private static final int FIRST_CELL = 0;
     private static final int FIRST_VIEW = 0;
     private static final int THREE_VIEWS_PER_CELL = 3;
+    private static final int NEGATIVE_CELL_SPACING = -10;
+    private static final int SECOND_CELL = 1;
+    private static final int SECOND_VIEW = 1;
     private static final int HALF_GRID_VIEW_SIZE = 50;
     private static final int MANY_ITEMS = 40;
 
@@ -133,6 +139,27 @@ public class CellDividerGroupTest {
         assertThat(divider.getDrawnBounds(0).right).isEqualTo(100);
         assertThat(divider.getDrawnBounds(1).left).isEqualTo(199);
         assertThat(divider.getDrawnBounds(1).right).isEqualTo(203);
+    }
+
+    @Test
+    public void gridDivider_withANegativeCellSpacing_isNotDrawn() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager = layOutOverlappingGrid(viewGroup);
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        final ScrollDirectionManager scrollDirectionManager =
+                layoutManager.getScrollDirectionManager();
+        final View firstItem = layoutManager.getDrawnCellView(FIRST_CELL, FIRST_VIEW);
+        final View secondItem = layoutManager.getDrawnCellView(FIRST_CELL, SECOND_VIEW);
+        final int firstItemBreadthEnd = scrollDirectionManager.getViewBreadthEnd(firstItem);
+        final int secondItemBreadthStart = scrollDirectionManager.getViewBreadthStart(secondItem);
+        final int firstRowEnd = layoutManager.getDrawnCellEnd(FIRST_CELL);
+        final int secondRowStart = layoutManager.getDrawnCellStart(SECOND_CELL);
+        assertThat(secondItemBreadthStart).isLessThan(firstItemBreadthEnd);
+        assertThat(secondRowStart).isLessThan(firstRowEnd);
+        assertThat(divider.getDrawCount()).isEqualTo(0);
     }
 
     @Test
@@ -401,6 +428,50 @@ public class CellDividerGroupTest {
     }
 
     @Test
+    public void
+            gridPatternDivider_betweenDiagonalItemsOverlappingAcrossTheBreadth_dividesOnlyTheOverlap() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager =
+                layOutGridPattern(
+                        viewGroup,
+                        IS_VERTICAL,
+                        SQUARE_RATIO,
+                        TWO_ITEMS,
+                        newDiagonalAcrossTheBreadthDefinition());
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        assertThat(viewGroup.mViews).hasSize(TWO_ITEMS);
+        assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
+                .isEqualTo(TWO_SHORT_ROWS_CENTRED_START);
+        assertThat(divider.getDrawCount()).isEqualTo(1);
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(124, 148, 176, 152));
+    }
+
+    @Test
+    public void
+            gridPatternDivider_betweenDiagonalItemsOverlappingAlongTheSize_dividesOnlyTheOverlap() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager =
+                layOutGridPattern(
+                        viewGroup,
+                        IS_VERTICAL,
+                        QUARTER_RATIO,
+                        TWO_ITEMS,
+                        newDiagonalAlongTheSizeDefinition());
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        assertThat(viewGroup.mViews).hasSize(TWO_ITEMS);
+        assertThat(layoutManager.getDrawnCellStart(FIRST_CELL))
+                .isEqualTo(FIVE_SHORT_ROWS_CENTRED_START);
+        assertThat(divider.getDrawCount()).isEqualTo(1);
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(148, 132, 152, 168));
+    }
+
+    @Test
     public void everyGridDividerOfEveryFrame_isMeasuredIntoTheSameBoundsRect() {
         final MyViewGroup viewGroup = newViewGroup();
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_VERTICAL, GRAVITY_TOP);
@@ -503,6 +574,18 @@ public class CellDividerGroupTest {
                 NOT_CIRCULAR,
                 THREE_ITEMS,
                 THREE_VIEWS_PER_CELL);
+    }
+
+    private static LayoutManager<?> layOutOverlappingGrid(final MyViewGroup viewGroup) {
+        return newGridLayoutManager(
+                viewGroup,
+                IS_VERTICAL,
+                GRAVITY_TOP,
+                new TestAdapter(IS_VERTICAL),
+                NEGATIVE_CELL_SPACING,
+                NOT_CIRCULAR,
+                EIGHT_ITEMS,
+                VIEWS_PER_CELL);
     }
 
     private static CountingGridLayoutManager layOutCountingGrid(
@@ -676,6 +759,22 @@ public class CellDividerGroupTest {
         testAdapter.setAdapterSize(adapterSize);
         layoutManager.layout(viewGroup, newAnimation(), 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
         return layoutManager;
+    }
+
+    private static GridPatternGroupDefinition newDiagonalAcrossTheBreadthDefinition() {
+        final List<GridPatternItemDefinition> itemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
+        itemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 3));
+        itemDefinitions.add(new GridPatternItemDefinition(1, 2, 1, 3));
+        return new GridPatternGroupDefinition(IS_VERTICAL, itemDefinitions);
+    }
+
+    private static GridPatternGroupDefinition newDiagonalAlongTheSizeDefinition() {
+        final List<GridPatternItemDefinition> itemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
+        itemDefinitions.add(new GridPatternItemDefinition(0, 0, 3, 1));
+        itemDefinitions.add(new GridPatternItemDefinition(2, 1, 3, 1));
+        return new GridPatternGroupDefinition(IS_VERTICAL, itemDefinitions);
     }
 
     private static GridPatternGroupDefinition newGroupDefinitionWithAHole() {

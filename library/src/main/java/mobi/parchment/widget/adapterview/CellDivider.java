@@ -136,6 +136,9 @@ public final class CellDivider {
                 CellEdges.isAcrossTheEndEdge(itemStart, itemEnd, neighbourStart, neighbourEnd);
         if (!isAcrossTheEndEdge) return;
 
+        final boolean isAGap = CellEdges.isAGap(itemEnd, neighbourStart);
+        if (!isAGap) return;
+
         final int itemBandStart = axis.getBandStart(item);
         final int itemBandEnd = axis.getBandEnd(item);
         final int neighbourBandStart = axis.getBandStart(neighbour);

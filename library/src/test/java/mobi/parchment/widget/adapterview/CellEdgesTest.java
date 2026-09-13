@@ -118,6 +118,27 @@ public class CellEdgesTest {
     }
 
     @Test
+    public void isAGap_forANeighbourSeparatedByAGap_isTrue() {
+        final boolean isAGap = CellEdges.isAGap(ITEM_END, AFTER_A_GAP_START);
+
+        assertThat(isAGap).isTrue();
+    }
+
+    @Test
+    public void isAGap_forANeighbourTouchingTheEndEdge_isTrue() {
+        final boolean isAGap = CellEdges.isAGap(ITEM_END, TOUCHING_START);
+
+        assertThat(isAGap).isTrue();
+    }
+
+    @Test
+    public void isAGap_forANeighbourOverlappingTheItem_isFalse() {
+        final boolean isAGap = CellEdges.isAGap(ITEM_END, OVERLAPPING_START);
+
+        assertThat(isAGap).isFalse();
+    }
+
+    @Test
     public void isInTheGap_forAnItemBetweenTheTwo_isTrue() {
         final boolean isInTheGap =
                 CellEdges.isInTheGap(
