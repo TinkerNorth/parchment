@@ -25,6 +25,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManage
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
 import mobi.parchment.widget.adapterview.gridview.GridLayoutManager;
 import mobi.parchment.widget.adapterview.gridview.GridLayoutManagerAttributes;
+import mobi.parchment.widget.adapterview.gridview.Group;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -73,6 +74,9 @@ public class CellDividerGroupTest {
     private static final int SIX_ITEMS = 6;
     private static final int FIRST_CELL = 0;
     private static final int FIRST_VIEW = 0;
+    private static final int THREE_VIEWS_PER_CELL = 3;
+    private static final int HALF_GRID_VIEW_SIZE = 50;
+    private static final int MANY_ITEMS = 40;
 
     private final Canvas mCanvas = new Canvas();
 
@@ -117,6 +121,54 @@ public class CellDividerGroupTest {
     }
 
     @Test
+    public void gridDivider_withThreeItemsInALine_isNotDrawnThroughTheMiddleOne() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager = layOutThreeColumnGrid(viewGroup);
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        assertThat(divider.getDrawCount()).isEqualTo(2);
+        assertThat(divider.getDrawnBounds(0).left).isEqualTo(96);
+        assertThat(divider.getDrawnBounds(0).right).isEqualTo(100);
+        assertThat(divider.getDrawnBounds(1).left).isEqualTo(199);
+        assertThat(divider.getDrawnBounds(1).right).isEqualTo(203);
+    }
+
+    @Test
+    public void lastCandidateCellIndex_forACellBeforeTheLast_isTheNextCell() {
+        assertThat(CellDivider.getLastCandidateCellIndex(FIRST_CELL, THREE_DRAWN_GROUPS))
+                .isEqualTo(1);
+    }
+
+    @Test
+    public void lastCandidateCellIndex_forTheLastCell_isThatCellItself() {
+        assertThat(CellDivider.getLastCandidateCellIndex(2, THREE_DRAWN_GROUPS)).isEqualTo(2);
+    }
+
+    @Test
+    public void gridDivider_theWorkItDoes_growsWithTheDrawnItemsRatherThanTheirSquare() {
+        final MyViewGroup smallViewGroup = newViewGroup();
+        final CountingGridLayoutManager small = layOutCountingGrid(smallViewGroup, GRID_VIEW_SIZE);
+        final MyViewGroup bigViewGroup = newViewGroup();
+        final CountingGridLayoutManager big = layOutCountingGrid(bigViewGroup, HALF_GRID_VIEW_SIZE);
+
+        small.resetCellViewReads();
+        draw(new RecordingDrawable(), smallViewGroup, small);
+        big.resetCellViewReads();
+        draw(new RecordingDrawable(), bigViewGroup, big);
+
+        final int smallItems = smallViewGroup.mViews.size();
+        final int bigItems = bigViewGroup.mViews.size();
+        final int smallReads = small.getCellViewReads();
+        final int bigReads = big.getCellViewReads();
+        final int smallReadsPerItem = smallReads / smallItems;
+        final int bigReadsPerItem = bigReads / bigItems;
+        assertThat(bigItems).isGreaterThanOrEqualTo(smallItems * 2);
+        assertThat(bigReadsPerItem).isLessThan(smallReadsPerItem * 2);
+    }
+
+    @Test
     public void gridDivider_atTheOuterBoundaryOfAVerticalGrid_isNotDrawn() {
         final MyViewGroup viewGroup = newViewGroup();
         final LayoutManager<?> layoutManager = layOutGrid(viewGroup, IS_VERTICAL, GRAVITY_TOP);
@@ -132,6 +184,7 @@ public class CellDividerGroupTest {
         final int contentEnd = contentEnd(viewGroup, sizeAxis);
         final int contentBreadthStart = contentStart(viewGroup, breadthAxis);
         final int contentBreadthEnd = contentEnd(viewGroup, breadthAxis);
+        assertThat(divider.getDrawCount()).isGreaterThan(0);
         for (int index = 0; index < divider.getDrawCount(); index++) {
             final Rect bounds = divider.getDrawnBounds(index);
             final boolean isASizeDivider = bounds.height() == DIVIDER_SIZE;
@@ -157,6 +210,7 @@ public class CellDividerGroupTest {
         for (int index = 0; index < divider.getDrawCount(); index++) {
             drawn.add(divider.getDrawnBounds(index));
         }
+        assertThat(divider.getDrawCount()).isEqualTo(7);
         assertThat(drawn).doesNotHaveDuplicates();
     }
 
@@ -219,8 +273,22 @@ public class CellDividerGroupTest {
 
         draw(divider, viewGroup, layoutManager);
 
+        assertThat(divider.getDrawCount()).isEqualTo(7);
         assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(0, 103, 145, 107));
         assertThat(divider.getDrawnBounds(2)).isEqualTo(new Rect(155, 83, 300, 87));
+    }
+
+    @Test
+    public void gridPatternDivider_acrossAHoleInThePattern_isStillDrawn() {
+        final MyViewGroup viewGroup = newViewGroup();
+        final LayoutManager<?> layoutManager = layOutGridPatternWithAHole(viewGroup);
+        final RecordingDrawable divider = new RecordingDrawable();
+
+        draw(divider, viewGroup, layoutManager);
+
+        assertThat(divider.getDrawCount()).isEqualTo(1);
+        assertThat(divider.getDrawnBounds(0).left).isEqualTo(147);
+        assertThat(divider.getDrawnBounds(0).right).isEqualTo(151);
     }
 
     @Test
@@ -425,6 +493,58 @@ public class CellDividerGroupTest {
                 EIGHT_ITEMS);
     }
 
+    private static LayoutManager<?> layOutThreeColumnGrid(final MyViewGroup viewGroup) {
+        return newGridLayoutManager(
+                viewGroup,
+                IS_VERTICAL,
+                GRAVITY_TOP,
+                new TestAdapter(IS_VERTICAL),
+                CELL_SPACING,
+                NOT_CIRCULAR,
+                THREE_ITEMS,
+                THREE_VIEWS_PER_CELL);
+    }
+
+    private static CountingGridLayoutManager layOutCountingGrid(
+            final MyViewGroup viewGroup, final int viewSize) {
+        final AdapterViewManager adapterViewManager = new AdapterViewManager();
+        final GridLayoutManagerAttributes attributes =
+                newGridAttributes(
+                        IS_VERTICAL, GRAVITY_TOP, CELL_SPACING, NOT_CIRCULAR, VIEWS_PER_CELL);
+        final CountingGridLayoutManager layoutManager =
+                new CountingGridLayoutManager(viewGroup, adapterViewManager, attributes);
+        final TestAdapter testAdapter = new TestAdapter(viewSize, IS_VERTICAL);
+        adapterViewManager.setAdapter(testAdapter);
+        layOut(viewGroup);
+        layoutManager.measure(viewGroup, measureSpec(), measureSpec());
+        testAdapter.setAdapterSize(MANY_ITEMS);
+        layoutManager.layout(viewGroup, newAnimation(), 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
+        return layoutManager;
+    }
+
+    private static GridLayoutManagerAttributes newGridAttributes(
+            final boolean isVertical,
+            final boolean isTop,
+            final int cellSpacing,
+            final boolean isCircular,
+            final int viewsPerCell) {
+        return new GridLayoutManagerAttributes(
+                viewsPerCell,
+                isCircular,
+                NOT_SNAP_TO_POSITION,
+                NOT_A_VIEW_PAGER,
+                VIEWPORT_VIEW_PAGER_INTERVAL,
+                SnapPosition.onScreen,
+                cellSpacing,
+                NOT_SELECT_ON_SNAP,
+                NOT_SELECT_WHILE_SCROLLING,
+                isVertical,
+                isTop,
+                GRAVITY_BOTTOM,
+                isTop,
+                GRAVITY_RIGHT);
+    }
+
     private static GridLayoutManager newGridLayoutManager(
             final MyViewGroup viewGroup,
             final boolean isVertical,
@@ -433,10 +553,30 @@ public class CellDividerGroupTest {
             final int cellSpacing,
             final boolean isCircular,
             final int adapterSize) {
+        return newGridLayoutManager(
+                viewGroup,
+                isVertical,
+                isTop,
+                testAdapter,
+                cellSpacing,
+                isCircular,
+                adapterSize,
+                VIEWS_PER_CELL);
+    }
+
+    private static GridLayoutManager newGridLayoutManager(
+            final MyViewGroup viewGroup,
+            final boolean isVertical,
+            final boolean isTop,
+            final TestAdapter testAdapter,
+            final int cellSpacing,
+            final boolean isCircular,
+            final int adapterSize,
+            final int viewsPerCell) {
         final AdapterViewManager adapterViewManager = new AdapterViewManager();
         final GridLayoutManagerAttributes attributes =
                 new GridLayoutManagerAttributes(
-                        VIEWS_PER_CELL,
+                        viewsPerCell,
                         isCircular,
                         NOT_SNAP_TO_POSITION,
                         NOT_A_VIEW_PAGER,
@@ -482,6 +622,35 @@ public class CellDividerGroupTest {
 
     private static LayoutManager<?> layOutGridPatternTee(
             final MyViewGroup viewGroup, final boolean isVertical) {
+        return layOutGridPattern(
+                viewGroup,
+                isVertical,
+                SQUARE_RATIO,
+                THREE_ITEMS,
+                newTeeGroupDefinition(isVertical));
+    }
+
+    private static LayoutManager<?> layOutGridPatternPair(final MyViewGroup viewGroup) {
+        return layOutGridPattern(
+                viewGroup,
+                IS_VERTICAL,
+                SQUARE_RATIO,
+                THREE_ITEMS,
+                newSideBySideGroupDefinition(),
+                newWideGroupDefinition());
+    }
+
+    private static LayoutManager<?> layOutGridPatternWithAHole(final MyViewGroup viewGroup) {
+        return layOutGridPattern(
+                viewGroup, IS_VERTICAL, SQUARE_RATIO, TWO_ITEMS, newGroupDefinitionWithAHole());
+    }
+
+    private static LayoutManager<?> layOutGridPattern(
+            final MyViewGroup viewGroup,
+            final boolean isVertical,
+            final float ratio,
+            final int adapterSize,
+            final GridPatternGroupDefinition... definitions) {
         final AdapterViewManager adapterViewManager = new AdapterViewManager();
         final GridPatternLayoutManagerAttributes attributes =
                 new GridPatternLayoutManagerAttributes(
@@ -494,44 +663,27 @@ public class CellDividerGroupTest {
                         NOT_SELECT_ON_SNAP,
                         NOT_SELECT_WHILE_SCROLLING,
                         isVertical,
-                        SQUARE_RATIO);
+                        ratio);
         final GridPatternLayoutManager layoutManager =
                 new GridPatternLayoutManager(viewGroup, null, adapterViewManager, attributes);
-        layoutManager.addGridPatternGroupDefinition(newTeeGroupDefinition(isVertical));
+        for (final GridPatternGroupDefinition definition : definitions) {
+            layoutManager.addGridPatternGroupDefinition(definition);
+        }
         final TestAdapter testAdapter = new TestAdapter(GRID_PATTERN_VIEW_SIZE, isVertical);
         adapterViewManager.setAdapter(testAdapter);
         layOut(viewGroup);
         layoutManager.measure(viewGroup, measureSpec(), measureSpec());
-        testAdapter.setAdapterSize(THREE_ITEMS);
+        testAdapter.setAdapterSize(adapterSize);
         layoutManager.layout(viewGroup, newAnimation(), 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
         return layoutManager;
     }
 
-    private static LayoutManager<?> layOutGridPatternPair(final MyViewGroup viewGroup) {
-        final AdapterViewManager adapterViewManager = new AdapterViewManager();
-        final GridPatternLayoutManagerAttributes attributes =
-                new GridPatternLayoutManagerAttributes(
-                        NOT_CIRCULAR,
-                        NOT_SNAP_TO_POSITION,
-                        NOT_A_VIEW_PAGER,
-                        VIEWPORT_VIEW_PAGER_INTERVAL,
-                        SnapPosition.onScreen,
-                        CELL_SPACING,
-                        NOT_SELECT_ON_SNAP,
-                        NOT_SELECT_WHILE_SCROLLING,
-                        IS_VERTICAL,
-                        SQUARE_RATIO);
-        final GridPatternLayoutManager layoutManager =
-                new GridPatternLayoutManager(viewGroup, null, adapterViewManager, attributes);
-        layoutManager.addGridPatternGroupDefinition(newSideBySideGroupDefinition());
-        layoutManager.addGridPatternGroupDefinition(newWideGroupDefinition());
-        final TestAdapter testAdapter = new TestAdapter(GRID_PATTERN_VIEW_SIZE, IS_VERTICAL);
-        adapterViewManager.setAdapter(testAdapter);
-        layOut(viewGroup);
-        layoutManager.measure(viewGroup, measureSpec(), measureSpec());
-        testAdapter.setAdapterSize(THREE_ITEMS);
-        layoutManager.layout(viewGroup, newAnimation(), 0, 0, VIEW_GROUP_SIZE, VIEW_GROUP_SIZE);
-        return layoutManager;
+    private static GridPatternGroupDefinition newGroupDefinitionWithAHole() {
+        final List<GridPatternItemDefinition> itemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
+        itemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 1));
+        itemDefinitions.add(new GridPatternItemDefinition(0, 2, 1, 1));
+        return new GridPatternGroupDefinition(IS_VERTICAL, itemDefinitions);
     }
 
     private static GridPatternGroupDefinition newSideBySideGroupDefinition() {
@@ -652,6 +804,31 @@ public class CellDividerGroupTest {
                 view.setLayoutParams(new ViewGroup.LayoutParams(size, fill));
             }
             return view;
+        }
+    }
+
+    private static final class CountingGridLayoutManager extends GridLayoutManager {
+        private int mCellViewReads;
+
+        private CountingGridLayoutManager(
+                final MyViewGroup viewGroup,
+                final AdapterViewManager adapterViewManager,
+                final GridLayoutManagerAttributes attributes) {
+            super(viewGroup, null, adapterViewManager, attributes);
+        }
+
+        private void resetCellViewReads() {
+            mCellViewReads = 0;
+        }
+
+        private int getCellViewReads() {
+            return mCellViewReads;
+        }
+
+        @Override
+        public View getCellView(final Group group, final int viewIndex) {
+            mCellViewReads++;
+            return super.getCellView(group, viewIndex);
         }
     }
 

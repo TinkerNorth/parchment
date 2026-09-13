@@ -29,7 +29,8 @@ import org.junit.runner.RunWith;
  * Proves that parchment_divider and parchment_dividerSize, parsed by a real LayoutInflater, put
  * real pixels on a real framework canvas between the cells of a ListView. Every expected band is
  * written out as literal pixels rather than recomputed from the production formula, so a change to
- * that formula fails here.
+ * that formula fails here. The padded case additionally cross-checks those literals against the
+ * laid-out row, because the divider is supposed to track the row rather than the padding box.
  */
 @RunWith(AndroidJUnit4.class)
 public final class CellDividerInstrumentedTest {
@@ -73,6 +74,8 @@ public final class CellDividerInstrumentedTest {
     private static final int[] THICK_BAND_ENDS = {132, 256, 380, 504};
     private static final int[] NO_SPACING_BAND_STARTS = {96, 196, 296, 396, 496, 596};
     private static final int[] NO_SPACING_BAND_ENDS = {104, 204, 304, 404, 504, 600};
+    private static final int PADDED_ROW_START = 50;
+    private static final int PADDED_ROW_END = 850;
     private static final int[] PADDED_SHORT_BAND_STARTS = {234, 358};
     private static final int[] PADDED_SHORT_BAND_ENDS = {242, 366};
 
@@ -154,14 +157,23 @@ public final class CellDividerInstrumentedTest {
         assertEquals("one unbroken divider across the breadth: " + across, ONE_RUN, across.size());
         assertEquals(
                 "the divider starts where the rows it separates start: " + across,
-                children.left(0),
+                PADDED_ROW_START,
                 across.get(0).start());
         assertEquals(
                 "the divider ends where the rows it separates end: " + across,
+                PADDED_ROW_END,
+                across.get(0).end());
+        assertEquals(
+                "the divider follows the row, which layoutCell centres in the whole breadth: "
+                        + children,
+                children.left(0),
+                across.get(0).start());
+        assertEquals(
+                "and so it overhangs the end breadth padding exactly as the row does: " + children,
                 children.right(0),
                 across.get(0).end());
         assertEquals(
-                "nothing may be painted in the breadth padding",
+                "nothing is painted in the start breadth padding the row leaves empty",
                 NOTHING_PAINTED,
                 pixels.colourAt(A_COLUMN_INSIDE_THE_BREADTH_PADDING, insideADivider));
     }

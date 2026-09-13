@@ -74,20 +74,20 @@ out instead of being a case, and `GridPatternView`'s mixed spans and
 T-junctions are handled without rows or columns having to exist.
 
 Only trailing edges are considered, which is what paints each shared edge
-exactly once: `CellEdges.isAcrossTheEndEdge` holds for at most one of an
-ordered pair, because it requires the neighbour to reach further than the
-item. The same asymmetry means the size pass and the breadth pass can never
-both claim one pair: a pair separated along both axes would have to overlap on
-neither, and each pass requires a positive overlap on the other axis
-(`gridDivider_onAnEdgeSharedByTwoItems_isDrawnOnlyOnce`).
+exactly once on a given axis: `CellEdges.isAcrossTheEndEdge` holds for at most
+one of an ordered pair, because it requires the neighbour to reach further than
+the item (`isAcrossTheEndEdge_forAPairOfItems_holdsInOneDirectionOnly`).
 
-The two passes are two named methods rather than one parameterised by an axis
-strategy. They read the same four spans through `ScrollDirectionManager` with
-the roles of the axes swapped, and they fill the `Rect` in opposite orders; a
-strategy family next to `ScrollDirectionManager` would be a second thing
-called an "axis" and would invite exactly the `getLeft()`/`getTop()` confusion
-the engine rule exists to stop. What they share is the geometry, and that
-lives in `CellEdges`: whether a neighbour lies across an end edge, the overlap
+The two passes are one method over a strategy, the way `snapposition/` and
+`pageinterval/` hold one algorithm each. They read the same four spans with the
+roles of the axes swapped and fill the `Rect` in opposite orders, so
+`divideraxis/` holds that swap: `DividerAxisInterface` answers `getStart`,
+`getEnd`, `getBandStart`, `getBandEnd` and `setDividerBounds`, and
+`SizeDividerAxis` and `BreadthDividerAxis` are built once in `CellDivider`'s
+constructor and reused every frame. Both reach orientation only through
+`ScrollDirectionManager`, so there is still exactly one place in the engine that
+knows about left and top. What the passes share besides the axis is the
+geometry, and that lives in `CellEdges`: whether a neighbour lies across an end edge, the overlap
 of two spans, whether an overlap is real, and whether a third item stands in
 the gap inside the band a divider would span. `CellEdges` takes scalars and
 returns scalars, the shape `getDividerStart` already had, so every one of
@@ -103,10 +103,15 @@ and also 1-3, the last drawn straight through the middle one.
 Because this runs on every frame while anything moves, the neighbour search is
 bounded by structure rather than cached. The candidates for an item in a drawn
 cell are the items of that cell and of the next one, and nothing else: cells
-are laid end to end along the scroll axis, so an item two cells away is either
-not adjacent or separated by a hole rather than by a gap. That makes the work
-per frame linear in the number of drawn items, with a constant set by the
-items in one cell — one for `ListView`, `parchment_numberOfViewsPerCell` for
+are laid end to end along the scroll axis, so an item two cells away is never
+the nearest thing across a gap. Inside one cell there is no such bound, and a
+`GridPatternGroupDefinition` that leaves a grid position empty is divided across
+that empty position as though it were a gap, because nothing in the draw pass
+can tell a hole from spacing
+(`gridPatternDivider_acrossAHoleInThePattern_isStillDrawn` pins that). That makes
+the work per frame linear in the number of drawn items
+(`gridDivider_theWorkItDoes_growsWithTheDrawnItemsRatherThanTheirSquare`), with a
+constant set by the items in one cell — one for `ListView`, `parchment_numberOfViewsPerCell` for
 `GridView`, the pattern's item count for `GridPatternView` — and independent
 of the adapter's size and of how far the view has been scrolled. Nothing is
 computed once per layout pass and kept, because the layout pass runs on every
@@ -137,14 +142,16 @@ abuts either gap, so the crossing is left unpainted and the grid reads as a
 grid (`dividerInXmlOnAGridView_whereTwoGapsCross_paintsNothing`).
 
 A divider begins and ends where the items it separates do, and knows nothing
-about padding. It does not need to: the layout managers place cells inside
-`android:padding*`, so a divider that follows them is inside the padding too
-(`divider_withPaddingSet_spansTheRowsItSeparatesAndNoFurther`). This is the one
-place the new rule moved an existing line. `ListLayoutManager.layoutCell`
-centres a row in the *whole* breadth rather than inside the padding box, so
-with asymmetric padding the row sits off-centre of that box; the divider used
-to span the padding box and now spans the row, which is where the content
-actually is. `android:clipToPadding` is applied by `ViewGroup.dispatchDraw`
+about padding. It follows the content, and so it is inside the padding exactly
+when the content is. This is the one place the new rule moved an existing line,
+and it moved it onto a pre-existing layout bug rather than away from one:
+`ListLayoutManager.layoutCell` centres a row in the *whole* breadth rather than
+inside the padding box, so with asymmetric padding the row sits off-centre of
+that box and overhangs one padding edge. The divider used to span the padding
+box and now spans the row, overhang included
+(`divider_withPaddingSet_spansTheRowsItSeparatesAndNoFurther`). Fixing the
+centring is a separate change; until then the divider tells the truth about
+where the row is. `android:clipToPadding` is applied by `ViewGroup.dispatchDraw`
 and restored before it returns, so it never clips the divider either way.
 
 `parchment_gravity` can leave a view shorter than its row along the scroll

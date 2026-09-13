@@ -139,10 +139,9 @@ which a gap between rows meets a gap between columns — no item lies on either
 side of either gap, so the crossing is left unpainted.
 
 A divider follows the items it separates rather than the view's padding: it
-begins and ends where they do. Cells are laid out inside `android:padding*`,
-so a divider stays inside the padding with them. `android:clipToPadding`
-decides whether a cell is clipped at the padding; either way it never reaches
-the divider.
+begins and ends where they do, so it is inside `android:padding*` exactly when
+the items are. `android:clipToPadding` decides whether a cell is clipped at the
+padding; either way it never reaches the divider.
 
 `parchment_dividerSize` gives the thickness along the scroll axis. Leave it
 out and the drawable's intrinsic size along that axis is used instead — but

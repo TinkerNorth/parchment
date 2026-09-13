@@ -215,6 +215,19 @@ public class CellDividerTest {
     }
 
     @Test
+    public void divider_inAListWhoseRowsAreNarrowerThanTheView_spansTheRowsRatherThanTheView() {
+        final Harness harness = new Harness(IS_VERTICAL, CELL_SPACING, NOT_CIRCULAR, VIEW_SIZE);
+        harness.layout(SIX_CELLS);
+        final RecordingDrawable divider = new RecordingDrawable();
+        harness.setDivider(divider, DIVIDER_SIZE);
+
+        harness.draw();
+
+        assertThat(divider.getDrawCount()).isEqualTo(2);
+        assertThat(divider.getDrawnBounds(0)).isEqualTo(new Rect(100, 103, 200, 107));
+    }
+
+    @Test
     public void dividerSizeOfZero_drawsNothing() {
         final Harness harness = new Harness(IS_VERTICAL, CELL_SPACING, NOT_CIRCULAR);
         harness.layout(SIX_CELLS);
@@ -420,8 +433,16 @@ public class CellDividerTest {
 
         private Harness(
                 final boolean isVertical, final int cellSpacing, final boolean isCircularScroll) {
+            this(isVertical, cellSpacing, isCircularScroll, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+
+        private Harness(
+                final boolean isVertical,
+                final int cellSpacing,
+                final boolean isCircularScroll,
+                final int rowBreadth) {
             mIsVertical = isVertical;
-            mTestAdapter = new TestAdapter(VIEW_SIZE, isVertical);
+            mTestAdapter = new TestAdapter(VIEW_SIZE, isVertical, rowBreadth);
             final LayoutManagerAttributes attributes =
                     new LayoutManagerAttributes(
                             isCircularScroll,
@@ -528,11 +549,13 @@ public class CellDividerTest {
     private static final class TestAdapter extends BaseAdapter {
         private final int mViewSize;
         private final boolean mIsVertical;
+        private final int mRowBreadth;
         private int mAdapterSize;
 
-        private TestAdapter(final int viewSize, final boolean isVertical) {
+        private TestAdapter(final int viewSize, final boolean isVertical, final int rowBreadth) {
             mViewSize = viewSize;
             mIsVertical = isVertical;
+            mRowBreadth = rowBreadth;
         }
 
         private void setAdapterSize(final int adapterSize) {
@@ -558,11 +581,10 @@ public class CellDividerTest {
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
             final FrameLayout view = new FrameLayout(parent.getContext());
-            final int fillsTheBreadth = ViewGroup.LayoutParams.MATCH_PARENT;
             if (mIsVertical) {
-                view.setLayoutParams(new ViewGroup.LayoutParams(fillsTheBreadth, mViewSize));
+                view.setLayoutParams(new ViewGroup.LayoutParams(mRowBreadth, mViewSize));
             } else {
-                view.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, fillsTheBreadth));
+                view.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mRowBreadth));
             }
             return view;
         }
