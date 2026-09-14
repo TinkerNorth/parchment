@@ -8,6 +8,7 @@ import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -271,14 +272,18 @@ public class AnimationFrameSchedulingTest {
                 final boolean isViewPager,
                 final AdapterViewManager adapterViewManager,
                 final LayoutManager<View> layoutManager,
-                final boolean isVerticalScroll) {
+                final boolean isVerticalScroll,
+                final Drawable divider,
+                final int dividerSize) {
             final AdapterViewInitializer<View> initializer =
                     super.createAdapterViewInitializer(
                             context,
                             isViewPager,
                             adapterViewManager,
                             layoutManager,
-                            isVerticalScroll);
+                            isVerticalScroll,
+                            divider,
+                            dividerSize);
             mGestureListener = initializer.getChildTouchListener();
             return initializer;
         }

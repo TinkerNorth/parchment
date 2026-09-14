@@ -119,6 +119,10 @@ public class GridPatternGroup {
         return mViews;
     }
 
+    public View getView(final int index) {
+        return mViews.get(index);
+    }
+
     public int getWidth() {
         if (mViews.isEmpty()) {
             return 0;

@@ -109,6 +109,16 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     }
 
     @Override
+    public int getCellViewCount(final GridPatternGroup gridPatternGroup) {
+        return gridPatternGroup.getNumberOfItems();
+    }
+
+    @Override
+    public View getCellView(final GridPatternGroup gridPatternGroup, final int viewIndex) {
+        return gridPatternGroup.getView(viewIndex);
+    }
+
+    @Override
     protected GridPatternGroup getCell(final int adapterPosition) {
         final GridPatternGroupDefinition gridPatternGroupDefinition =
                 getGridPatternGroupDefinition(adapterPosition);

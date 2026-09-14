@@ -5,6 +5,7 @@ package mobi.parchment.widget.adapterview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import mobi.parchment.R;
 
@@ -20,6 +21,9 @@ public class Attributes {
         private static final boolean SELECT_ON_SNAP = false;
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
         private static final boolean SELECT_WHILE_SCROLLING = false;
+        private static final Drawable DIVIDER = null;
+        private static final int DIVIDER_SIZE = CellDivider.INTRINSIC_SIZE;
+        private static final int NO_DIVIDER_SIZE = 0;
     }
 
     private Orientation mOrientation;
@@ -33,6 +37,8 @@ public class Attributes {
 
     private boolean mIsViewPager;
     private int mViewPagerInterval;
+    private Drawable mDivider;
+    private int mDividerSize;
 
     public Attributes(final Context context, final AttributeSet attributeSet) {
         initialize(context, attributeSet);
@@ -83,6 +89,8 @@ public class Attributes {
                         typedArray.getBoolean(
                                 R.styleable.ListView_parchment_selectWhileScrolling,
                                 DefaultValues.SELECT_WHILE_SCROLLING);
+                mDivider = typedArray.getDrawable(R.styleable.ListView_parchment_divider);
+                mDividerSize = getDividerSize(typedArray);
 
                 final int orientationOrdinal =
                         typedArray.getInteger(
@@ -109,6 +117,8 @@ public class Attributes {
             mSelectOnSnap = DefaultValues.SELECT_ON_SNAP;
             mSelectWhileScrolling = DefaultValues.SELECT_WHILE_SCROLLING;
             mOrientation = DefaultValues.ORIENTATION;
+            mDivider = DefaultValues.DIVIDER;
+            mDividerSize = DefaultValues.DIVIDER_SIZE;
         }
 
         final boolean isVertical = mOrientation == Orientation.vertical;
@@ -149,6 +159,30 @@ public class Attributes {
 
     public boolean selectWhileScrolling() {
         return mSelectWhileScrolling;
+    }
+
+    private static int getDividerSize(final TypedArray typedArray) {
+        final boolean isDividerSizeDeclared =
+                typedArray.hasValue(R.styleable.ListView_parchment_dividerSize);
+        if (isDividerSizeDeclared) {
+            return getDeclaredDividerSize(typedArray);
+        }
+        return DefaultValues.DIVIDER_SIZE;
+    }
+
+    private static int getDeclaredDividerSize(final TypedArray typedArray) {
+        final int dividerSize =
+                typedArray.getDimensionPixelSize(
+                        R.styleable.ListView_parchment_dividerSize, DefaultValues.NO_DIVIDER_SIZE);
+        return Math.max(dividerSize, DefaultValues.NO_DIVIDER_SIZE);
+    }
+
+    public Drawable getDivider() {
+        return mDivider;
+    }
+
+    public int getDividerSize() {
+        return mDividerSize;
     }
 
     protected void setIsVertical(final boolean isVertical) {

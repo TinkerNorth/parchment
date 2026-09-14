@@ -149,6 +149,10 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     public abstract List<View> getViews(final Cell cell);
 
+    public abstract int getCellViewCount(final Cell cell);
+
+    public abstract View getCellView(final Cell cell, final int viewIndex);
+
     protected abstract Cell getCell(final int adapterPosition);
 
     public abstract void layoutCell(
@@ -567,6 +571,34 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         final View nearestView = getNearestViewToSnapPosition(size);
         return nearestView;
+    }
+
+    protected final ScrollDirectionManager getScrollDirectionManager() {
+        return mScrollDirectionManager;
+    }
+
+    protected final int getDrawnCellCount() {
+        return mCells.size();
+    }
+
+    protected final int getDrawnCellViewCount(final int cellIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return getCellViewCount(cell);
+    }
+
+    protected final View getDrawnCellView(final int cellIndex, final int viewIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return getCellView(cell, viewIndex);
+    }
+
+    protected final int getDrawnCellStart(final int cellIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return getCellStart(cell);
+    }
+
+    protected final int getDrawnCellEnd(final int cellIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return getCellEnd(cell);
     }
 
     public int getCellCenter(final Cell cell) {

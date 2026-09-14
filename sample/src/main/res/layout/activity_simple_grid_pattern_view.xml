@@ -5,6 +5,8 @@
         parchment:parchment_cellSpacing="@dimen/activity_simple_grid_pattern_view_cell_spacing"
         parchment:parchment_orientation="horizontal"
         parchment:parchment_snapPosition="onScreen"
+        parchment:parchment_divider="@color/cell_divider"
+        parchment:parchment_dividerSize="@dimen/activity_sample_parchment_divider_size"
         parchment:parchment_ratio="@dimen/activity_simple_grid_pattern_ratio"
         android:scrollbars="horizontal"
         android:scrollbarStyle="outsideOverlay"

@@ -59,6 +59,164 @@ The step itself:
 The layout managers never call `getLeft()`/`getTop()` directly; that is
 the rule that keeps one engine working for both orientations.
 
+## The draw pass
+
+`AbstractAdapterView.dispatchDraw` draws the cells through `super`, then
+hands the canvas to `CellDivider`. A divider belongs on every edge internal
+to the content and on none at the content's outer boundary, and `CellDivider`
+gets that by working in edges rather than in full-breadth lines. It walks the
+drawn items — the child views themselves, not the cells — and asks each one
+about its trailing edge along each of the two axes: where another drawn item
+lies across the gap, a divider is painted in that gap spanning exactly the run
+the two items share along the perpendicular axis. An item with no neighbour on
+a side is at the content boundary and gets nothing, so the boundary rule falls
+out instead of being a case, and `GridPatternView`'s mixed spans and
+T-junctions are handled without rows or columns having to exist.
+
+Only trailing edges are considered, which is what paints each shared edge
+exactly once on a given axis: `CellEdges.isAcrossTheEndEdge` holds for at most
+one of an ordered pair, because it requires the neighbour to reach further than
+the item (`isAcrossTheEndEdge_forAPairOfItems_holdsInOneDirectionOnly`).
+
+A pass draws in a gap, so before anything else it asks whether there is one:
+`CellEdges.isAGap` holds when the neighbour starts no earlier than the item
+ends along this axis, and a pair that fails it overlaps on this axis and gets
+nothing from this pass. That is the whole of what keeps the two passes off the
+same pair. Ordering on an axis does not imply separation on it — a negative
+`parchment_cellSpacing` lays items over each other in both directions — so a
+pair can be across the end edge on both axes, and without the precondition each
+pass would divide it, at two different places. With it, a pair separated on one
+axis is drawn once, by that axis's pass, over the run the two share on the
+other; a pair overlapping on one axis and separated on the other gets exactly
+one segment, over the overlap
+(`gridPatternDivider_betweenDiagonalItemsOverlappingAcrossTheBreadth_dividesOnlyTheOverlap`);
+and a pair that overlaps on both axes has no gap for either pass to fill and
+gets no divider at all (`gridDivider_withANegativeCellSpacing_isNotDrawn`,
+`divider_withANegativeCellSpacing_isNotDrawn`). A gap of zero is still a gap,
+which is why a zero spacing still draws
+(`isAGap_forANeighbourTouchingTheEndEdge_isTrue`).
+
+The two passes are one method over a strategy, the way `snapposition/` and
+`pageinterval/` hold one algorithm each. They read the same four spans with the
+roles of the axes swapped and fill the `Rect` in opposite orders, so
+`divideraxis/` holds that swap: `DividerAxisInterface` answers `getStart`,
+`getEnd`, `getBandStart`, `getBandEnd` and `setDividerBounds`, and
+`SizeDividerAxis` and `BreadthDividerAxis` are built once in `CellDivider`'s
+constructor and reused every frame. Both reach orientation only through
+`ScrollDirectionManager`, so there is still exactly one place in the engine that
+knows about left and top. What the passes share besides the axis is the
+geometry, and that lives in `CellEdges`: whether a neighbour lies across an end edge, the overlap
+of two spans, whether an overlap is real, and whether a third item stands in
+the gap inside the band a divider would span. `CellEdges` takes scalars and
+returns scalars, the shape `getDividerStart` already had, so every one of
+those facts is pinned on its own in `CellEdgesTest` without a layout manager
+and without weakening anything's visibility.
+
+The third of those facts is what keeps a divider from being drawn across an
+item that stands between two others: a candidate occludes the edge when it is
+across the item's end edge and the neighbour is across *its* end edge, and it
+reaches the band. Without it, three items in a line would be divided 1-2, 2-3
+and also 1-3, the last drawn straight through the middle one.
+
+Because this runs on every frame while anything moves, the neighbour search is
+bounded by structure rather than cached. The candidates for an item in a drawn
+cell are the items of that cell and of the next one, and nothing else: cells
+are laid end to end along the scroll axis, so an item two cells away is never
+the nearest thing across a gap. Inside one cell there is no such bound, and a
+`GridPatternGroupDefinition` that leaves a grid position empty is divided across
+that empty position as though it were a gap, because nothing in the draw pass
+can tell a hole from spacing
+(`gridPatternDivider_acrossAHoleInThePattern_isStillDrawn` pins that), but only
+while nothing stands anywhere in the gap inside the band: `isGapOccupied`
+answers for the whole edge, so an item beside the hole occludes the edge across
+the hole too and nothing is drawn there
+(`gridPatternDivider_acrossAHoleWithAnItemBesideItInTheGap_isNotDrawn`). In a
+pattern without holes that is the right answer, because whatever fills the rest
+of the band is a neighbour in its own right and gets its own divider.
+
+The work per frame is therefore linear in the number of drawn cells
+(`gridDivider_theWorkItDoes_growsWithTheDrawnItemsRatherThanTheirSquare`) and
+independent of the adapter's size and of how far the view has been scrolled,
+but the cost of one cell is cubic in the items of two adjacent cells, not
+linear in them: for each item and each axis the neighbour scan reads every
+item of this cell and the next, and for each neighbour that passes the cheap
+tests `isGapOccupied` reads them all again. A cell of n items with N items in
+it and the next together costs up to 2·n·N·(N+1) item reads — 12 for
+`ListView`, 80 for a `GridView` with two views per cell, 1,100 for one of the
+sample's five-item pattern groups. Measured rather than bounded, a frame that
+draws all three of the sample's pattern groups, eleven items, makes 384 item
+reads and paints 20 dividers, and each read is an indexed list lookup and two
+`View` getters, so the frame spends microseconds here against its 16 ms. A
+pattern of dozens of items per group would not: at thirty items per group the
+bound is 219,600 reads per cell. The fix for that is to take the occupancy scan
+out of the neighbour loop — only a candidate across the item's end edge can
+occlude it, and the neighbour loop already visits every one of those, so a
+sweep over them in order of their starts, marking the run of the band each
+covers into a reused array, finds the neighbours and the occluders in one pass.
+That is a follow-up, not part of the change that introduced the rule. Nothing
+is computed once per layout pass and kept, because the layout pass runs on
+every frame too while scrolling, so a cache would save nothing and would have
+to be allocated and invalidated on every cell that is recycled or prepended
+mid-gesture.
+
+Nothing on the path allocates: one `Rect` field is refilled per divider
+(`everyGridDividerOfEveryFrame_isMeasuredIntoTheSameBoundsRect`), every loop
+is indexed rather than iterated, and the items are reached through
+`LayoutManager.getDrawnCellViewCount` and `getDrawnCellView`, which index into
+a cell instead of copying its view list the way `getViews` does. Those two,
+with `getDrawnCellCount`, are `protected final`: `protected` carries the
+package access `CellDivider` and the tests need, and `final` keeps a subclass
+from overriding one and silently relocating every divider. What a `Drawable`
+does inside its own `draw` is its own business.
+
+Dividers are decoration and never enter the layout: the items sit where
+`parchment_cellSpacing` puts them and the divider is centred in the gap
+between two items' boundaries, measured as `gapStart + (gapEnd - gapStart) / 2`
+rather than `(gapStart + gapEnd) / 2`, because a gap that straddles the
+leading edge has a negative start and integer division truncates toward zero
+(`dividerStart_inAGapThatStartsBeforeTheOrigin_centresTheDividerInTheGap`).
+Painting after the children is what makes a divider thicker than the
+spacing — a zero spacing included — visible rather than hidden under the item
+it overlaps. Where a gap between rows crosses a gap between columns no item
+abuts either gap, so the crossing is left unpainted and the grid reads as a
+grid (`dividerInXmlOnAGridView_whereTwoGapsCross_paintsNothing`).
+
+A divider begins and ends where the items it separates do, and knows nothing
+about padding. It follows the content, and so it is inside the padding exactly
+when the content is. This is the one place the new rule moved an existing line,
+and it moved it onto a pre-existing layout bug rather than away from one:
+`ListLayoutManager.layoutCell` centres a row in the *whole* breadth rather than
+inside the padding box, so with asymmetric padding the row sits off-centre of
+that box and overhangs one padding edge. The divider used to span the padding
+box and now spans the row, overhang included
+(`divider_withPaddingSet_spansTheRowsItSeparatesAndNoFurther`). Fixing the
+centring is a separate change; until then the divider tells the truth about
+where the row is. `android:clipToPadding` is applied by `ViewGroup.dispatchDraw`
+and restored before it returns, so it never clips the divider either way.
+
+`parchment_gravity` can leave a view shorter than its row along the scroll
+axis, and the divider follows the view there too: two items of different
+lengths in one row are each divided from their own neighbour, in their own
+gap, so the line is not continuous across the row. That is the rule working
+rather than failing — the alternative, snapping every divider onto the cell
+boundary, would put a line part-way inside a short view
+(`gridDivider_withAShortViewPlacedByGravity_followsTheViewRatherThanTheCell`).
+
+`CellDivider` still resolves its thickness once, in its constructor, from
+either `parchment_dividerSize` or the drawable's intrinsic size, and nothing
+selects between algorithms per frame.
+
+With `parchment_isCircularScroll` on, the drawn cells already wrap, so the
+divider between the last cell and the first is just a divider between two
+adjacent drawn cells and needs no case of its own.
+
+A cell that scrolls off the start keeps its divider for as long as the gap
+after it is on screen, without the draw pass knowing anything about it:
+`layout` recycles a cell once its end passes 0, but the backward pass then
+prepends cells while `mOffset` is still above 0, and `mOffset` is above 0
+exactly when part of that gap is still visible
+(`divider_whenACellScrollsOffTheStart_isStillDrawnWhileItsGapIsOnScreen`).
+
 ## Recycling
 
 `AdapterViewManager` keeps a `Queue<View>` per adapter view type plus a
@@ -217,4 +375,5 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
+| Why is the divider missing or in the wrong place? | `CellDivider` and the edge geometry in `CellEdges`; `CellDividerTest`, `CellDividerGroupTest`, `CellEdgesTest`, `CellDividerPaintTest` |
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |

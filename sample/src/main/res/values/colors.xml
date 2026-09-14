@@ -6,4 +6,6 @@
 
     <color name="press_state_colour">#6600498b</color>
     <color name="selected_state_colour">#338b7700</color>
+
+    <color name="cell_divider">#664c4c4c</color>
 </resources>

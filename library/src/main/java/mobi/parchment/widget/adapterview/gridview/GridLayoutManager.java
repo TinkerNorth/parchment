@@ -159,6 +159,16 @@ public class GridLayoutManager extends LayoutManager<Group> {
         return group.getViews();
     }
 
+    @Override
+    public int getCellViewCount(final Group group) {
+        return group.getNumberOfItems();
+    }
+
+    @Override
+    public View getCellView(final Group group, final int viewIndex) {
+        return group.getView(viewIndex);
+    }
+
     public int getNumberOfViewsPerCell() {
         return mGridLayoutManagerAttributes.getNumberOfViewsPerCell();
     }

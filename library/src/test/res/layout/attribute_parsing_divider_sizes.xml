@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:parchment="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/negative_divider_size_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_divider="#ff112233"
+            parchment:parchment_dividerSize="-0.4px"/>
+
+    <mobi.parchment.widget.adapterview.listview.ListView
+            android:id="@+id/no_divider_size_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_divider="#ff112233"/>
+
+</LinearLayout>

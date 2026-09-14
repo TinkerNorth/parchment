@@ -15,6 +15,8 @@ import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
 public class ListLayoutManager extends LayoutManager<View> {
 
+    private static final int ONE_VIEW = 1;
+
     public ListLayoutManager(
             final ViewGroup viewGroup,
             final OnSelectedListener onSelectedListener,
@@ -139,6 +141,16 @@ public class ListLayoutManager extends LayoutManager<View> {
 
     @Override
     public View getFirstView(final View view) {
+        return view;
+    }
+
+    @Override
+    public int getCellViewCount(final View view) {
+        return ONE_VIEW;
+    }
+
+    @Override
+    public View getCellView(final View view, final int viewIndex) {
         return view;
     }
 

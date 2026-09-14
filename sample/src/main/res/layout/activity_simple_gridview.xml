@@ -9,6 +9,8 @@
         parchment:parchment_orientation="vertical"
         parchment:parchment_gravity="top"
         parchment:parchment_snapPosition="onScreen"
+        parchment:parchment_divider="@color/cell_divider"
+        parchment:parchment_dividerSize="@dimen/activity_sample_parchment_divider_size"
         android:paddingStart="@dimen/activity_sample_parchment_padding_small"
         android:paddingEnd="@dimen/activity_sample_parchment_padding_large"
         android:paddingTop="@dimen/activity_sample_parchment_padding_medium"
