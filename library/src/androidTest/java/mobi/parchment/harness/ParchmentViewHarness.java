@@ -39,6 +39,7 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
     private static final int NO_OFFSET = 0;
     private static final int NO_HOLD = 0;
     private static final int RELEASE_HOLD_STEPS = 10;
+    private static final int HALVES = 2;
 
     private final VIEW mView;
 
@@ -134,6 +135,29 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
     }
 
     /**
+     * Dispatches a drag that applies a setup on the main thread part-way through: after the content
+     * has started moving and a frame has shown it, and before the finger lifts.
+     */
+    public void dragAndRelease(
+            final int fromX,
+            final int fromY,
+            final int toX,
+            final int toY,
+            final int steps,
+            final ViewSetup<VIEW> midGestureSetup) {
+        performGestureWithMidGestureSetup(fromX, fromY, toX, toY, steps, midGestureSetup);
+    }
+
+    /** Dispatches a real down and up at one point, which the platform detector reports as a tap. */
+    public void tap(final int x, final int y) {
+        final long downTime = SystemClock.uptimeMillis();
+        dispatch(downTime, downTime, MotionEvent.ACTION_DOWN, x, y);
+        sleepOneFrame();
+        final long upTime = downTime + FRAME_MILLISECONDS;
+        dispatch(downTime, upTime, MotionEvent.ACTION_UP, x, y);
+    }
+
+    /**
      * Dispatches one touch event per main-thread pass, waiting a frame between them. The waiting is
      * the point: Parchment applies a scroll on the animation frame that follows it, so a gesture
      * delivered without frames in between never reaches a layout pass.
@@ -157,7 +181,79 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         final long downTime = SystemClock.uptimeMillis();
         long eventTime = downTime;
         dispatch(downTime, eventTime, MotionEvent.ACTION_DOWN, fromX, fromY);
-        for (int step = FIRST_STEP; step <= movesBeforeTheLastEvent; step++) {
+        eventTime =
+                dispatchMoves(
+                        downTime,
+                        eventTime,
+                        fromX,
+                        fromY,
+                        toX,
+                        toY,
+                        steps,
+                        firstProgress,
+                        FIRST_STEP,
+                        movesBeforeTheLastEvent);
+        eventTime = dispatchHold(downTime, eventTime, toX, toY, holdSteps);
+        dispatchUp(downTime, eventTime, toX, toY);
+    }
+
+    private void performGestureWithMidGestureSetup(
+            final int fromX,
+            final int fromY,
+            final int toX,
+            final int toY,
+            final int steps,
+            final ViewSetup<VIEW> midGestureSetup) {
+        final float firstProgress = firstMoveProgress(fromX, fromY, toX, toY, steps);
+        final int movesBeforeTheLastEvent = Math.max(FIRST_STEP, steps - ONE_STEP);
+        final int movesBeforeTheSetup = Math.max(FIRST_STEP, movesBeforeTheLastEvent / HALVES);
+        final int firstMoveAfterTheSetup = movesBeforeTheSetup + ONE_STEP;
+        final long downTime = SystemClock.uptimeMillis();
+        long eventTime = downTime;
+        dispatch(downTime, eventTime, MotionEvent.ACTION_DOWN, fromX, fromY);
+        eventTime =
+                dispatchMoves(
+                        downTime,
+                        eventTime,
+                        fromX,
+                        fromY,
+                        toX,
+                        toY,
+                        steps,
+                        firstProgress,
+                        FIRST_STEP,
+                        movesBeforeTheSetup);
+        sleepOneFrame();
+        apply(midGestureSetup);
+        eventTime =
+                dispatchMoves(
+                        downTime,
+                        eventTime,
+                        fromX,
+                        fromY,
+                        toX,
+                        toY,
+                        steps,
+                        firstProgress,
+                        firstMoveAfterTheSetup,
+                        movesBeforeTheLastEvent);
+        eventTime = dispatchHold(downTime, eventTime, toX, toY, RELEASE_HOLD_STEPS);
+        dispatchUp(downTime, eventTime, toX, toY);
+    }
+
+    private long dispatchMoves(
+            final long downTime,
+            final long eventTimeBefore,
+            final int fromX,
+            final int fromY,
+            final int toX,
+            final int toY,
+            final int steps,
+            final float firstProgress,
+            final int firstMove,
+            final int lastMove) {
+        long eventTime = eventTimeBefore;
+        for (int step = firstMove; step <= lastMove; step++) {
             sleepOneFrame();
             eventTime = eventTime + FRAME_MILLISECONDS;
             final float progress = progressAt(step, steps, firstProgress);
@@ -165,13 +261,28 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
             final float y = fromY + (toY - fromY) * progress;
             dispatch(downTime, eventTime, MotionEvent.ACTION_MOVE, x, y);
         }
+        return eventTime;
+    }
+
+    private long dispatchHold(
+            final long downTime,
+            final long eventTimeBefore,
+            final int toX,
+            final int toY,
+            final int holdSteps) {
+        long eventTime = eventTimeBefore;
         for (int hold = 0; hold < holdSteps; hold++) {
             sleepOneFrame();
             eventTime = eventTime + FRAME_MILLISECONDS;
             dispatch(downTime, eventTime, MotionEvent.ACTION_MOVE, toX, toY);
         }
+        return eventTime;
+    }
+
+    private void dispatchUp(
+            final long downTime, final long eventTimeBefore, final int toX, final int toY) {
         sleepOneFrame();
-        eventTime = eventTime + FRAME_MILLISECONDS;
+        final long eventTime = eventTimeBefore + FRAME_MILLISECONDS;
         dispatch(downTime, eventTime, MotionEvent.ACTION_UP, toX, toY);
     }
 

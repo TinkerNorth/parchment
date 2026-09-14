@@ -30,6 +30,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
     private AdapterViewInitializer<Cell> mAdapterViewInitializer;
 
     private final AnimationFrameRunnable mAnimationFrameRunnable = new AnimationFrameRunnable(this);
+    private final ScrollListenerDispatcher mScrollListenerDispatcher =
+            new ScrollListenerDispatcher();
     private boolean mAnimationFrameRequested;
 
     private final DataSetObserver mDataSetObserver =
@@ -87,7 +89,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
                         this,
                         this,
                         layoutManagerBridge,
-                        viewConfiguration);
+                        viewConfiguration,
+                        mScrollListenerDispatcher);
         final AdapterViewGestureDetector adapterViewGestureDetector =
                 new AdapterViewGestureDetector(context, childTouchGestureListener);
 
@@ -204,6 +207,13 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         }
     }
 
+    public void setOnScrollListener(final OnScrollListener onScrollListener) {
+        mScrollListenerDispatcher.setOnScrollListener(onScrollListener);
+        final ChildTouchGestureListener childTouchListener =
+                mAdapterViewInitializer.getChildTouchListener();
+        childTouchListener.requestFrameForUndispatchedScrollState();
+    }
+
     @Override
     public void setOnItemSelectedListener(final OnItemSelectedListener onItemSelectedListener) {
         mOnItemSelectedListener = onItemSelectedListener;
@@ -228,9 +238,8 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         childTouchListener.computeScrollOffset();
         final Animation animation = childTouchListener.getAnimation();
 
-        if (layoutManager != null) {
-            layoutManager.layout(this, animation, left, top, right, bottom);
-        }
+        final int frameDisplacement =
+                layOutCells(layoutManager, animation, left, top, right, bottom);
         childTouchListener.onFrameLaidOut();
         final AdapterAnimator.State state = childTouchListener.getState();
         switch (state) {
@@ -248,6 +257,21 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             default:
                 break;
         }
+        final ScrollState scrollState = ScrollState.from(state);
+        mScrollListenerDispatcher.dispatch(this, frameDisplacement, scrollState);
+    }
+
+    private int layOutCells(
+            final LayoutManager<Cell> layoutManager,
+            final Animation animation,
+            final int left,
+            final int top,
+            final int right,
+            final int bottom) {
+        if (layoutManager == null) return ScrollListenerDispatcher.NO_DISPLACEMENT;
+
+        layoutManager.layout(this, animation, left, top, right, bottom);
+        return layoutManager.getFrameDisplacement();
     }
 
     @Override
