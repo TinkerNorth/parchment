@@ -110,22 +110,19 @@ public class OnScreenSnapPosition<Cell> implements SnapPositionInterface<Cell> {
 
     @Override
     public int getSnapToPixelDistance(
-            LayoutManager<Cell> layoutManager,
-            ScrollDirectionManager scrollDirectionManager,
-            int size,
-            View view) {
+            final LayoutManager<Cell> layoutManager, final int size, final Cell cell) {
         final int startSizePadding = layoutManager.getStartSizePadding();
         final int endSizePadding = layoutManager.getEndSizePadding();
-        final int startPixel = scrollDirectionManager.getViewStart(view);
-        final int endPixel = scrollDirectionManager.getViewEnd(view);
-        final int viewSize = endPixel - startPixel;
+        final int cellStart = layoutManager.getCellStart(cell);
+        final int cellEnd = layoutManager.getCellEnd(cell);
+        final int cellSize = layoutManager.getCellSize(cell);
 
         final int actualSize = size - startSizePadding - endSizePadding;
-        final boolean viewIsLargerThanViewGroup = actualSize <= viewSize;
-        if (startPixel < startSizePadding || viewIsLargerThanViewGroup) {
-            return -startPixel + startSizePadding;
-        } else if (endPixel > startSizePadding + size) {
-            return startSizePadding + size - endPixel;
+        final boolean cellIsLargerThanViewGroup = actualSize <= cellSize;
+        if (cellStart < startSizePadding || cellIsLargerThanViewGroup) {
+            return -cellStart + startSizePadding;
+        } else if (cellEnd > startSizePadding + size) {
+            return startSizePadding + size - cellEnd;
         }
 
         return 0;
