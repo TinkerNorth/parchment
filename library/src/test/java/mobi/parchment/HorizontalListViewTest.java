@@ -19,14 +19,19 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import mobi.parchment.test.R;
+import mobi.parchment.widget.adapterview.AbstractAdapterView;
 import mobi.parchment.widget.adapterview.Attributes;
+import mobi.parchment.widget.adapterview.OnScrollListener;
 import mobi.parchment.widget.adapterview.Orientation;
 import mobi.parchment.widget.adapterview.SnapPosition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternAttributes;
+import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 import mobi.parchment.widget.adapterview.gridview.GridAttributes;
+import mobi.parchment.widget.adapterview.gridview.GridView;
 import mobi.parchment.widget.adapterview.listview.ListView;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,6 +67,7 @@ public class HorizontalListViewTest {
     private static final int TEST_DIVIDER_COLOUR = 0xff112233;
     private static final int DEFAULT_DIVIDER_SIZE = -1;
     private static final int NO_DIVIDER_SIZE = 0;
+    private static final String SET_ON_SCROLL_LISTENER = "setOnScrollListener";
 
     @Test
     public void testBasicIntegration() {
@@ -183,6 +189,32 @@ public class HorizontalListViewTest {
                         "parchment_numberOfViewsPerCell",
                         "parchment_gravity",
                         "parchment_ratio");
+    }
+
+    @Test
+    public void adapterView_hasNoSetOnScrollListenerOfItsOwnAtAnyVisibility() {
+        Class<?> type = android.widget.AdapterView.class;
+        while (type != null) {
+            for (final Method method : type.getDeclaredMethods()) {
+                assertThat(method.getName()).isNotEqualTo(SET_ON_SCROLL_LISTENER);
+            }
+            type = type.getSuperclass();
+        }
+    }
+
+    @Test
+    public void setOnScrollListener_isOnAllThreeViewsThroughAbstractAdapterView()
+            throws NoSuchMethodException {
+        final Method listViewMethod =
+                ListView.class.getMethod(SET_ON_SCROLL_LISTENER, OnScrollListener.class);
+        final Method gridViewMethod =
+                GridView.class.getMethod(SET_ON_SCROLL_LISTENER, OnScrollListener.class);
+        final Method gridPatternViewMethod =
+                GridPatternView.class.getMethod(SET_ON_SCROLL_LISTENER, OnScrollListener.class);
+
+        assertThat(listViewMethod.getDeclaringClass()).isEqualTo(AbstractAdapterView.class);
+        assertThat(gridViewMethod.getDeclaringClass()).isEqualTo(AbstractAdapterView.class);
+        assertThat(gridPatternViewMethod.getDeclaringClass()).isEqualTo(AbstractAdapterView.class);
     }
 
     @Test
