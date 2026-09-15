@@ -12,7 +12,7 @@ androidxAnnotation = "1.10.0"
 
 # Test
 junit = "4.13.2"
-robolectric = "4.16.1"
+robolectric = "4.17"
 assertj = "3.27.7"
 androidxTestCore = "1.7.0"
 androidxTestExtJunit = "1.3.0"
@@ -21,7 +21,7 @@ androidxTestRules = "1.7.0"
 espresso = "3.7.0"
 
 # Sample
-picasso = "2.8"
+picasso = "2.71828"
 
 [libraries]
 androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "androidxAnnotation" }
