@@ -4,17 +4,23 @@
 package mobi.parchment;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import mobi.parchment.playground.Cell;
 import mobi.parchment.playground.PatternOption;
 import mobi.parchment.playground.PlaygroundOptions;
@@ -31,7 +37,7 @@ public final class DemoActivity extends Activity {
     private static final String STATE_IS_XML_SHOWN = "isXmlShown";
     private static final boolean ATTACH_TO_CONTAINER = true;
 
-    private View mXmlPanel;
+    private Dialog mXmlDialog;
 
     public static Intent intentFor(final Context context, final PlaygroundOptions options) {
         final Intent intent = new Intent(context, DemoActivity.class);
@@ -52,29 +58,28 @@ public final class DemoActivity extends Activity {
         report(view);
         view.setAdapter(createAdapter(viewKind.getCell(options.getOrientation())));
 
-        mXmlPanel = findViewById(R.id.demo_xml_panel);
-        showXml(options, wasXmlShown(savedInstanceState));
+        mXmlDialog = createXmlDialog(options);
+        findViewById(R.id.demo_show_xml).setOnClickListener(new ShowDialog(mXmlDialog));
+        if (wasXmlShown(savedInstanceState)) {
+            mXmlDialog.show();
+        }
     }
 
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(STATE_IS_XML_SHOWN, isXmlShown());
+        outState.putBoolean(STATE_IS_XML_SHOWN, mXmlDialog.isShowing());
     }
 
     @Override
-    public boolean onCreateOptionsMenu(final Menu menu) {
-        getMenuInflater().inflate(R.menu.demo, menu);
-        return true;
+    protected void onDestroy() {
+        mXmlDialog.dismiss();
+        super.onDestroy();
     }
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         if (UpIsBack.handles(this, item)) {
-            return true;
-        }
-        if (item.getItemId() == R.id.demo_show_xml) {
-            setXmlShown(!isXmlShown());
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -118,10 +123,18 @@ public final class DemoActivity extends Activity {
         return new ProductsAdapter(cell.getLayoutResourceId(), widthPixels, heightPixels);
     }
 
-    private void showXml(final PlaygroundOptions options, final boolean isShown) {
-        final TextView xmlView = findViewById(R.id.demo_xml);
-        xmlView.setText(PlaygroundXml.of(options, getResources()));
-        setXmlShown(isShown);
+    private Dialog createXmlDialog(final PlaygroundOptions options) {
+        final String xml = PlaygroundXml.of(options, getResources());
+        final CharSequence title = getTitle();
+        final View content = getLayoutInflater().inflate(R.layout.dialog_xml, null);
+        final TextView xmlView = content.findViewById(R.id.demo_xml);
+        xmlView.setText(xml);
+        return new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setView(content)
+                .setPositiveButton(R.string.demo_copy, new CopyXml(this, title, xml))
+                .setNegativeButton(R.string.demo_close, null)
+                .create();
     }
 
     private static boolean wasXmlShown(final Bundle savedInstanceState) {
@@ -131,15 +144,49 @@ public final class DemoActivity extends Activity {
         return savedInstanceState.getBoolean(STATE_IS_XML_SHOWN);
     }
 
-    private boolean isXmlShown() {
-        return mXmlPanel.getVisibility() == View.VISIBLE;
+    private static final class ShowDialog implements View.OnClickListener {
+
+        private final Dialog mDialog;
+
+        private ShowDialog(final Dialog dialog) {
+            mDialog = dialog;
+        }
+
+        @Override
+        public void onClick(final View view) {
+            mDialog.show();
+        }
     }
 
-    private void setXmlShown(final boolean isShown) {
-        if (isShown) {
-            mXmlPanel.setVisibility(View.VISIBLE);
-        } else {
-            mXmlPanel.setVisibility(View.GONE);
+    private static final class CopyXml implements DialogInterface.OnClickListener {
+
+        private final Context mContext;
+        private final CharSequence mLabel;
+        private final String mXml;
+
+        private CopyXml(final Context context, final CharSequence label, final String xml) {
+            mContext = context;
+            mLabel = label;
+            mXml = xml;
+        }
+
+        @Override
+        public void onClick(final DialogInterface dialog, final int which) {
+            final ClipboardManager clipboard =
+                    (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+            final ClipData clip = ClipData.newPlainText(mLabel, mXml);
+            clipboard.setPrimaryClip(clip);
+            if (!systemConfirmsCopy()) {
+                confirm();
+            }
+        }
+
+        private static boolean systemConfirmsCopy() {
+            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
+        }
+
+        private void confirm() {
+            Toast.makeText(mContext, R.string.demo_copied, Toast.LENGTH_SHORT).show();
         }
     }
 }

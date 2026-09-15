@@ -54,7 +54,14 @@
         <item name="android:textColor">@color/action_bar_text_color</item>
         <item name="android:textSize">@dimen/xml_text_size</item>
         <item name="android:typeface">monospace</item>
-        <item name="android:padding">@dimen/status_padding</item>
+        <item name="android:padding">@dimen/dialog_padding</item>
+    </style>
+
+    <style name="FloatingActionButton">
+        <item name="android:background">@drawable/floating_action_button_background</item>
+        <item name="android:elevation">@dimen/floating_action_button_elevation</item>
+        <item name="android:tint">@android:color/white</item>
+        <item name="android:layout_margin">@dimen/floating_action_button_margin</item>
     </style>
 
 </resources>

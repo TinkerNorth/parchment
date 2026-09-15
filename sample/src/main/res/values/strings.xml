@@ -65,5 +65,8 @@
 
     <string name="demo_status">%1$s | moved %2$d, total %3$d | selected %4$s | tapped %5$s</string>
     <string name="demo_nothing">none</string>
-    <string name="demo_xml">XML</string>
+    <string name="demo_show_xml">Show XML</string>
+    <string name="demo_copy">Copy</string>
+    <string name="demo_close">Close</string>
+    <string name="demo_copied">Copied</string>
 </resources>

@@ -13,22 +13,22 @@
         android:layout_height="wrap_content" />
 
     <FrameLayout
-        android:id="@+id/demo_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1">
 
-    <HorizontalScrollView
-        android:id="@+id/demo_xml_panel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/action_bar_background"
-        android:visibility="gone">
+        <FrameLayout
+            android:id="@+id/demo_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-        <TextView
-            android:id="@+id/demo_xml"
-            style="@style/Xml"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-    </HorizontalScrollView>
+        <ImageButton
+            android:id="@+id/demo_show_xml"
+            style="@style/FloatingActionButton"
+            android:layout_width="@dimen/floating_action_button_size"
+            android:layout_height="@dimen/floating_action_button_size"
+            android:layout_gravity="bottom|start"
+            android:contentDescription="@string/demo_show_xml"
+            android:src="@drawable/ic_info" />
+    </FrameLayout>
 </LinearLayout>

@@ -31,14 +31,15 @@ behaviour of the views is unchanged; everything around them is new.
   `parchment_*` attribute is a control, plus the `GridPatternView` pattern.
   Show inflates the configured view with a status line of what
   `setOnScrollListener`, `OnItemSelectedListener` and `OnItemClickListener`
-  report, and an XML action prints the layout that reproduces it. Parchment
-  reads its attributes only when a view is inflated and has no setters for
-  them, so the playground layouts reference `?attr/playground_*` theme
-  attributes and `PlaygroundTheme` applies one overlay style per chosen
-  option to the theme it inflates under. The README had the
-  `GridPatternItemDefinition` parameters as `(left, top, width, height)`; the
-  constructor takes `(top, left, height, width)`, and its example, which
-  tiles either way, is unchanged.
+  report, and an info button shows the layout that reproduces it, which Copy
+  puts on the clipboard. Parchment reads its attributes only when a view is
+  inflated and has no setters for them, so the playground layouts reference
+  `?attr/playground_*` theme attributes and `PlaygroundTheme` applies one
+  overlay style per chosen option to the theme it inflates under. The README
+  had the `GridPatternItemDefinition` parameters as
+  `(left, top, width, height)`; the constructor takes
+  `(top, left, height, width)`, and its example, which tiles either way, is
+  unchanged.
 - **Breaking:** the `AdapterAnimator` and `ChildTouchGestureListener`
   constructors take a `ScrollListenerDispatcher`. Both classes are
   implementation details that the views build for themselves — the in-tree
