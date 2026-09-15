@@ -27,7 +27,8 @@
                 android:id="@+id/playground_view_kind"
                 style="@style/Choices"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/playground_view_kind_list_view">
 
                 <RadioButton
                     android:id="@+id/playground_view_kind_list_view"
@@ -49,6 +50,12 @@
             </RadioGroup>
 
             <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_view_kind_hint" />
+
+            <TextView
                 style="@style/Heading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -58,7 +65,8 @@
                 android:id="@+id/playground_orientation"
                 style="@style/Choices"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/playground_orientation_horizontal">
 
                 <RadioButton
                     android:id="@+id/playground_orientation_horizontal"
@@ -74,6 +82,12 @@
             </RadioGroup>
 
             <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_orientation_hint" />
+
+            <TextView
                 style="@style/Heading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,7 +97,8 @@
                 android:id="@+id/playground_cell_spacing"
                 style="@style/Choices"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/playground_cell_spacing_large">
 
                 <RadioButton
                     android:id="@+id/playground_cell_spacing_none"
@@ -104,11 +119,23 @@
                     android:text="@string/playground_cell_spacing_large" />
             </RadioGroup>
 
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_cell_spacing_hint" />
+
             <CheckBox
                 android:id="@+id/playground_divider"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/playground_divider" />
+
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_divider_hint" />
 
             <TextView
                 style="@style/Heading"
@@ -122,11 +149,18 @@
                 android:layout_height="wrap_content"
                 android:text="@string/playground_snap_to_position" />
 
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_snap_to_position_hint" />
+
             <RadioGroup
                 android:id="@+id/playground_snap_position"
                 style="@style/Choices"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/playground_snap_position_on_screen">
 
                 <RadioButton
                     android:id="@+id/playground_snap_position_center"
@@ -154,6 +188,13 @@
             </RadioGroup>
 
             <TextView
+                android:id="@+id/playground_snap_position_hint"
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_snap_position_hint" />
+
+            <TextView
                 style="@style/Heading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -165,17 +206,31 @@
                 android:layout_height="wrap_content"
                 android:text="@string/playground_circular_scroll" />
 
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_circular_scroll_hint" />
+
             <CheckBox
                 android:id="@+id/playground_view_pager"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/playground_view_pager" />
 
+            <TextView
+                android:id="@+id/playground_view_pager_hint"
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_view_pager_hint_needs_snapping" />
+
             <RadioGroup
                 android:id="@+id/playground_view_pager_interval"
                 style="@style/Choices"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:checkedButton="@+id/playground_view_pager_interval_viewport">
 
                 <RadioButton
                     android:id="@+id/playground_view_pager_interval_viewport"
@@ -197,6 +252,12 @@
             </RadioGroup>
 
             <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_view_pager_interval_hint" />
+
+            <TextView
                 style="@style/Heading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -208,11 +269,23 @@
                 android:layout_height="wrap_content"
                 android:text="@string/playground_select_on_snap" />
 
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_select_on_snap_hint" />
+
             <CheckBox
                 android:id="@+id/playground_select_while_scrolling"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/playground_select_while_scrolling" />
+
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_select_while_scrolling_hint" />
 
             <LinearLayout
                 android:id="@+id/playground_grid_view_section"
@@ -236,7 +309,8 @@
                     android:id="@+id/playground_views_per_cell"
                     style="@style/Choices"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:checkedButton="@+id/playground_views_per_cell_two">
 
                     <RadioButton
                         android:id="@+id/playground_views_per_cell_two"
@@ -258,6 +332,12 @@
                 </RadioGroup>
 
                 <TextView
+                    style="@style/ControlHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/playground_views_per_cell_hint" />
+
+                <TextView
                     style="@style/Label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -267,7 +347,8 @@
                     android:id="@+id/playground_gravity"
                     style="@style/Choices"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:checkedButton="@+id/playground_gravity_top">
 
                     <RadioButton
                         android:id="@+id/playground_gravity_top"
@@ -293,6 +374,13 @@
                         android:layout_height="wrap_content"
                         android:text="@string/playground_gravity_right" />
                 </RadioGroup>
+
+                <TextView
+                    android:id="@+id/playground_gravity_hint"
+                    style="@style/ControlHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/playground_gravity_hint_vertical" />
             </LinearLayout>
 
             <LinearLayout
@@ -317,7 +405,8 @@
                     android:id="@+id/playground_ratio"
                     style="@style/Choices"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:checkedButton="@+id/playground_ratio_golden">
 
                     <RadioButton
                         android:id="@+id/playground_ratio_square"
@@ -339,6 +428,12 @@
                 </RadioGroup>
 
                 <TextView
+                    style="@style/ControlHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/playground_ratio_hint" />
+
+                <TextView
                     style="@style/Label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -348,7 +443,8 @@
                     android:id="@+id/playground_pattern"
                     style="@style/Choices"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:checkedButton="@+id/playground_pattern_magazine">
 
                     <RadioButton
                         android:id="@+id/playground_pattern_hero"
@@ -362,6 +458,12 @@
                         android:layout_height="wrap_content"
                         android:text="@string/playground_pattern_magazine" />
                 </RadioGroup>
+
+                <TextView
+                    style="@style/ControlHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/playground_pattern_hint" />
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -17,6 +17,8 @@ public final class PlaygroundActivity extends Activity {
 
     private static final String EXTRA_PRESET = "preset";
 
+    private PlaygroundForm mForm;
+
     public static Intent intentFor(final Context context, final Preset preset) {
         final Intent intent = new Intent(context, PlaygroundActivity.class);
         intent.putExtra(EXTRA_PRESET, preset.name());
@@ -29,12 +31,18 @@ public final class PlaygroundActivity extends Activity {
         setContentView(R.layout.activity_playground);
         setTitle(R.string.playground_title);
         getActionBar().setDisplayHomeAsUpEnabled(true);
-        final PlaygroundForm form = new PlaygroundForm(this);
+        mForm = new PlaygroundForm(this);
         final boolean isFirstCreation = savedInstanceState == null;
         if (isFirstCreation) {
-            form.show(presetFromIntent().getOptions());
+            mForm.show(presetFromIntent().getOptions());
         }
-        findViewById(R.id.playground_show).setOnClickListener(new ShowDemo(form));
+        findViewById(R.id.playground_show).setOnClickListener(new ShowDemo(mForm));
+    }
+
+    @Override
+    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mForm.refresh();
     }
 
     @Override

@@ -24,6 +24,7 @@
     <dimen name="section_spacing">16dp</dimen>
     <dimen name="status_padding">8dp</dimen>
     <dimen name="dialog_padding">24dp</dimen>
+    <dimen name="hint_spacing">8dp</dimen>
     <dimen name="xml_text_size">12sp</dimen>
     <dimen name="floating_action_button_size">56dp</dimen>
     <dimen name="floating_action_button_margin">16dp</dimen>

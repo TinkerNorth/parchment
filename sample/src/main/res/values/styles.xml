@@ -38,6 +38,11 @@
         <item name="android:gravity">center</item>
     </style>
 
+    <style name="ControlHint" parent="@android:style/TextAppearance.Material.Caption">
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:layout_marginBottom">@dimen/hint_spacing</item>
+    </style>
+
     <style name="Choices">
         <item name="android:orientation">horizontal</item>
     </style>

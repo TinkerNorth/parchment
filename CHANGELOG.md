@@ -29,6 +29,9 @@ behaviour of the views is unchanged; everything around them is new.
   listener). Each opens the playground pre-filled with a preset that shows
   that item off — the four old screens are four of the presets — where every
   `parchment_*` attribute is a control, plus the `GridPatternView` pattern.
+  Every control carries a hint saying what its attribute does, and one whose
+  attribute would have no effect under the other settings disables itself
+  and says what it needs; the printed XML leaves such an attribute out too.
   Show inflates the configured view with a status line of what
   `setOnScrollListener`, `OnItemSelectedListener` and `OnItemClickListener`
   report, and an info button shows the layout that reproduces it, which Copy

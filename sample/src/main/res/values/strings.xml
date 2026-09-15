@@ -63,6 +63,27 @@
     <string name="playground_pattern_magazine">Magazine</string>
     <string name="playground_show">Show</string>
 
+    <string name="playground_view_kind_hint">ListView lays one view per cell. GridView packs a fixed number of views into every row or column. GridPatternView sizes each view from a repeating pattern of shapes.</string>
+    <string name="playground_orientation_hint">The axis the content scrolls along. A vertical GridView fills rows; a horizontal one fills columns.</string>
+    <string name="playground_cell_spacing_hint">The gap between neighbouring cells. Space at the outer edges comes from the view\'s own padding.</string>
+    <string name="playground_divider_hint">Paints a line on every edge two cells share, centred in the cell spacing, and none at the outer boundary of the content.</string>
+    <string name="playground_snap_to_position_hint">After a drag or fling, settles the nearest cell on the snap position; a tapped cell snaps there too, and setSelection jumps. With onScreen nothing settles, but a tap still brings its cell fully on screen and setSelection still jumps.</string>
+    <string name="playground_snap_position_hint">Where a cell settles, a page lands and setSelection jumps to, and how far the first and last cells can be pulled in from the edges.</string>
+    <string name="playground_snap_position_hint_circular">Circular scroll forces onScreen, so center, start and end no longer differ: all three still settle the nearest cell on an edge, and onScreen alone turns that settle off.</string>
+    <string name="playground_circular_scroll_hint">After the last cell comes the first again, so the content has no ends to pull against.</string>
+    <string name="playground_view_pager_hint_settles">Only a fling turns a page. Snapping to a position other than onScreen is on, so a drag released slowly settles on a cell too.</string>
+    <string name="playground_view_pager_hint_needs_snapping">Only a fling turns a page; a drag released slowly stops where it is. To always rest on a page, also snap to a position other than onScreen.</string>
+    <string name="playground_view_pager_interval_hint">How far one fling pages: every cell that fits the viewport whole, or a fixed number of cells. Needs ViewPager.</string>
+    <string name="playground_select_on_snap_hint">Selects the cell a snap lands on. Needs snapping; with onScreen a snap only lands when the content is pushed against an end, which circular scroll has none of.</string>
+    <string name="playground_select_while_scrolling_hint">Moves the selection to the cell nearest the snap position while the content is still moving. Needs a snap position other than onScreen; snapping itself is not needed.</string>
+    <string name="playground_views_per_cell_hint">How many views share a row (vertical) or a column (horizontal).</string>
+    <string name="playground_gravity_hint_vertical">top and bottom place a view shorter than its row, such as one whose caption wraps. left and right place a row narrower than the width: the short last row.</string>
+    <string name="playground_gravity_hint_vertical_full_rows">top and bottom place a view shorter than its row, such as one whose caption wraps. left and right would place a row narrower than the width, but the photos fill every row: %1$d of them, %2$d to a row.</string>
+    <string name="playground_gravity_hint_horizontal">top and bottom place a column shorter than the height: the short last column. left and right would place a view narrower than its column, and these fixed-width cells never are.</string>
+    <string name="playground_gravity_hint_horizontal_full_columns">top and bottom would place a column shorter than the height, but the photos fill every column: %1$d of them, %2$d to a column. left and right would place a view narrower than its column, and these fixed-width cells never are.</string>
+    <string name="playground_ratio_hint">The length of one pattern unit along the scroll axis over its breadth across it; 1.0 makes square units. Every shape in the pattern spans whole units.</string>
+    <string name="playground_pattern_hint">The repeating groups of shapes the views fill, in adapter order. Defined in code; see PatternOption.</string>
+
     <string name="demo_status">%1$s | moved %2$d, total %3$d | selected %4$s | tapped %5$s</string>
     <string name="demo_nothing">none</string>
     <string name="demo_show_xml">Show XML</string>

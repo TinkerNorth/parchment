@@ -52,14 +52,26 @@ public final class PlaygroundXml {
         flag(xml, "snapToPosition", options.isSnapToPosition());
         flag(xml, "isCircularScroll", options.isCircularScroll());
         flag(xml, "isViewPager", options.isViewPager());
-        if (options.isViewPager()) {
-            parchment(xml, "viewPagerInterval", options.getViewPagerInterval().getXmlValue());
-        }
-        flag(xml, "selectOnSnap", options.selectOnSnap());
-        flag(xml, "selectWhileScrolling", options.selectWhileScrolling());
+        appendEffectiveAttributes(xml, options);
         if (options.hasDivider()) {
             appendDividerAttributes(xml, resources);
         }
+    }
+
+    private static void appendEffectiveAttributes(
+            final StringBuilder xml, final PlaygroundOptions options) {
+        final boolean intervalHasAnEffect = PlaygroundRules.viewPagerIntervalHasAnEffect(options);
+        final boolean selectOnSnapHasAnEffect = PlaygroundRules.selectOnSnapHasAnEffect(options);
+        final boolean selectWhileScrollingHasAnEffect =
+                PlaygroundRules.selectWhileScrollingHasAnEffect(options);
+        final boolean printsSelectOnSnap = options.selectOnSnap() && selectOnSnapHasAnEffect;
+        final boolean printsSelectWhileScrolling =
+                options.selectWhileScrolling() && selectWhileScrollingHasAnEffect;
+        if (intervalHasAnEffect) {
+            parchment(xml, "viewPagerInterval", options.getViewPagerInterval().getXmlValue());
+        }
+        flag(xml, "selectOnSnap", printsSelectOnSnap);
+        flag(xml, "selectWhileScrolling", printsSelectWhileScrolling);
     }
 
     private static void appendDividerAttributes(

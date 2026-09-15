@@ -195,11 +195,14 @@ dividers, selection, the scroll listener. Each opens the playground with a
 preset that shows that item off, where every attribute above is a control;
 Show then inflates the configured view with a status line of what its
 listeners report, and the info button shows the layout that reproduces it,
-which Copy puts on the clipboard. Parchment reads its attributes only when a
-view is inflated, so the playground drives them through theme attributes:
-the layouts under `sample/src/main/res/layout/playground_*.xml` reference
-`?attr/playground_*`, and `PlaygroundTheme` applies one overlay style per
-chosen option before inflating.
+which Copy puts on the clipboard. Every control carries a hint saying what
+its attribute does, and a control whose attribute would have no effect under
+the other settings — the paging interval without `parchment_isViewPager`,
+say — disables itself and says what it needs. Parchment reads its attributes
+only when a view is inflated, so the playground drives them through theme
+attributes: the layouts under `sample/src/main/res/layout/playground_*.xml`
+reference `?attr/playground_*`, and `PlaygroundTheme` applies one overlay
+style per chosen option before inflating.
 
 ### Scroll listener
 
