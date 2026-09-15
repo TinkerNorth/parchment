@@ -1,8 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Parchment</string>
-    <string name="button_activity_menu_horizontal_list_view">Horizontal ListView</string>
-    <string name="button_activity_menu_wrapping_height_grid_view">Wrapping Height GridView</string>
-    <string name="button_activity_grid_pattern_view">GridPatternView</string>
-    <string name="button_activity_menu_view_pager">View Pager</string>
+
+    <!-- Menu: one button per high-level item, each a preset of the playground. -->
+    <string name="menu_views">Views</string>
+    <string name="menu_features">Features</string>
+    <string name="menu_hint">Every button opens the playground with that item switched on. Change anything there, then show the result.</string>
+    <string name="preset_list_view">ListView</string>
+    <string name="preset_grid_view">GridView</string>
+    <string name="preset_grid_pattern_view">GridPatternView</string>
+    <string name="preset_view_pager">ViewPager</string>
+    <string name="preset_snapping">Snapping</string>
+    <string name="preset_circular_scroll">Circular scroll</string>
+    <string name="preset_dividers">Dividers</string>
+    <string name="preset_selection">Selection</string>
+    <string name="preset_scroll_listener">Scroll listener</string>
+
+    <!-- Playground: every attribute, on or off. -->
+    <string name="playground_title">Playground</string>
+    <string name="playground_view">View</string>
+    <string name="playground_list_view">ListView</string>
+    <string name="playground_grid_view">GridView</string>
+    <string name="playground_grid_pattern_view">GridPatternView</string>
+    <string name="playground_orientation">Orientation</string>
+    <string name="playground_horizontal">horizontal</string>
+    <string name="playground_vertical">vertical</string>
+    <string name="playground_cell_spacing">Cell spacing</string>
+    <string name="playground_cell_spacing_none">0dp</string>
+    <string name="playground_cell_spacing_small">8dp</string>
+    <string name="playground_cell_spacing_large">20dp</string>
+    <string name="playground_snapping">Snapping</string>
+    <string name="playground_snap_to_position">Snap to position after a scroll or fling</string>
+    <string name="playground_snap_center">center</string>
+    <string name="playground_snap_start">start</string>
+    <string name="playground_snap_end">end</string>
+    <string name="playground_snap_on_screen">onScreen</string>
+    <string name="playground_scrolling">Scrolling</string>
+    <string name="playground_circular_scroll">Circular scroll</string>
+    <string name="playground_view_pager">ViewPager: one page per gesture</string>
+    <string name="playground_interval_viewport">viewport</string>
+    <string name="playground_interval_one">1 cell</string>
+    <string name="playground_interval_two">2 cells</string>
+    <string name="playground_selection">Selection</string>
+    <string name="playground_select_on_snap">Select the cell a snap lands on</string>
+    <string name="playground_select_while_scrolling">Select while still scrolling</string>
+    <string name="playground_divider">Divider between cells</string>
+    <string name="playground_grid_view_section">GridView</string>
+    <string name="playground_views_per_cell">Views per row or column</string>
+    <string name="playground_views_per_cell_two">2</string>
+    <string name="playground_views_per_cell_three">3</string>
+    <string name="playground_views_per_cell_four">4</string>
+    <string name="playground_gravity">Gravity of shorter views</string>
+    <string name="playground_gravity_top">top</string>
+    <string name="playground_gravity_bottom">bottom</string>
+    <string name="playground_gravity_left">left</string>
+    <string name="playground_gravity_right">right</string>
+    <string name="playground_grid_pattern_view_section">GridPatternView</string>
+    <string name="playground_ratio">Cell aspect ratio</string>
+    <string name="playground_ratio_square">1.0</string>
+    <string name="playground_ratio_golden">1.618</string>
+    <string name="playground_ratio_inverse_golden">0.618</string>
+    <string name="playground_pattern">Pattern</string>
+    <string name="playground_pattern_hero">Hero</string>
+    <string name="playground_pattern_magazine">Magazine</string>
+    <string name="playground_show">Show</string>
+
+    <!-- Demo: the configured view, what its listeners report, and the XML that reproduces it. -->
+    <string name="demo_status">%1$s | moved %2$d, total %3$d | selected %4$s | tapped %5$s</string>
+    <string name="demo_nothing">none</string>
+    <string name="demo_xml">XML</string>
 </resources>

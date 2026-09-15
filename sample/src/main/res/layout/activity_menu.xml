@@ -1,41 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+<!-- MenuActivity fills menu_items with a menu_heading per Preset.Group and a menu_button per
+     Preset, so a new high-level item is one new Preset constant. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_vertical"
-    android:background="@color/activity_background">
+    android:background="@color/activity_background"
+    android:fitsSystemWindows="true"
+    android:fillViewport="true">
 
-    <Button
-        style="@style/ButtonStyle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/menu_items"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/button_activity_menu_horizontal_list_view"
-        android:id="@+id/menu_list_view"
-        android:layout_gravity="center_horizontal" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/page_padding">
 
-    <Button
-        style="@style/ButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_activity_menu_wrapping_height_grid_view"
-        android:id="@+id/menu_grid_view"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_activity_grid_pattern_view"
-        android:id="@+id/menu_grid_pattern_view"
-        android:layout_gravity="center_horizontal" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_activity_menu_view_pager"
-        android:id="@+id/menu_view_pager"
-        android:layout_gravity="center_horizontal" />
-
-</LinearLayout>
+        <TextView
+            style="@style/Hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/menu_hint" />
+    </LinearLayout>
+</ScrollView>

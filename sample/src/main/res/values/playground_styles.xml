@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The theme DemoActivity inflates a playground layout under. Playground holds every attribute
+     at the value Parchment uses when the attribute is left out; PlaygroundTheme then applies the
+     overlay for each chosen option on top. The overlays are named with underscores rather than
+     dots so that none of them inherits Playground and re-applies its defaults over an overlay
+     applied before it. -->
+<resources>
+    <style name="Playground">
+        <item name="playground_orientation">vertical</item>
+        <item name="playground_cellSpacing">0dp</item>
+        <item name="playground_isCircularScroll">false</item>
+        <item name="playground_snapToPosition">false</item>
+        <item name="playground_snapPosition">onScreen</item>
+        <item name="playground_selectOnSnap">false</item>
+        <item name="playground_selectWhileScrolling">false</item>
+        <item name="playground_isViewPager">false</item>
+        <item name="playground_viewPagerInterval">0</item>
+        <item name="playground_divider">@android:color/transparent</item>
+        <item name="playground_dividerSize">0dp</item>
+        <item name="playground_numberOfViewsPerCell">1</item>
+        <item name="playground_gravity">top</item>
+        <item name="playground_ratio">1</item>
+        <item name="playground_scrollbars">vertical</item>
+    </style>
+
+    <style name="Playground_Horizontal">
+        <item name="playground_orientation">horizontal</item>
+        <item name="playground_scrollbars">horizontal</item>
+    </style>
+    <style name="Playground_Vertical">
+        <item name="playground_orientation">vertical</item>
+        <item name="playground_scrollbars">vertical</item>
+    </style>
+
+    <style name="Playground_CellSpacing_None">
+        <item name="playground_cellSpacing">@dimen/playground_cell_spacing_none</item>
+    </style>
+    <style name="Playground_CellSpacing_Small">
+        <item name="playground_cellSpacing">@dimen/playground_cell_spacing_small</item>
+    </style>
+    <style name="Playground_CellSpacing_Large">
+        <item name="playground_cellSpacing">@dimen/playground_cell_spacing_large</item>
+    </style>
+
+    <style name="Playground_SnapToPosition">
+        <item name="playground_snapToPosition">true</item>
+    </style>
+    <style name="Playground_SnapPosition_Center">
+        <item name="playground_snapPosition">center</item>
+    </style>
+    <style name="Playground_SnapPosition_Start">
+        <item name="playground_snapPosition">start</item>
+    </style>
+    <style name="Playground_SnapPosition_End">
+        <item name="playground_snapPosition">end</item>
+    </style>
+    <style name="Playground_SnapPosition_OnScreen">
+        <item name="playground_snapPosition">onScreen</item>
+    </style>
+
+    <style name="Playground_CircularScroll">
+        <item name="playground_isCircularScroll">true</item>
+    </style>
+
+    <style name="Playground_ViewPager">
+        <item name="playground_isViewPager">true</item>
+    </style>
+    <style name="Playground_ViewPagerInterval_Viewport">
+        <item name="playground_viewPagerInterval">0</item>
+    </style>
+    <style name="Playground_ViewPagerInterval_One">
+        <item name="playground_viewPagerInterval">1</item>
+    </style>
+    <style name="Playground_ViewPagerInterval_Two">
+        <item name="playground_viewPagerInterval">2</item>
+    </style>
+
+    <style name="Playground_SelectOnSnap">
+        <item name="playground_selectOnSnap">true</item>
+    </style>
+    <style name="Playground_SelectWhileScrolling">
+        <item name="playground_selectWhileScrolling">true</item>
+    </style>
+
+    <style name="Playground_Divider">
+        <item name="playground_divider">@color/cell_divider</item>
+        <item name="playground_dividerSize">@dimen/activity_sample_parchment_divider_size</item>
+    </style>
+
+    <style name="Playground_ViewsPerCell_Two">
+        <item name="playground_numberOfViewsPerCell">2</item>
+    </style>
+    <style name="Playground_ViewsPerCell_Three">
+        <item name="playground_numberOfViewsPerCell">3</item>
+    </style>
+    <style name="Playground_ViewsPerCell_Four">
+        <item name="playground_numberOfViewsPerCell">4</item>
+    </style>
+
+    <style name="Playground_Gravity_Top">
+        <item name="playground_gravity">top</item>
+    </style>
+    <style name="Playground_Gravity_Bottom">
+        <item name="playground_gravity">bottom</item>
+    </style>
+    <style name="Playground_Gravity_Left">
+        <item name="playground_gravity">left</item>
+    </style>
+    <style name="Playground_Gravity_Right">
+        <item name="playground_gravity">right</item>
+    </style>
+
+    <style name="Playground_Ratio_Square">
+        <item name="playground_ratio">@dimen/playground_ratio_square</item>
+    </style>
+    <style name="Playground_Ratio_Golden">
+        <item name="playground_ratio">@dimen/playground_ratio_golden</item>
+    </style>
+    <style name="Playground_Ratio_InverseGolden">
+        <item name="playground_ratio">@dimen/playground_ratio_inverse_golden</item>
+    </style>
+</resources>

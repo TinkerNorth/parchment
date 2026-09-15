@@ -5,7 +5,7 @@
     <dimen name="activity_sample_parchment_padding_large">30dp</dimen>
     <dimen name="activity_sample_parchment_divider_size">2dp</dimen>
     <dimen name="list_item_gridview_picture_height">200dp</dimen>
-    <dimen name="list_item_view_pager_height">200dp</dimen>
+    <dimen name="list_item_vertical_picture_height">200dp</dimen>
     <dimen name="list_item_horizontal_height">300dp</dimen>
 
     <dimen name="button_padding">10dp</dimen>
@@ -13,5 +13,15 @@
 
     <dimen name="list_item_gridpatternview_padding_vertical">0dp</dimen>
 
-    <item name="list_item_grid_view_column_count" format="integer" type="integer">2</item>
+    <dimen name="playground_cell_spacing_none">0dp</dimen>
+    <dimen name="playground_cell_spacing_small">8dp</dimen>
+    <dimen name="playground_cell_spacing_large">20dp</dimen>
+    <item name="playground_ratio_square" format="float" type="dimen">1.0</item>
+    <item name="playground_ratio_golden" format="float" type="dimen">1.618</item>
+    <item name="playground_ratio_inverse_golden" format="float" type="dimen">0.618</item>
+
+    <dimen name="page_padding">16dp</dimen>
+    <dimen name="section_spacing">16dp</dimen>
+    <dimen name="status_padding">8dp</dimen>
+    <dimen name="xml_text_size">12sp</dimen>
 </resources>

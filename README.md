@@ -1,4 +1,4 @@
-# Parchment
+| Unit tests (Robolectric) | `./gradlew :library:test :sample:testDebugUnitTest` |# Parchment
 
 [![Android CI](https://github.com/TinkerNorth/parchment/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TinkerNorth/parchment/actions/workflows/android-ci.yml)
 [![Security](https://github.com/TinkerNorth/parchment/actions/workflows/security.yml/badge.svg)](https://github.com/TinkerNorth/parchment/actions/workflows/security.yml)
@@ -175,7 +175,7 @@ listView.setAdapter(adapter);
 ```
 
 `GridPatternView` takes its pattern in code. Each `GridPatternItemDefinition`
-is `(left, top, width, height)` in grid cells; every group you add repeats in
+is `(top, left, height, width)` in grid cells; every group you add repeats in
 sequence across the adapter:
 
 ```java
@@ -188,8 +188,18 @@ view.addGridPatternGroupDefinition(hero);
 view.setAdapter(adapter);
 ```
 
-The [sample app](sample/src/main/java/mobi/parchment) exercises all four
-views.
+The [sample app](sample/src/main/java/mobi/parchment) is a playground for
+all of this. Its first page lists the high-level items — the three views and
+the behaviours that cut across them: paging, snapping, circular scrolling,
+dividers, selection, the scroll listener. Each opens the playground with a
+preset that shows that item off, where every attribute above is a control;
+Show then inflates the configured view with a status line of what its
+listeners report, and the XML action prints the layout that reproduces it.
+Parchment reads its attributes only when a view is inflated, so the
+playground drives them through theme attributes: the layouts under
+`sample/src/main/res/layout/playground_*.xml` reference `?attr/playground_*`,
+and `PlaygroundTheme` applies one overlay style per chosen option before
+inflating.
 
 ### Scroll listener
 
@@ -329,7 +339,7 @@ library/
   src/test/                       Robolectric unit tests
   src/androidTest/                Instrumented smoke tests
   consumer-rules.pro              Keep rules applied to consumers' R8 builds
-sample/                           Demo app: ListView, GridView, GridPatternView, ViewPager
+sample/                           Demo app: a playground for every attribute of the three views
 docs/architecture.md              Layout engine, recycler, and gesture pipeline
 config/spotless/                  License header applied by Spotless
 gradle/libs.versions.toml         Version catalog

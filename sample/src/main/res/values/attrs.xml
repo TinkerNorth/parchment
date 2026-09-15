@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Parchment reads its attributes once, when a view is inflated, and has no setters for them.
+     So the playground layouts point every parchment_* attribute at one of these theme attributes,
+     and DemoActivity inflates them under a theme that PlaygroundTheme has built from the chosen
+     options, one overlay style per option. Each enum and flag mirrors the attribute it feeds. -->
+<resources>
+    <attr name="playground_orientation" format="enum">
+        <enum name="horizontal" value="0" />
+        <enum name="vertical" value="1" />
+    </attr>
+    <attr name="playground_cellSpacing" format="dimension" />
+    <attr name="playground_isCircularScroll" format="boolean" />
+    <attr name="playground_snapToPosition" format="boolean" />
+    <attr name="playground_snapPosition" format="enum">
+        <enum name="center" value="0" />
+        <enum name="start" value="1" />
+        <enum name="end" value="2" />
+        <enum name="onScreen" value="3" />
+    </attr>
+    <attr name="playground_selectOnSnap" format="boolean" />
+    <attr name="playground_selectWhileScrolling" format="boolean" />
+    <attr name="playground_isViewPager" format="boolean" />
+    <attr name="playground_viewPagerInterval" format="integer" />
+    <attr name="playground_divider" format="reference|color" />
+    <attr name="playground_dividerSize" format="dimension" />
+    <attr name="playground_numberOfViewsPerCell" format="integer" />
+    <attr name="playground_gravity">
+        <flag name="left" value="0x02" />
+        <flag name="right" value="0x04" />
+        <flag name="top" value="0x08" />
+        <flag name="bottom" value="0x10" />
+    </attr>
+    <attr name="playground_ratio" format="float" />
+    <!-- android:scrollbars, so a view shows only the bar for the axis it scrolls on. -->
+    <attr name="playground_scrollbars">
+        <flag name="horizontal" value="0x00000100" />
+        <flag name="vertical" value="0x00000200" />
+    </attr>
+</resources>

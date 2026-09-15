@@ -14,22 +14,6 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name="mobi.parchment.SimpleListViewActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="mobi.parchment.SimpleGridViewActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="mobi.parchment.SimpleGridPatternViewActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="mobi.parchment.SimpleViewPagerActivity"
-            android:exported="false" />
-
-        <activity
             android:name="mobi.parchment.MenuActivity"
             android:exported="true">
             <intent-filter>
@@ -37,6 +21,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="mobi.parchment.PlaygroundActivity"
+            android:exported="false" />
+
+        <activity
+            android:name="mobi.parchment.DemoActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

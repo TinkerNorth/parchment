@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="activity_simple_grid_pattern_view_cell_spacing">15dp</dimen>
-    <item name="activity_simple_grid_pattern_ratio" format="float" type="dimen">1.618</item>
-</resources>
