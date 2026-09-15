@@ -1,7 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- DemoActivity inflates the chosen playground layout into demo_container. The status line is
-     one line high whatever it says, so updating it on every scroll frame never relayouts the
-     view it reports on. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

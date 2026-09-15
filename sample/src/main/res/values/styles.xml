@@ -22,14 +22,12 @@
         <item name="android:layout_marginBottom">@dimen/button_margin</item>
     </style>
 
-    <!-- A section title on the menu and the playground. -->
     <style name="Heading" parent="@android:style/TextAppearance.Material.Subhead">
         <item name="android:textColor">@color/action_bar_text_color</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:layout_marginTop">@dimen/section_spacing</item>
     </style>
 
-    <!-- The name of one control inside a playground section. -->
     <style name="Label" parent="@android:style/TextAppearance.Material.Body1">
         <item name="android:textColor">@color/action_bar_text_color</item>
         <item name="android:layout_marginTop">@dimen/status_padding</item>
@@ -40,12 +38,10 @@
         <item name="android:gravity">center</item>
     </style>
 
-    <!-- A RadioGroup laid out as one row of choices. -->
     <style name="Choices">
         <item name="android:orientation">horizontal</item>
     </style>
 
-    <!-- The demo's one-line report of what the view's listeners say. -->
     <style name="Status" parent="@android:style/TextAppearance.Material.Body1">
         <item name="android:textColor">@color/action_bar_text_color</item>
         <item name="android:background">@color/action_bar_background</item>
@@ -54,7 +50,6 @@
         <item name="android:ellipsize">end</item>
     </style>
 
-    <!-- The XML that reproduces the demo, as the demo's XML action shows it. -->
     <style name="Xml">
         <item name="android:textColor">@color/action_bar_text_color</item>
         <item name="android:textSize">@dimen/xml_text_size</item>

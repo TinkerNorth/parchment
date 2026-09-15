@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Every parchment_* value is a theme attribute the demo resolves from the chosen options;
-     see values/attrs.xml. The demo's XML action prints the literal equivalent. -->
 <mobi.parchment.widget.adapterview.gridview.GridView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:parchment="http://schemas.android.com/apk/res-auto"

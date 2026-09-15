@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">Parchment</string>
 
-    <!-- Menu: one button per high-level item, each a preset of the playground. -->
     <string name="menu_views">Views</string>
     <string name="menu_features">Features</string>
     <string name="menu_hint">Every button opens the playground with that item switched on. Change anything there, then show the result.</string>
@@ -16,7 +15,6 @@
     <string name="preset_selection">Selection</string>
     <string name="preset_scroll_listener">Scroll listener</string>
 
-    <!-- Playground: every attribute, on or off. -->
     <string name="playground_title">Playground</string>
     <string name="playground_view">View</string>
     <string name="playground_list_view">ListView</string>
@@ -65,7 +63,6 @@
     <string name="playground_pattern_magazine">Magazine</string>
     <string name="playground_show">Show</string>
 
-    <!-- Demo: the configured view, what its listeners report, and the XML that reproduces it. -->
     <string name="demo_status">%1$s | moved %2$d, total %3$d | selected %4$s | tapped %5$s</string>
     <string name="demo_nothing">none</string>
     <string name="demo_xml">XML</string>

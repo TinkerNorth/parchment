@@ -8,7 +8,6 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 import mobi.parchment.widget.adapterview.gridview.GridView;
 import mobi.parchment.widget.adapterview.listview.ListView;
 
-/** Which Parchment view the demo inflates, and the cell it fills with in each orientation. */
 public enum ViewKind implements RadioOption {
     listView(
             R.id.playground_view_kind_list_view,
@@ -67,7 +66,6 @@ public enum ViewKind implements RadioOption {
         return mTitleResourceId;
     }
 
-    /** The fully qualified class name, as the XML that inflates this view names it. */
     public String getXmlTag() {
         return mViewClass.getName();
     }

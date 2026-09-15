@@ -3,7 +3,6 @@
 
 package mobi.parchment.playground;
 
-/** An option the playground offers as one RadioButton of a RadioGroup. */
 public interface RadioOption {
 
     int getRadioButtonId();

@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_gravity: where a view shorter than its row, or narrower than its column, sits. */
 public enum GravityOption implements RadioOption {
     top(R.id.playground_gravity_top, R.style.Playground_Gravity_Top),
     bottom(R.id.playground_gravity_bottom, R.style.Playground_Gravity_Bottom),

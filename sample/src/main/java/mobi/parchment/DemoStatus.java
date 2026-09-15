@@ -12,10 +12,6 @@ import mobi.parchment.widget.adapterview.AbstractAdapterView;
 import mobi.parchment.widget.adapterview.OnScrollListener;
 import mobi.parchment.widget.adapterview.ScrollState;
 
-/**
- * One line of what the demo's view reports through its listeners: the scroll state, the last
- * frame's displacement and the sum of all of them, the selected position, and the tapped one.
- */
 final class DemoStatus
         implements OnScrollListener,
                 AdapterView.OnItemSelectedListener,

@@ -11,16 +11,10 @@ import mobi.parchment.sample.R;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 
-/**
- * The pattern groups a GridPatternView tiles its items through. A pattern is code, not XML: each
- * item is (top, left, height, width) in grid cells and the groups repeat in sequence.
- */
 public enum PatternOption implements RadioOption {
-    /** The README's example: one 4x4 hero with two 2x2 tiles after it. */
     hero(
             R.id.playground_pattern_hero,
             groups(group(item(0, 0, 4, 4), item(4, 0, 2, 2), item(4, 2, 2, 2)))),
-    /** Three groups of mixed spans: a full-bleed opener, then two five-item spreads. */
     magazine(
             R.id.playground_pattern_magazine,
             groups(

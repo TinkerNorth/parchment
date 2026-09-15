@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_orientation. */
 public enum OrientationOption implements RadioOption {
     horizontal(R.id.playground_orientation_horizontal, R.style.Playground_Horizontal),
     vertical(R.id.playground_orientation_vertical, R.style.Playground_Vertical);

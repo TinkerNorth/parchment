@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Parchment reads its attributes once, when a view is inflated, and has no setters for them.
-     So the playground layouts point every parchment_* attribute at one of these theme attributes,
-     and DemoActivity inflates them under a theme that PlaygroundTheme has built from the chosen
-     options, one overlay style per option. Each enum and flag mirrors the attribute it feeds. -->
+<!-- Parchment reads its attributes once, at inflation, and has no setters for them, so the
+     playground layouts take every parchment_* value from one of these and PlaygroundTheme
+     supplies the values. -->
 <resources>
     <attr name="playground_orientation" format="enum">
         <enum name="horizontal" value="0" />
@@ -31,7 +30,6 @@
         <flag name="bottom" value="0x10" />
     </attr>
     <attr name="playground_ratio" format="float" />
-    <!-- android:scrollbars, so a view shows only the bar for the axis it scrolls on. -->
     <attr name="playground_scrollbars">
         <flag name="horizontal" value="0x00000100" />
         <flag name="vertical" value="0x00000200" />

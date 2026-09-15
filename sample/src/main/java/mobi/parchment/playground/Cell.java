@@ -6,11 +6,6 @@ package mobi.parchment.playground;
 import android.content.res.Resources;
 import mobi.parchment.sample.R;
 
-/**
- * The layout each adapter item is inflated from, and the size its photo is requested at. A view
- * measures its cells UNSPECIFIED along the axis it scrolls on, so every cell layout fixes its size
- * along that axis and lets the view size it across.
- */
 public enum Cell {
     horizontal(
             R.layout.list_item_horizontal_picture,

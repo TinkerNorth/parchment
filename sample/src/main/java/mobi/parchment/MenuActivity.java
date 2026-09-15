@@ -14,7 +14,6 @@ import android.widget.TextView;
 import mobi.parchment.playground.Preset;
 import mobi.parchment.sample.R;
 
-/** The first page: one button per high-level item, each opening the playground on a preset. */
 public final class MenuActivity extends Activity {
 
     @Override
@@ -24,12 +23,15 @@ public final class MenuActivity extends Activity {
         final ViewGroup items = findViewById(R.id.menu_items);
         final LayoutInflater inflater = getLayoutInflater();
         for (final Preset.Group group : Preset.Group.values()) {
-            addHeading(inflater, items, group);
-            for (final Preset preset : Preset.values()) {
-                if (preset.getGroup() == group) {
-                    addButton(inflater, items, preset);
-                }
-            }
+            addGroup(inflater, items, group);
+        }
+    }
+
+    private static void addGroup(
+            final LayoutInflater inflater, final ViewGroup items, final Preset.Group group) {
+        addHeading(inflater, items, group);
+        for (final Preset preset : Preset.in(group)) {
+            addButton(inflater, items, preset);
         }
     }
 

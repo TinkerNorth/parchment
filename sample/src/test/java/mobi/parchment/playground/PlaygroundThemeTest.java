@@ -33,14 +33,7 @@ import org.robolectric.annotation.GraphicsMode;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
-/**
- * The playground rests on one claim: a parchment_* attribute that a layout points at a theme
- * attribute takes the value of whichever overlay PlaygroundTheme applied last. Parchment reads its
- * attributes through its own parsers, so the first half asks those parsers directly, one attribute
- * format each; the second half inflates the playground layouts and looks at the views.
- */
-// SampleApplication installs a Picasso singleton, which can be installed once per JVM and is not
-// needed here.
+// SampleApplication installs a Picasso singleton, which a JVM accepts once.
 @RunWith(RobolectricTestRunner.class)
 @Config(application = Application.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -54,6 +47,11 @@ public class PlaygroundThemeTest {
     private static final int FILLS_THE_BREADTH = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int NO_DIVIDER = 0;
     private static final int VIEWPORT_INTERVAL = 0;
+    private static final int ONE_CELL_PER_GESTURE = 1;
+    private static final int TWO_CELLS_PER_GESTURE = 2;
+    private static final int TWO_PER_ROW = 2;
+    private static final int THREE_PER_ROW = 3;
+    private static final int FOUR_PER_ROW = 4;
     private static final int FIRST = 0;
     private static final int SECOND = 1;
     private static final int THIRD = 2;
@@ -122,11 +120,11 @@ public class PlaygroundThemeTest {
         assertThat(
                         list(options().viewPagerInterval(ViewPagerIntervalOption.one))
                                 .getViewPagerInterval())
-                .isEqualTo(1);
+                .isEqualTo(ONE_CELL_PER_GESTURE);
         assertThat(
                         list(options().viewPagerInterval(ViewPagerIntervalOption.two))
                                 .getViewPagerInterval())
-                .isEqualTo(2);
+                .isEqualTo(TWO_CELLS_PER_GESTURE);
     }
 
     @Test
@@ -150,11 +148,11 @@ public class PlaygroundThemeTest {
     @Test
     public void theViewsPerCellOverlay_reachesTheIntegerAttribute() {
         assertThat(grid(options().viewsPerCell(ViewsPerCellOption.two)).getNumberOfViewsPerCell())
-                .isEqualTo(2);
+                .isEqualTo(TWO_PER_ROW);
         assertThat(grid(options().viewsPerCell(ViewsPerCellOption.three)).getNumberOfViewsPerCell())
-                .isEqualTo(3);
+                .isEqualTo(THREE_PER_ROW);
         assertThat(grid(options().viewsPerCell(ViewsPerCellOption.four)).getNumberOfViewsPerCell())
-                .isEqualTo(4);
+                .isEqualTo(FOUR_PER_ROW);
     }
 
     @Test
@@ -285,7 +283,6 @@ public class PlaygroundThemeTest {
         }
     }
 
-    /** The layout's parser, advanced to its root tag so that it serves as that tag's attributes. */
     private static XmlResourceParser rootTagOf(final int layoutResourceId) {
         final XmlResourceParser parser = resources().getLayout(layoutResourceId);
         try {
@@ -369,7 +366,6 @@ public class PlaygroundThemeTest {
         return new CellAdapter(FILLS_THE_BREADTH, CELL_SIZE, SHORT_CELL_SIZE);
     }
 
-    /** Coloured cells tagged with their position; even positions get one height, odd the other. */
     private static final class CellAdapter extends BaseAdapter {
 
         private final int mCellWidth;

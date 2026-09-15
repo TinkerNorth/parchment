@@ -3,12 +3,11 @@
 
 package mobi.parchment.playground;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import mobi.parchment.sample.R;
 
-/**
- * The high-level items on the menu. Each is the playground pre-filled to show one thing off: a view
- * at its most typical, or a behaviour switched on in the view that shows it best.
- */
 public enum Preset {
     listView(
             Group.views,
@@ -67,7 +66,6 @@ public enum Preset {
     scrollListener(
             Group.features, R.string.preset_scroll_listener, new PlaygroundOptions.Builder());
 
-    /** The menu's sections, in order. */
     public enum Group {
         views(R.string.menu_views),
         features(R.string.menu_features);
@@ -103,5 +101,16 @@ public enum Preset {
 
     public PlaygroundOptions getOptions() {
         return mOptions;
+    }
+
+    public static List<Preset> in(final Group group) {
+        final List<Preset> presets = new ArrayList<>();
+        for (final Preset preset : values()) {
+            final boolean isInGroup = preset.mGroup == group;
+            if (isInGroup) {
+                presets.add(preset);
+            }
+        }
+        return Collections.unmodifiableList(presets);
     }
 }

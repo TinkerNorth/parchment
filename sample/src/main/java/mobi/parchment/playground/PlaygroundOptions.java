@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import android.os.Bundle;
 
-/** One complete configuration of a Parchment view: the view, and every attribute it reads. */
 public final class PlaygroundOptions {
 
     private static final String VIEW_KIND = "viewKind";
@@ -140,26 +139,30 @@ public final class PlaygroundOptions {
 
     public static PlaygroundOptions fromBundle(final Bundle bundle) {
         return new Builder()
-                .viewKind(ViewKind.valueOf(bundle.getString(VIEW_KIND)))
-                .orientation(OrientationOption.valueOf(bundle.getString(ORIENTATION)))
-                .cellSpacing(CellSpacingOption.valueOf(bundle.getString(CELL_SPACING)))
+                .viewKind(read(bundle, VIEW_KIND, ViewKind.class))
+                .orientation(read(bundle, ORIENTATION, OrientationOption.class))
+                .cellSpacing(read(bundle, CELL_SPACING, CellSpacingOption.class))
                 .snapToPosition(bundle.getBoolean(SNAP_TO_POSITION))
-                .snapPosition(SnapPositionOption.valueOf(bundle.getString(SNAP_POSITION)))
+                .snapPosition(read(bundle, SNAP_POSITION, SnapPositionOption.class))
                 .isCircularScroll(bundle.getBoolean(IS_CIRCULAR_SCROLL))
                 .isViewPager(bundle.getBoolean(IS_VIEW_PAGER))
-                .viewPagerInterval(
-                        ViewPagerIntervalOption.valueOf(bundle.getString(VIEW_PAGER_INTERVAL)))
+                .viewPagerInterval(read(bundle, VIEW_PAGER_INTERVAL, ViewPagerIntervalOption.class))
                 .selectOnSnap(bundle.getBoolean(SELECT_ON_SNAP))
                 .selectWhileScrolling(bundle.getBoolean(SELECT_WHILE_SCROLLING))
                 .hasDivider(bundle.getBoolean(HAS_DIVIDER))
-                .viewsPerCell(ViewsPerCellOption.valueOf(bundle.getString(VIEWS_PER_CELL)))
-                .gravity(GravityOption.valueOf(bundle.getString(GRAVITY)))
-                .ratio(RatioOption.valueOf(bundle.getString(RATIO)))
-                .pattern(PatternOption.valueOf(bundle.getString(PATTERN)))
+                .viewsPerCell(read(bundle, VIEWS_PER_CELL, ViewsPerCellOption.class))
+                .gravity(read(bundle, GRAVITY, GravityOption.class))
+                .ratio(read(bundle, RATIO, RatioOption.class))
+                .pattern(read(bundle, PATTERN, PatternOption.class))
                 .build();
     }
 
-    /** Starts from a horizontal ListView with spaced cells and every behaviour switched off. */
+    private static <OPTION extends Enum<OPTION>> OPTION read(
+            final Bundle bundle, final String key, final Class<OPTION> type) {
+        final String name = bundle.getString(key);
+        return Enum.valueOf(type, name);
+    }
+
     public static final class Builder {
 
         private ViewKind mViewKind = ViewKind.listView;

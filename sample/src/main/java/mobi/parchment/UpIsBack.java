@@ -6,11 +6,8 @@ package mobi.parchment;
 import android.app.Activity;
 import android.view.MenuItem;
 
-/**
- * The action bar's Up arrow finishes the screen, so that it lands on the screen beneath as the user
- * left it. Android's own Up navigation would instead start the parent afresh from a bare intent,
- * and a fresh playground carries neither its preset nor the user's edits.
- */
+// Android's own Up navigation restarts a standard-launch parent from a bare intent, and a fresh
+// playground carries neither its preset nor the user's edits.
 final class UpIsBack {
 
     private UpIsBack() {}

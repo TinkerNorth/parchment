@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_snapPosition. */
 public enum SnapPositionOption implements RadioOption {
     center(R.id.playground_snap_position_center, R.style.Playground_SnapPosition_Center),
     start(R.id.playground_snap_position_start, R.style.Playground_SnapPosition_Start),

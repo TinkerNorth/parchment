@@ -20,11 +20,6 @@ import mobi.parchment.playground.ViewPagerIntervalOption;
 import mobi.parchment.playground.ViewsPerCellOption;
 import mobi.parchment.sample.R;
 
-/**
- * The playground's controls. Each RadioGroup is bound to an option enum through the RadioButton id
- * each constant carries, so showing options checks buttons and reading buttons yields options with
- * no switch in between.
- */
 final class PlaygroundForm {
 
     private final RadioGroup mViewKind;
@@ -104,7 +99,6 @@ final class PlaygroundForm {
                 .build();
     }
 
-    /** Shows the section of attributes only the checked view reads. */
     void showSections() {
         final ViewKind viewKind = readViewKind();
         final boolean isGridView = viewKind == ViewKind.gridView;

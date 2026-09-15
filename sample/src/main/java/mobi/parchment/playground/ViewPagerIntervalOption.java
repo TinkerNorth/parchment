@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_viewPagerInterval: a whole viewport per gesture, or a fixed number of cells. */
 public enum ViewPagerIntervalOption implements RadioOption {
     viewport(
             R.id.playground_view_pager_interval_viewport,

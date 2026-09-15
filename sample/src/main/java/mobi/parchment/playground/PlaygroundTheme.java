@@ -8,19 +8,12 @@ import android.content.res.Resources;
 import android.view.ContextThemeWrapper;
 import mobi.parchment.sample.R;
 
-/**
- * Turns options into the theme a playground layout is inflated under. Parchment takes its
- * attributes from XML only, so the layouts reference playground_* theme attributes and this theme
- * is what gives them their values: the Playground defaults, then one overlay style per chosen
- * option applied over them.
- */
 public final class PlaygroundTheme {
 
     private static final boolean OVERRIDE_EARLIER_VALUES = true;
 
     private PlaygroundTheme() {}
 
-    /** A context whose theme resolves every playground_* attribute to the given options. */
     public static Context contextFor(final Context context, final PlaygroundOptions options) {
         final ContextThemeWrapper themedContext =
                 new ContextThemeWrapper(context, R.style.Playground);

@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_ratio: a grid cell's size along the scroll axis over its size across it. */
 public enum RatioOption implements RadioOption {
     square(
             R.id.playground_ratio_square,

@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The theme DemoActivity inflates a playground layout under. Playground holds every attribute
-     at the value Parchment uses when the attribute is left out; PlaygroundTheme then applies the
-     overlay for each chosen option on top. The overlays are named with underscores rather than
-     dots so that none of them inherits Playground and re-applies its defaults over an overlay
-     applied before it. -->
+<!-- Underscores, not dots: a dotted overlay would inherit Playground and re-apply its defaults
+     over every overlay applied before it. -->
 <resources>
     <style name="Playground">
         <item name="playground_orientation">vertical</item>

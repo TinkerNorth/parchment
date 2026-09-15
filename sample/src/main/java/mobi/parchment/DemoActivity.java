@@ -25,10 +25,6 @@ import mobi.parchment.sample.R;
 import mobi.parchment.widget.adapterview.AbstractAdapterView;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 
-/**
- * The third page: the chosen view, inflated under a theme built from the options, with a line of
- * what its listeners report and, behind the XML action, the layout that reproduces it.
- */
 public final class DemoActivity extends Activity {
 
     private static final String EXTRA_OPTIONS = "options";
@@ -47,35 +43,17 @@ public final class DemoActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_demo);
-        final PlaygroundOptions options =
-                PlaygroundOptions.fromBundle(getIntent().getBundleExtra(EXTRA_OPTIONS));
+        final PlaygroundOptions options = optionsFromIntent();
         final ViewKind viewKind = options.getViewKind();
         setTitle(viewKind.getTitleResourceId());
         getActionBar().setDisplayHomeAsUpEnabled(true);
 
-        final ViewGroup container = findViewById(R.id.demo_container);
-        final Context themedContext = PlaygroundTheme.contextFor(this, options);
-        final LayoutInflater inflater = LayoutInflater.from(themedContext);
-        inflater.inflate(viewKind.getLayoutResourceId(), container, ATTACH_TO_CONTAINER);
-        if (viewKind == ViewKind.gridPatternView) {
-            addPattern(container, options.getPattern());
-        }
-
-        final TextView statusView = findViewById(R.id.demo_status);
-        final DemoStatus status = new DemoStatus(statusView);
-        final AbstractAdapterView<BaseAdapter, ?> view =
-                container.findViewById(R.id.parchment_view);
-        view.setOnScrollListener(status);
-        view.setOnItemSelectedListener(status);
-        view.setOnItemClickListener(status);
+        final AbstractAdapterView<BaseAdapter, ?> view = inflate(options);
+        report(view);
         view.setAdapter(createAdapter(viewKind.getCell(options.getOrientation())));
 
-        final TextView xmlView = findViewById(R.id.demo_xml);
-        xmlView.setText(PlaygroundXml.of(options, getResources()));
         mXmlPanel = findViewById(R.id.demo_xml_panel);
-        final boolean isXmlShown =
-                savedInstanceState != null && savedInstanceState.getBoolean(STATE_IS_XML_SHOWN);
-        showXml(isXmlShown);
+        showXml(options, wasXmlShown(savedInstanceState));
     }
 
     @Override
@@ -96,16 +74,41 @@ public final class DemoActivity extends Activity {
             return true;
         }
         if (item.getItemId() == R.id.demo_show_xml) {
-            showXml(!isXmlShown());
+            setXmlShown(!isXmlShown());
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private PlaygroundOptions optionsFromIntent() {
+        final Bundle bundle = getIntent().getBundleExtra(EXTRA_OPTIONS);
+        return PlaygroundOptions.fromBundle(bundle);
+    }
+
+    private AbstractAdapterView<BaseAdapter, ?> inflate(final PlaygroundOptions options) {
+        final ViewGroup container = findViewById(R.id.demo_container);
+        final Context themedContext = PlaygroundTheme.contextFor(this, options);
+        final LayoutInflater inflater = LayoutInflater.from(themedContext);
+        final ViewKind viewKind = options.getViewKind();
+        inflater.inflate(viewKind.getLayoutResourceId(), container, ATTACH_TO_CONTAINER);
+        if (viewKind == ViewKind.gridPatternView) {
+            addPattern(container, options.getPattern());
+        }
+        return container.findViewById(R.id.parchment_view);
     }
 
     private static void addPattern(final ViewGroup container, final PatternOption pattern) {
         final GridPatternView<BaseAdapter> gridPatternView =
                 container.findViewById(R.id.parchment_view);
         pattern.addTo(gridPatternView);
+    }
+
+    private void report(final AbstractAdapterView<BaseAdapter, ?> view) {
+        final TextView statusView = findViewById(R.id.demo_status);
+        final DemoStatus status = new DemoStatus(statusView);
+        view.setOnScrollListener(status);
+        view.setOnItemSelectedListener(status);
+        view.setOnItemClickListener(status);
     }
 
     private ProductsAdapter createAdapter(final Cell cell) {
@@ -115,11 +118,24 @@ public final class DemoActivity extends Activity {
         return new ProductsAdapter(cell.getLayoutResourceId(), widthPixels, heightPixels);
     }
 
+    private void showXml(final PlaygroundOptions options, final boolean isShown) {
+        final TextView xmlView = findViewById(R.id.demo_xml);
+        xmlView.setText(PlaygroundXml.of(options, getResources()));
+        setXmlShown(isShown);
+    }
+
+    private static boolean wasXmlShown(final Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            return false;
+        }
+        return savedInstanceState.getBoolean(STATE_IS_XML_SHOWN);
+    }
+
     private boolean isXmlShown() {
         return mXmlPanel.getVisibility() == View.VISIBLE;
     }
 
-    private void showXml(final boolean isShown) {
+    private void setXmlShown(final boolean isShown) {
         if (isShown) {
             mXmlPanel.setVisibility(View.VISIBLE);
         } else {

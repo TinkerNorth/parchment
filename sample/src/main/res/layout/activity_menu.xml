@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- MenuActivity fills menu_items with a menu_heading per Preset.Group and a menu_button per
-     Preset, so a new high-level item is one new Preset constant. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"

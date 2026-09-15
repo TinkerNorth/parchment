@@ -5,7 +5,6 @@ package mobi.parchment.playground;
 
 import mobi.parchment.sample.R;
 
-/** parchment_cellSpacing. */
 public enum CellSpacingOption implements RadioOption {
     none(
             R.id.playground_cell_spacing_none,

@@ -13,10 +13,6 @@ import mobi.parchment.playground.PlaygroundOptions;
 import mobi.parchment.playground.Preset;
 import mobi.parchment.sample.R;
 
-/**
- * The second page: every attribute as a control, pre-filled from the preset that opened it. The
- * controls keep their own state across rotation, so the preset is only read the first time.
- */
 public final class PlaygroundActivity extends Activity {
 
     private static final String EXTRA_PRESET = "preset";
@@ -36,8 +32,7 @@ public final class PlaygroundActivity extends Activity {
         final PlaygroundForm form = new PlaygroundForm(this);
         final boolean isFirstCreation = savedInstanceState == null;
         if (isFirstCreation) {
-            final Preset preset = Preset.valueOf(getIntent().getStringExtra(EXTRA_PRESET));
-            form.show(preset.getOptions());
+            form.show(presetFromIntent().getOptions());
         }
         findViewById(R.id.playground_show).setOnClickListener(new ShowDemo(form));
     }
@@ -48,6 +43,11 @@ public final class PlaygroundActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private Preset presetFromIntent() {
+        final String name = getIntent().getStringExtra(EXTRA_PRESET);
+        return Preset.valueOf(name);
     }
 
     private static final class ShowDemo implements View.OnClickListener {
