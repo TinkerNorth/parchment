@@ -68,6 +68,18 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.withType<Test>().configureEach {
     maxHeapSize = "1g"
     jvmArgs("-XX:+ExitOnOutOfMemoryError")
+    // Robolectric 4.17 reaches into these JDK internals and the module system refuses it otherwise.
+    jvmArgs(
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.net=ALL-UNNAMED",
+        "--add-opens=java.base/java.security=ALL-UNNAMED",
+        "--add-opens=java.base/java.text=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+    )
     // Robolectric URL-encodes the android-all jar path, so a home directory with a space breaks
     // its native runtime; the gitignored .robolectric/ stands in for ~ on those machines.
     val home = System.getProperty("user.home")
