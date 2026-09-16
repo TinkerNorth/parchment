@@ -22,6 +22,8 @@ public class PlaygroundXmlTest {
     private static final String SELECT_ON_SNAP = "parchment:parchment_selectOnSnap=\"true\"";
     private static final String SELECT_WHILE_SCROLLING =
             "parchment:parchment_selectWhileScrolling=\"true\"";
+    private static final String SCROLL_WITHIN_CONTENT =
+            "parchment:parchment_scrollWithinContent=\"true\"";
     private static final String VIEW_PAGER_INTERVAL = "parchment:parchment_viewPagerInterval=";
     private static final String SNAP_POSITION = "parchment:parchment_snapPosition=";
     private static final String GRAVITY = "parchment:parchment_gravity=";
@@ -92,6 +94,42 @@ public class PlaygroundXmlTest {
                 xml(options().selectWhileScrolling(false).snapPosition(SnapPositionOption.start));
 
         assertThat(xml).doesNotContain(SELECT_WHILE_SCROLLING);
+    }
+
+    @Test
+    public void scrollWithinContent_withAnotherPosition_isPrinted() {
+        final String xml =
+                xml(options().scrollWithinContent(true).snapPosition(SnapPositionOption.start));
+
+        assertThat(xml).contains(SCROLL_WITHIN_CONTENT);
+    }
+
+    @Test
+    public void scrollWithinContent_withOnScreen_isNotPrinted() {
+        final String xml =
+                xml(options().scrollWithinContent(true).snapPosition(SnapPositionOption.onScreen));
+
+        assertThat(xml).doesNotContain(SCROLL_WITHIN_CONTENT);
+    }
+
+    @Test
+    public void scrollWithinContent_underCircularScroll_isNotPrinted() {
+        final String xml =
+                xml(
+                        options()
+                                .scrollWithinContent(true)
+                                .snapPosition(SnapPositionOption.start)
+                                .isCircularScroll(true));
+
+        assertThat(xml).doesNotContain(SCROLL_WITHIN_CONTENT);
+    }
+
+    @Test
+    public void scrollWithinContent_offAndRelevant_isNotPrinted() {
+        final String xml =
+                xml(options().scrollWithinContent(false).snapPosition(SnapPositionOption.start));
+
+        assertThat(xml).doesNotContain(SCROLL_WITHIN_CONTENT);
     }
 
     @Test

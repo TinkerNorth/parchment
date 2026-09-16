@@ -30,6 +30,7 @@ public final class PlaygroundTheme {
         applyIf(theme, options.isViewPager(), R.style.Playground_ViewPager);
         applyIf(theme, options.selectOnSnap(), R.style.Playground_SelectOnSnap);
         applyIf(theme, options.selectWhileScrolling(), R.style.Playground_SelectWhileScrolling);
+        applyIf(theme, options.scrollWithinContent(), R.style.Playground_ScrollWithinContent);
         applyIf(theme, options.hasDivider(), R.style.Playground_Divider);
         return themedContext;
     }

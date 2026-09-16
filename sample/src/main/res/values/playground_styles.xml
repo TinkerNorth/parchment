@@ -10,6 +10,7 @@
         <item name="playground_snapPosition">onScreen</item>
         <item name="playground_selectOnSnap">false</item>
         <item name="playground_selectWhileScrolling">false</item>
+        <item name="playground_scrollWithinContent">false</item>
         <item name="playground_isViewPager">false</item>
         <item name="playground_viewPagerInterval">0</item>
         <item name="playground_divider">@android:color/transparent</item>
@@ -53,6 +54,9 @@
     </style>
     <style name="Playground_SnapPosition_OnScreen">
         <item name="playground_snapPosition">onScreen</item>
+    </style>
+    <style name="Playground_ScrollWithinContent">
+        <item name="playground_scrollWithinContent">true</item>
     </style>
 
     <style name="Playground_CircularScroll">

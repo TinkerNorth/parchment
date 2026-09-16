@@ -26,7 +26,19 @@ public interface SnapPositionInterface<Cell> {
     public int getCellDistanceFromSnapPosition(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell);
 
+    public int getCellSettleDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell);
+
     public int getSnapToPixelDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell);
+
+    public int getUnboundedSnapToPixelDistance(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell);
 
     public int getRedrawOffset(

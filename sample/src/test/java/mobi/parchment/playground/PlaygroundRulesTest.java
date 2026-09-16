@@ -91,6 +91,30 @@ public class PlaygroundRulesTest {
     }
 
     @Test
+    public void scrollWithinContent_withAPositionOtherThanOnScreenAndEnds_hasAnEffect() {
+        final PlaygroundOptions options =
+                options().snapPosition(SnapPositionOption.start).isCircularScroll(false).build();
+
+        assertThat(PlaygroundRules.scrollWithinContentHasAnEffect(options)).isTrue();
+    }
+
+    @Test
+    public void scrollWithinContent_withOnScreen_hasNoEffect() {
+        final PlaygroundOptions options =
+                options().snapPosition(SnapPositionOption.onScreen).isCircularScroll(false).build();
+
+        assertThat(PlaygroundRules.scrollWithinContentHasAnEffect(options)).isFalse();
+    }
+
+    @Test
+    public void scrollWithinContent_underCircularScroll_hasNoEffect() {
+        final PlaygroundOptions options =
+                options().snapPosition(SnapPositionOption.start).isCircularScroll(true).build();
+
+        assertThat(PlaygroundRules.scrollWithinContentHasAnEffect(options)).isFalse();
+    }
+
+    @Test
     public void snapPositions_underCircularScroll_areForcedOnScreen() {
         final PlaygroundOptions options = options().isCircularScroll(true).build();
 

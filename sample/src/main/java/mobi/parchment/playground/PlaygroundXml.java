@@ -64,14 +64,19 @@ public final class PlaygroundXml {
         final boolean selectOnSnapHasAnEffect = PlaygroundRules.selectOnSnapHasAnEffect(options);
         final boolean selectWhileScrollingHasAnEffect =
                 PlaygroundRules.selectWhileScrollingHasAnEffect(options);
+        final boolean scrollWithinContentHasAnEffect =
+                PlaygroundRules.scrollWithinContentHasAnEffect(options);
         final boolean printsSelectOnSnap = options.selectOnSnap() && selectOnSnapHasAnEffect;
         final boolean printsSelectWhileScrolling =
                 options.selectWhileScrolling() && selectWhileScrollingHasAnEffect;
+        final boolean printsScrollWithinContent =
+                options.scrollWithinContent() && scrollWithinContentHasAnEffect;
         if (intervalHasAnEffect) {
             parchment(xml, "viewPagerInterval", options.getViewPagerInterval().getXmlValue());
         }
         flag(xml, "selectOnSnap", printsSelectOnSnap);
         flag(xml, "selectWhileScrolling", printsSelectWhileScrolling);
+        flag(xml, "scrollWithinContent", printsScrollWithinContent);
     }
 
     private static void appendDividerAttributes(

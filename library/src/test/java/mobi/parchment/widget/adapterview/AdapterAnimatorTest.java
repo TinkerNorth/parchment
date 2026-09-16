@@ -67,6 +67,7 @@ public class AdapterAnimatorTest {
                         isViewPager,
                         viewPagerInterval,
                         snapPosition,
+                        false,
                         0,
                         false,
                         false,

@@ -12,6 +12,7 @@ public final class PlaygroundOptions {
     private static final String CELL_SPACING = "cellSpacing";
     private static final String SNAP_TO_POSITION = "snapToPosition";
     private static final String SNAP_POSITION = "snapPosition";
+    private static final String SCROLL_WITHIN_CONTENT = "scrollWithinContent";
     private static final String IS_CIRCULAR_SCROLL = "isCircularScroll";
     private static final String IS_VIEW_PAGER = "isViewPager";
     private static final String VIEW_PAGER_INTERVAL = "viewPagerInterval";
@@ -28,6 +29,7 @@ public final class PlaygroundOptions {
     private final CellSpacingOption mCellSpacing;
     private final boolean mSnapToPosition;
     private final SnapPositionOption mSnapPosition;
+    private final boolean mScrollWithinContent;
     private final boolean mIsCircularScroll;
     private final boolean mIsViewPager;
     private final ViewPagerIntervalOption mViewPagerInterval;
@@ -45,6 +47,7 @@ public final class PlaygroundOptions {
         mCellSpacing = builder.mCellSpacing;
         mSnapToPosition = builder.mSnapToPosition;
         mSnapPosition = builder.mSnapPosition;
+        mScrollWithinContent = builder.mScrollWithinContent;
         mIsCircularScroll = builder.mIsCircularScroll;
         mIsViewPager = builder.mIsViewPager;
         mViewPagerInterval = builder.mViewPagerInterval;
@@ -75,6 +78,10 @@ public final class PlaygroundOptions {
 
     public SnapPositionOption getSnapPosition() {
         return mSnapPosition;
+    }
+
+    public boolean scrollWithinContent() {
+        return mScrollWithinContent;
     }
 
     public boolean isCircularScroll() {
@@ -124,6 +131,7 @@ public final class PlaygroundOptions {
         bundle.putString(CELL_SPACING, mCellSpacing.name());
         bundle.putBoolean(SNAP_TO_POSITION, mSnapToPosition);
         bundle.putString(SNAP_POSITION, mSnapPosition.name());
+        bundle.putBoolean(SCROLL_WITHIN_CONTENT, mScrollWithinContent);
         bundle.putBoolean(IS_CIRCULAR_SCROLL, mIsCircularScroll);
         bundle.putBoolean(IS_VIEW_PAGER, mIsViewPager);
         bundle.putString(VIEW_PAGER_INTERVAL, mViewPagerInterval.name());
@@ -144,6 +152,7 @@ public final class PlaygroundOptions {
                 .cellSpacing(read(bundle, CELL_SPACING, CellSpacingOption.class))
                 .snapToPosition(bundle.getBoolean(SNAP_TO_POSITION))
                 .snapPosition(read(bundle, SNAP_POSITION, SnapPositionOption.class))
+                .scrollWithinContent(bundle.getBoolean(SCROLL_WITHIN_CONTENT))
                 .isCircularScroll(bundle.getBoolean(IS_CIRCULAR_SCROLL))
                 .isViewPager(bundle.getBoolean(IS_VIEW_PAGER))
                 .viewPagerInterval(read(bundle, VIEW_PAGER_INTERVAL, ViewPagerIntervalOption.class))
@@ -170,6 +179,7 @@ public final class PlaygroundOptions {
         private CellSpacingOption mCellSpacing = CellSpacingOption.large;
         private boolean mSnapToPosition;
         private SnapPositionOption mSnapPosition = SnapPositionOption.onScreen;
+        private boolean mScrollWithinContent;
         private boolean mIsCircularScroll;
         private boolean mIsViewPager;
         private ViewPagerIntervalOption mViewPagerInterval = ViewPagerIntervalOption.viewport;
@@ -203,6 +213,11 @@ public final class PlaygroundOptions {
 
         public Builder snapPosition(final SnapPositionOption snapPosition) {
             mSnapPosition = snapPosition;
+            return this;
+        }
+
+        public Builder scrollWithinContent(final boolean scrollWithinContent) {
+            mScrollWithinContent = scrollWithinContent;
             return this;
         }
 

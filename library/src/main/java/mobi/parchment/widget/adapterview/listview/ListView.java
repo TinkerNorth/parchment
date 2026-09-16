@@ -46,6 +46,7 @@ public class ListView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
         final boolean snapToPosition = attributes.isSnapToPosition();
         final int viewPagerInterval = attributes.getViewPagerInterval();
         final SnapPosition snapPosition = attributes.getSnapPosition();
+        final boolean scrollWithinContent = attributes.scrollWithinContent();
         final boolean selectOnSnap = attributes.selectOnSnap();
         final boolean selectWhileScrolling = attributes.selectWhileScrolling();
         final Drawable divider = attributes.getDivider();
@@ -57,6 +58,7 @@ public class ListView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
                         isViewPager,
                         viewPagerInterval,
                         snapPosition,
+                        scrollWithinContent,
                         cellSpacing,
                         selectOnSnap,
                         selectWhileScrolling,

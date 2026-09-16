@@ -44,6 +44,7 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
         final boolean snapToPosition = gridAttributes.isSnapToPosition();
         final int viewPagerInterval = gridAttributes.getViewPagerInterval();
         final SnapPosition snapPosition = gridAttributes.getSnapPosition();
+        final boolean scrollWithinContent = gridAttributes.scrollWithinContent();
         final boolean selectOnSnap = gridAttributes.selectOnSnap();
         final boolean selectWhileScrolling = gridAttributes.selectWhileScrolling();
         final Drawable divider = gridAttributes.getDivider();
@@ -60,6 +61,7 @@ public class GridView<ADAPTER extends Adapter> extends AbstractAdapterView<ADAPT
                         isViewPager,
                         viewPagerInterval,
                         snapPosition,
+                        scrollWithinContent,
                         cellSpacing,
                         selectOnSnap,
                         selectWhileScrolling,

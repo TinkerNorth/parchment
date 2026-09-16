@@ -18,6 +18,7 @@
     </attr>
     <attr name="playground_selectOnSnap" format="boolean" />
     <attr name="playground_selectWhileScrolling" format="boolean" />
+    <attr name="playground_scrollWithinContent" format="boolean" />
     <attr name="playground_isViewPager" format="boolean" />
     <attr name="playground_viewPagerInterval" format="integer" />
     <attr name="playground_divider" format="reference|color" />

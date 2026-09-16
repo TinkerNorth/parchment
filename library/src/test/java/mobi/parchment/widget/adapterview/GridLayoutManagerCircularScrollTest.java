@@ -46,6 +46,7 @@ public class GridLayoutManagerCircularScrollTest {
                         false,
                         0,
                         SnapPosition.onScreen,
+                        false,
                         CELL_SPACING,
                         true,
                         true,

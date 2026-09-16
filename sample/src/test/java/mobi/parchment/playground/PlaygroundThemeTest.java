@@ -91,6 +91,7 @@ public class PlaygroundThemeTest {
         assertThat(attributes.isViewPager()).isFalse();
         assertThat(attributes.selectOnSnap()).isFalse();
         assertThat(attributes.selectWhileScrolling()).isFalse();
+        assertThat(attributes.scrollWithinContent()).isFalse();
     }
 
     @Test
@@ -102,13 +103,15 @@ public class PlaygroundThemeTest {
                                 .isCircularScroll(true)
                                 .isViewPager(true)
                                 .selectOnSnap(true)
-                                .selectWhileScrolling(true));
+                                .selectWhileScrolling(true)
+                                .scrollWithinContent(true));
 
         assertThat(attributes.isSnapToPosition()).isTrue();
         assertThat(attributes.isCircularScroll()).isTrue();
         assertThat(attributes.isViewPager()).isTrue();
         assertThat(attributes.selectOnSnap()).isTrue();
         assertThat(attributes.selectWhileScrolling()).isTrue();
+        assertThat(attributes.scrollWithinContent()).isTrue();
     }
 
     @Test

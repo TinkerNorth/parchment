@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:parchment="http://schemas.android.com/apk/res-auto"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <mobi.parchment.widget.adapterview.gridview.GridView
+            android:id="@+id/scroll_within_content_grid_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="start"
+            parchment:parchment_scrollWithinContent="true"/>
+
+    <mobi.parchment.widget.adapterview.gridpatternview.GridPatternView
+            android:id="@+id/scroll_within_content_grid_pattern_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            parchment:parchment_snapPosition="end"
+            parchment:parchment_scrollWithinContent="true"/>
+
+</LinearLayout>

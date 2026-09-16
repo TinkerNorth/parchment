@@ -312,8 +312,8 @@ adds nothing for padding of its own
 
 `snapposition/` holds one strategy per `parchment_snapPosition` value. Each answers
 two questions for a cell: where it should sit when snapped, and how far
-the content must move to get it there. `LayoutManager` picks the strategy
-once from the attributes and holds it as `mSnapPositionInterface`;
+the content must move to get it there. `SnapPositionSelector` picks the strategy
+once from the attributes and `LayoutManager` holds it as `mSnapPositionInterface`;
 `onScreen` is the default for a view inflated from XML, `center` for one
 built in Java, and neither moves content on its own.
 
@@ -337,6 +337,70 @@ target `(size - cellSize) / 2` and its old forward limit `(size + cellSize) / 2`
 truncate opposite ways once a cell is larger than the viewport, so a cell
 larger by an odd number of pixels was one pixel out of reach in every view
 (`centerSnap_cellTallerThanTheViewportByAnOddNumberOfPixels_settles`).
+
+`parchment_scrollWithinContent` is a fifth strategy rather than a branch:
+`ScrollWithinContentSnapPosition` wraps the `start`, `end` or `center` strategy,
+and `SnapPositionSelector` picks it once from the attributes the way
+`PageIntervalSelector` picks a paging mode. `onScreen` already keeps the content
+inside the view, and circular scrolling has no ends, so neither is wrapped. The
+wrapper's draw limits are the content's ends alone — the first cell's start never
+inside the start edge, the last cell's end never inside the end edge — so a cell
+larger than the view can be dragged to either of its own edges
+(`startSnap_scrollWithinContent_lastCellLargerThanTheView_itsEndIsReachable`).
+When the whole content is drawn and fits the view, both limits pin it where the
+wrapped strategy would put a single cell of the content's size, so the two
+cannot disagree and push the content back and forth.
+
+The rest positions under the flag are the cells at the snap position and the two
+bounds, whichever is nearest. The wrapper clamps each cell's snap distance to
+what the bounds allow, and `getCellSettleDistance` answers with the magnitude of
+that clamped distance, which is what `LayoutManager.getNearestCellIndexToSnapPosition`
+ranks by; `getCellDistanceFromSnapPosition`, the unclamped distance, only breaks
+ties. At a bound every cell whose snap point lies beyond it has a settle distance
+of zero, so the bound is a rest: a fling, a page or a tap that runs into it stops
+there and asks for nothing further, whether or not the cells tile the view
+(`startSnap_scrollWithinContent_heldAtTheEndBetweenCellStarts_restsAtTheEnd`,
+`listStartSnap_scrollWithinContent_cellsThatDoNotTileTheView_afterAFlingToTheEnd_restsAtTheContentEnd`).
+The tie-break is what `parchment_selectOnSnap` needs: it selects the cell that
+would have snapped there, the nearest of the cells the bound holds short of
+their snap point
+(`endSnap_scrollWithinContent_heldAtTheStartBetweenCellEnds_selectsTheCellNearestTheEndThatRestsThere`).
+That is why the wrapper's methods take the drawn cells: the bounds are measured
+from the first and last of them when they are the adapter's first and last.
+A cell larger than the view is the exception to the rest rule: the bound lets it
+be dragged to either of its own edges, but its snap point lies inside the bound,
+so on release it snaps back there, the convention `onScreen` already has
+(`startSnap_scrollWithinContent_lastCellLargerThanTheView_releasedAtItsEnd_restsAtItsStart`).
+`getFlingSnapAdjustment` is left alone: it retargets a fling onto a cell's snap
+point, extrapolating past the drawn cells, so a fling aimed beyond the bound is
+stopped by the bound rather than decelerating onto it, and settles there. Paging
+is measured from the anchor's unbounded snap point, `getUnboundedSnapToPixelDistance`,
+not the clamped one: from an end the anchor is a cell held short of its snap
+point, and measuring from where it is held would page back past the cell the
+gesture came from
+(`viewPagerGesture_scrollWithinContent_backFromTheContentEnd_returnsToTheCellItCameFrom`).
+A jump, `setSelection` or a data set change, puts the incoming cell where the
+outgoing nearest cell is, which is its snap point only at an unbounded rest;
+`jumpToPosition` therefore adds what the bound withheld from the outgoing cell,
+its unbounded snap distance less its reachable one, which is zero everywhere but
+at a bound, and lets `correctOverScroll` clamp the result when the incoming
+cell's snap point lies beyond the bound
+(`startSnap_scrollWithinContent_setSelectionFromTheEndBound_putsTheCellAtTheStart`).
+
+A frame the clamp holds stops the animation and selects, under
+`parchment_selectOnSnap`, after the frame is laid out rather than inside the
+clamp: the stop hands off to a snap, and a snap measured before the correction
+is applied would be measured from where the cells were, not where they are, and
+would move the content back off the bound
+(`listStartSnap_scrollWithinContent_draggingFurtherIntoTheClamp_neverMovesBack`).
+The cell selected is the cell nearest the snap position, not the held cell:
+without the flag the two are the same cell, with it the held cell is at an edge
+and another cell is at the snap position. `onScreen` has no cell to snap to and
+keeps selecting the held cell. Content that fits the view is put in place by the
+same correction on the first layout, so with `end` or `center` and the flag the
+first layout already selects the cell at the snap position, as `onScreen` has
+always done for short content
+(`endSnap_scrollWithinContent_contentShorterThanTheView_selectsOnTheFirstLayout`).
 
 Tapping a cell snaps that cell, not the view that was tapped:
 `LayoutManagerBridge.onSingleTapUp` finds the cell holding the tapped view
@@ -399,10 +463,9 @@ by counting and `ViewportPageInterval` by walking the viewport.
 `LayoutManager`'s constructor reads `parchment_viewPagerInterval` once, hands the
 value to `PageIntervalSelector` to pick between the two, and keeps the answer as
 `mPageIntervalInterface`. Nothing can set the interval afterwards, so choosing
-once gives the same answer the old per-call branch gave. That selection is a small
-public factory rather than the private switch `snapposition/` uses, which is the
-one place the two packages differ: it lets the tests exercise the real choice
-instead of a copy of it.
+once gives the same answer the old per-call branch gave. Both selections are small
+public factories, `PageIntervalSelector` and `SnapPositionSelector`, so the tests
+exercise the real choice instead of a copy of it.
 
 `ViewportPageInterval` takes the anchor and the room a page has as parameters and
 calls back into `LayoutManager` for the drawn cells and the cell spacing, the way
@@ -462,7 +525,7 @@ same content position without the adapter's help.
 | Question | File |
 |---|---|
 | Why did a view get re-measured? | `AdapterViewManager.getView` |
-| Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest` |
+| Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest`; under `parchment_scrollWithinContent`, `ScrollWithinContentSnapPosition` and `ScrollWithinContentTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
 | Why is the divider missing or in the wrong place? | `CellDivider` and the edge geometry in `CellEdges`; `CellDividerTest`, `CellDividerGroupTest`, `CellEdgesTest`, `CellDividerPaintTest` |

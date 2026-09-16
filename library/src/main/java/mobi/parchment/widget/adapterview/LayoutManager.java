@@ -13,11 +13,8 @@ import java.util.List;
 import java.util.Map;
 import mobi.parchment.widget.adapterview.pageinterval.PageIntervalInterface;
 import mobi.parchment.widget.adapterview.pageinterval.PageIntervalSelector;
-import mobi.parchment.widget.adapterview.snapposition.CenterSnapPosition;
-import mobi.parchment.widget.adapterview.snapposition.EndSnapPosition;
-import mobi.parchment.widget.adapterview.snapposition.OnScreenSnapPosition;
 import mobi.parchment.widget.adapterview.snapposition.SnapPositionInterface;
-import mobi.parchment.widget.adapterview.snapposition.StartSnapPosition;
+import mobi.parchment.widget.adapterview.snapposition.SnapPositionSelector;
 
 public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public static final int INVALID_POSITION = -1;
@@ -35,6 +32,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     protected int mViewPageDistanceBack;
     private int mAnimationDisplacement;
     private int mFrameDisplacement;
+    private Cell mHeldCell;
     protected final ViewGroup mViewGroup;
     private final ScrollDirectionManager mScrollDirectionManager;
 
@@ -63,7 +61,9 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
         final SnapPosition snapPosition = getSnapPosition(isCircularScroll);
-        mSnapPositionInterface = getSnapPositionInterface(snapPosition);
+        final boolean scrollWithinContent = mLayoutManagerAttributes.scrollWithinContent();
+        mSnapPositionInterface =
+                SnapPositionSelector.getSnapPositionInterface(snapPosition, scrollWithinContent);
 
         final int viewPagerInterval = mLayoutManagerAttributes.getViewPagerInterval();
         mPageIntervalInterface = PageIntervalSelector.getPageIntervalInterface(viewPagerInterval);
@@ -79,20 +79,6 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     public int getHeightMeasureSpec() {
         return mHeightMeasureSpec;
-    }
-
-    private SnapPositionInterface<Cell> getSnapPositionInterface(final SnapPosition snapPosition) {
-        switch (snapPosition) {
-            case center:
-                return new CenterSnapPosition<Cell>();
-            case end:
-                return new EndSnapPosition<Cell>();
-            case start:
-                return new StartSnapPosition<Cell>();
-            case onScreen:
-            default:
-                return new OnScreenSnapPosition<Cell>();
-        }
     }
 
     public int getCellSpacing() {
@@ -253,6 +239,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         correctOverScroll(adapterViewHandler, newSize, breadth);
+        stopAndSelectWhenHeld(newSize);
 
         checkSelectWhileScrollingAttribute(newSize);
         mSelectedPositionManager.onViewsDrawn(mPositions);
@@ -339,6 +326,32 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         layoutCells(adapterViewHandler, size, breadth);
     }
 
+    private void stopAndSelectWhenHeld(final int size) {
+        final Cell heldCell = mHeldCell;
+        mHeldCell = null;
+        if (heldCell == null) return;
+
+        onAnimationStopped();
+        selectTheCellAtTheSnapPosition(size, heldCell);
+    }
+
+    private void selectTheCellAtTheSnapPosition(final int size, final Cell heldCell) {
+        final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
+        final boolean snapToPosition = mLayoutManagerAttributes.isSnapToPosition();
+        final boolean selectsWhenHeld = selectOnSnap && snapToPosition;
+        if (!selectsWhenHeld) return;
+
+        final Cell cellAtTheSnapPosition = getCellAtTheSnapPositionWhenHeld(size, heldCell);
+        final View selectedView = getView(cellAtTheSnapPosition);
+        setSelected(selectedView);
+    }
+
+    private Cell getCellAtTheSnapPositionWhenHeld(final int size, final Cell heldCell) {
+        final Cell cellToSnapTo = getCellToSnapTo(size);
+        if (cellToSnapTo == null) return heldCell;
+        return cellToSnapTo;
+    }
+
     private void checkSelectWhileScrollingAttribute(final int newWidth) {
         final boolean shouldSelectWhileScrolling =
                 mLayoutManagerAttributes.selectWhileScrolling()
@@ -376,7 +389,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     protected int getSnapDisplacement(final int size, final Cell cell) {
-        return getSnapToPixelDistance(size, cell);
+        return mSnapPositionInterface.getUnboundedSnapToPixelDistance(this, size, cell);
     }
 
     public int getCellStartAtIndex(final long cellIndex) {
@@ -417,16 +430,18 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     private int getNearestCellIndexToSnapPosition(final int size) {
-        final Cell firstCell = mCells.get(0);
         int nearestCellIndex = 0;
-        int nearestCellDistance =
-                mSnapPositionInterface.getCellDistanceFromSnapPosition(this, size, firstCell);
+        int nearestCellDistance = getCellSettleDistance(size, nearestCellIndex);
 
         for (int cellIndex = 1; cellIndex < mCells.size(); cellIndex++) {
-            final Cell currentCell = mCells.get(cellIndex);
-            final int currentCellDistance =
-                    mSnapPositionInterface.getCellDistanceFromSnapPosition(this, size, currentCell);
-            final boolean currentCellIsCloser = currentCellDistance < nearestCellDistance;
+            final int currentCellDistance = getCellSettleDistance(size, cellIndex);
+            final boolean currentCellIsCloser =
+                    isCloserToTheSnapPosition(
+                            size,
+                            cellIndex,
+                            currentCellDistance,
+                            nearestCellIndex,
+                            nearestCellDistance);
 
             if (currentCellIsCloser) {
                 nearestCellDistance = currentCellDistance;
@@ -435,6 +450,34 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         return nearestCellIndex;
+    }
+
+    private int getCellSettleDistance(final int size, final int cellIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return mSnapPositionInterface.getCellSettleDistance(this, mCells, size, cell);
+    }
+
+    private boolean isCloserToTheSnapPosition(
+            final int size,
+            final int cellIndex,
+            final int cellDistance,
+            final int nearestCellIndex,
+            final int nearestCellDistance) {
+        final boolean settlesNearer = cellDistance < nearestCellDistance;
+        if (settlesNearer) return true;
+
+        final boolean settlesAsNear = cellDistance == nearestCellDistance;
+        if (!settlesAsNear) return false;
+
+        final int distanceFromTheSnapPosition = getCellDistanceFromSnapPosition(size, cellIndex);
+        final int nearestDistanceFromTheSnapPosition =
+                getCellDistanceFromSnapPosition(size, nearestCellIndex);
+        return distanceFromTheSnapPosition < nearestDistanceFromTheSnapPosition;
+    }
+
+    private int getCellDistanceFromSnapPosition(final int size, final int cellIndex) {
+        final Cell cell = mCells.get(cellIndex);
+        return mSnapPositionInterface.getCellDistanceFromSnapPosition(this, size, cell);
     }
 
     private View getNearestViewToSnapPosition(final int size) {
@@ -522,15 +565,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             return 0;
         }
 
-        final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
-        final boolean snapToPosition = mLayoutManagerAttributes.isSnapToPosition();
-        if (isOverDrawn) {
-            onAnimationStopped();
-            if (selectOnSnap && snapToPosition) {
-                final View selectedView = getView(cell);
-                setSelected(selectedView);
-            }
-        }
+        mHeldCell = cell;
 
         final int overDrawAdjust = drawLimit - startMostPixel;
         return overDrawAdjust;
@@ -559,15 +594,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             return 0;
         }
 
-        final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
-        final boolean snapToPosition = mLayoutManagerAttributes.isSnapToPosition();
-        if (isOverDrawn) {
-            onAnimationStopped();
-            if (selectOnSnap && snapToPosition) {
-                final View selectedView = getView(firstCell);
-                setSelected(selectedView);
-            }
-        }
+        mHeldCell = firstCell;
 
         final int overDrawAdjust = drawLimit - endMostPixel;
         return overDrawAdjust;
@@ -621,7 +648,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     private int getSnapToPixelDistance(final int size, final Cell cell) {
-        return mSnapPositionInterface.getSnapToPixelDistance(this, size, cell);
+        return mSnapPositionInterface.getSnapToPixelDistance(this, mCells, size, cell);
     }
 
     public int getSnapToPixelDistanceForView(final int size, final View view) {
@@ -1041,6 +1068,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     private void jumpToPosition(final AdapterViewHandler adapterViewHandler, final int position) {
         final int size = getSizeInsidePadding(mViewGroup);
 
+        final Cell outgoingCell = getNearestCellToSnapPosition(size);
         final View nearestViewToSnapPosition = getNearestViewToSnapPosition(size);
         final int positionOfNearestView = getPosition(nearestViewToSnapPosition);
 
@@ -1051,9 +1079,16 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             final View outgoingView = getDrawnView(outgoingPosition);
             final View incomingView = getView(incomingPosition);
 
-            mOffset =
+            final int redrawOffset =
                     mSnapPositionInterface.getRedrawOffset(
                             mScrollDirectionManager, incomingView, outgoingView);
+            final int outgoingSnapDistance =
+                    mSnapPositionInterface.getUnboundedSnapToPixelDistance(
+                            this, size, outgoingCell);
+            final int outgoingReachableSnapDistance = getSnapToPixelDistance(size, outgoingCell);
+            final int heldShortOfTheSnapPoint =
+                    outgoingSnapDistance - outgoingReachableSnapDistance;
+            mOffset = redrawOffset + heldShortOfTheSnapPoint;
 
             mStartCellPosition = getCellPosition(incomingPosition);
 

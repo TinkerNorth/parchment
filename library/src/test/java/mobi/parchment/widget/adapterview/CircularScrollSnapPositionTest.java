@@ -40,6 +40,7 @@ public class CircularScrollSnapPositionTest {
     private static final boolean NO_SELECT_ON_SNAP = false;
     private static final boolean NO_SELECT_WHILE_SCROLLING = false;
     private static final boolean HORIZONTAL = false;
+    private static final boolean SCROLL_PAST_CONTENT = false;
 
     private final MyViewGroup mViewGroup =
             new MyViewGroup(ApplicationProvider.getApplicationContext());
@@ -74,6 +75,7 @@ public class CircularScrollSnapPositionTest {
                         NOT_VIEW_PAGER,
                         VIEWPORT_PAGING,
                         snapPosition,
+                        SCROLL_PAST_CONTENT,
                         NO_CELL_SPACING,
                         NO_SELECT_ON_SNAP,
                         NO_SELECT_WHILE_SCROLLING,
