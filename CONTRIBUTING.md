@@ -200,6 +200,9 @@ Build + style:
   `./gradlew :library:test`, `./gradlew :library:assembleRelease :sample:assembleDebug`
   (uploads the AAR and sample APK as artifacts), then
   `:library:connectedDebugAndroidTest` on an emulator.
+- `release.yml`: on a bare version tag, checks it against `VERSION_NAME`, runs
+  Spotless, lint and the unit tests, then `:library:publishAndReleaseToMavenCentral`
+  and creates the GitHub Release. How to cut a release is in the README.
 
 Security gates (also blocking):
 

@@ -52,8 +52,8 @@ Out of scope:
 
 | Version | Supported |
 |---|---|
-| `main` (2.0.0 in development) | Yes |
-| `1.6.x` (2014, Maven Central `mobi.parchment:parchment`) | No. Unmaintained; upgrade to 2.0 when it ships |
+| `2.0.x` (Maven Central `mobi.parchment:parchment`) | Yes |
+| `1.6.x` (2014) | No. Unmaintained; upgrade to 2.0 |
 
 ---
 

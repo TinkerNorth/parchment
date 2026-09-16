@@ -1,0 +1,86 @@
+name: Release
+
+# Pushing a bare version tag (e.g. `2.0.0`, the form the 1.x tags use)
+# publishes the library to Maven Central and creates the GitHub Release.
+# The tag must match VERSION_NAME in gradle.properties; the fast CI gates
+# run first so a tag on an unchecked commit cannot ship.
+#
+# Pin map (verify with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`):
+#   actions/checkout              @ v7.0.1  → 3d3c42e5aac5ba805825da76410c181273ba90b1
+#   actions/setup-java            @ v6.0.0  → dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+#   gradle/actions/setup-gradle   @ v6.3.0  → 9c971963bec38e04b3d30dcc455b5382be2fdbfb
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # creates the GitHub Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the tag matches VERSION_NAME
+        run: |
+          version=$(sed -n 's/^VERSION_NAME=//p' gradle.properties)
+          if [ "$version" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match VERSION_NAME=${version} in gradle.properties" >&2
+            exit 1
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      # Also validates gradle-wrapper.jar against the published checksums.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Spotless, lint, unit tests
+        run: ./gradlew spotlessCheck :library:lintDebug :sample:lintDebug :library:test :sample:testDebugUnitTest
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+        run: ./gradlew :library:publishAndReleaseToMavenCentral
+
+      # The release body is this version's CHANGELOG section: from its heading
+      # to the next `## [` heading.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v v="${GITHUB_REF_NAME}" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "CHANGELOG.md has no [${GITHUB_REF_NAME}] section" >&2
+            exit 1
+          fi
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            library/build/outputs/aar/library-release.aar#parchment-${GITHUB_REF_NAME}.aar

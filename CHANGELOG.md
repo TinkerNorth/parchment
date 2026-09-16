@@ -5,10 +5,43 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
-## [Unreleased]
+## [2.0.0] - 2026-09-15
 
 The first work on Parchment since 2014. Apart from the new cell divider,
 behaviour of the views is unchanged; everything around them is new.
+Published to Maven Central as `mobi.parchment:parchment:2.0.0`, the same
+coordinates as 1.x.
+
+### Upgrading from 1.6.x
+
+- Depend on `mobi.parchment:parchment:2.0.0`; the artifact is an AAR now,
+  not an `apklib`. Minimum SDK is 21.
+- Every Parchment XML attribute gained a `parchment_` prefix:
+  `orientation` is `parchment_orientation`, `cellSpacing` is
+  `parchment_cellSpacing`, and so on for all of them. Declare the namespace
+  as `xmlns:parchment="http://schemas.android.com/apk/res-auto"`. The
+  old names are not kept as aliases, so a layout that still uses one fails
+  to build rather than silently ignoring it. The README lists every
+  attribute.
+- Class names, packages and the public Java API are unchanged. Only two
+  `protected` hooks changed shape, `createAdapterViewInitializer` and the
+  constructors of `AdapterAnimator` and `ChildTouchGestureListener`; a
+  subclass that overrides or calls them has to pass the new parameters on.
+
+### Highlights
+
+- `setOnScrollListener` on every view, shaped like
+  `RecyclerView.OnScrollListener`, with the state and the displacement.
+- `parchment_divider` and `parchment_dividerSize` draw a divider between
+  cells, in every view.
+- `parchment_viewPagerInterval` pages a fixed number of cells instead of a
+  viewport.
+- A snapping view comes to rest after a gesture instead of animating
+  forever, and animation frames no longer re-lay-out the whole ancestor tree.
+- The sample app is a playground that reaches every attribute and prints
+  the XML that reproduces what is on screen.
+
+Everything below is the full record.
 
 ### Changed
 
@@ -173,6 +206,11 @@ behaviour of the views is unchanged; everything around them is new.
 
 ### Added
 
+- Releases are published to Maven Central by pushing a version tag. The
+  `release.yml` workflow checks the tag against `VERSION_NAME`, runs the
+  fast CI gates, signs and uploads the AAR with its sources and Javadoc
+  through the Central Portal, and creates a GitHub Release whose notes are
+  this file's section for that version, with the AAR attached.
 - `setOnScrollListener` reports scrolling on all three views, which had no way
   to observe it at all (#23, #19). `OnScrollListener` takes the shape of
   `RecyclerView.OnScrollListener` rather than `AbsListView.OnScrollListener`:

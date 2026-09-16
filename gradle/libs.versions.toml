@@ -5,6 +5,7 @@ minSdk = "21"
 targetSdk = "37"
 java = "17"
 spotless = "8.10.2"
+mavenPublish = "0.37.0"
 googleJavaFormat = "1.36.1"
 
 # Library
@@ -39,3 +40,4 @@ picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "pic
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "mavenPublish" }

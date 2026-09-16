@@ -1,4 +1,4 @@
-| Unit tests (Robolectric) | `./gradlew :library:test :sample:testDebugUnitTest` |# Parchment
+# Parchment
 
 [![Android CI](https://github.com/TinkerNorth/parchment/actions/workflows/android-ci.yml/badge.svg)](https://github.com/TinkerNorth/parchment/actions/workflows/android-ci.yml)
 [![Security](https://github.com/TinkerNorth/parchment/actions/workflows/security.yml/badge.svg)](https://github.com/TinkerNorth/parchment/actions/workflows/security.yml)
@@ -71,6 +71,30 @@ The full map, including the recycling contract and the layout pass, is in
   `gradle/gradle-daemon-jvm.properties`)
 - Min SDK 21 (Android 5.0) for consumers
 
+## Installation
+
+Parchment is on Maven Central as `mobi.parchment:parchment`, the same
+coordinates as the 2014 releases.
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("mobi.parchment:parchment:2.0.0")
+}
+```
+
+Or in a version catalog:
+
+```toml
+[libraries]
+parchment = { group = "mobi.parchment", name = "parchment", version = "2.0.0" }
+```
+
+2.0 is a breaking upgrade from 1.6.x: every XML attribute gained a
+`parchment_` prefix, and a few `protected` hooks changed shape. The class
+names and packages are unchanged. [`CHANGELOG.md`](CHANGELOG.md) lists every
+change, with the breaking ones marked.
+
 ## Build and test
 
 ```bash
@@ -83,7 +107,7 @@ cd parchment
 |------|---------|
 | Library AAR | `./gradlew :library:assembleRelease` |
 | Sample app | `./gradlew :sample:installDebug` |
-| Unit tests (Robolectric) | `./gradlew :library:test` |
+| Unit tests (Robolectric) | `./gradlew :library:test :sample:testDebugUnitTest` |
 | Instrumented tests (device or emulator) | `./gradlew :library:connectedDebugAndroidTest` |
 | Lint | `./gradlew :library:lintDebug :sample:lintDebug` |
 | Format | `./gradlew spotlessApply` |
@@ -368,10 +392,17 @@ Vulnerability disclosure: [`SECURITY.md`](SECURITY.md).
 
 ## Releases
 
-Parchment 2.0 is not published yet. The last release, `mobi.parchment:parchment:1.6.9`
-on Maven Central, is the 2014 build and targets the pre-Gradle toolchain;
-build the AAR from source until 2.0 ships. Notable changes are tracked in
-[`CHANGELOG.md`](CHANGELOG.md).
+Every version is on Maven Central and on the
+[GitHub Releases](https://github.com/TinkerNorth/parchment/releases) page with
+the AAR attached. Notable changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
+
+To cut one: set `VERSION_NAME` in `gradle.properties`, retitle the
+`[Unreleased]` section of `CHANGELOG.md` as that version with the date,
+merge, then push a bare version tag (`git tag 2.0.1 && git push origin 2.0.1`).
+`release.yml` refuses a tag that does not match `VERSION_NAME`, runs the fast
+CI gates, publishes to Maven Central signed, and creates the GitHub Release
+from the changelog section. The Central Portal credentials and the signing
+key are repository secrets.
 
 ## Acknowledgements
 
