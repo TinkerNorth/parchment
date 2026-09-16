@@ -2,7 +2,7 @@ name: Android CI
 
 # Pin map (verify with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`):
 #   actions/checkout              @ v7.0.1  → 3d3c42e5aac5ba805825da76410c181273ba90b1
-#   actions/setup-java            @ v6.0.0  → dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+#   actions/setup-java            @ v6.0.1  → de7274f081f381c8f8158605e0321c36c376e2e6
 #   actions/upload-artifact       @ v7.0.1  → 043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
 #   gradle/actions/setup-gradle   @ v6.3.0  → 9c971963bec38e04b3d30dcc455b5382be2fdbfb
 #   reactivecircus/android-emulator-runner @ v2.38.0 → a421e43855164a8197daf9d8d40fe71c6996bb0d

@@ -5,9 +5,9 @@ name: CodeQL
 #
 # Pin map (verify with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`):
 #   actions/checkout              @ v7.0.1  → 3d3c42e5aac5ba805825da76410c181273ba90b1
-#   actions/setup-java            @ v6.0.0  → dd06d9cba3e5552c54d9f8ea23572deb30010f7c
+#   actions/setup-java            @ v6.0.1  → de7274f081f381c8f8158605e0321c36c376e2e6
 #   gradle/actions/setup-gradle   @ v6.3.0  → 9c971963bec38e04b3d30dcc455b5382be2fdbfb
-#   github/codeql-action/*        @ v4.37.9 → cdf488f595d80d6e07e03d4674febd5ab45fa938
+#   github/codeql-action/*        @ v4.38.0 → b96794f015dfd88f77b49b1c93e0fa7110f94c63
 
 on:
   push:
