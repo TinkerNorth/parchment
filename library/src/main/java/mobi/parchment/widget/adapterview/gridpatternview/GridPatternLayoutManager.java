@@ -103,6 +103,16 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     }
 
     @Override
+    public int getCellBreadth(final GridPatternGroup gridPatternGroup) {
+        return gridPatternGroup.getBreadth();
+    }
+
+    @Override
+    public int measureBreadth(final ViewGroup viewGroup, final int breadthMeasureSpec) {
+        return View.MeasureSpec.getSize(breadthMeasureSpec);
+    }
+
+    @Override
     public List<View> getViews(final GridPatternGroup gridPatternGroup) {
         final List<View> views = gridPatternGroup.getViews();
         return views;

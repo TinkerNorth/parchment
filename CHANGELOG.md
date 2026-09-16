@@ -5,6 +5,53 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** `LayoutManager` gains an abstract `getCellBreadth`, a cell's
+  extent across the scroll axis, and `measureBreadth`, which
+  `AbstractAdapterView.onMeasure` asks for the view's size across it;
+  `ScrollDirectionManager` gains the cross-axis spec, padding and width/height
+  mappings that serve them. All are implementation details the views build and
+  call for themselves, so nothing outside the library should be subclassing or
+  calling them.
+
+### Fixed
+
+- `android:layout_height="wrap_content"` on a horizontal view and
+  `android:layout_width="wrap_content"` on a vertical one used to take every
+  pixel the parent had left, pushing the next sibling of a `LinearLayout` off
+  the screen: `onMeasure` set the measured size to the spec size whatever the
+  spec's mode, so `AT_MOST` was treated as `EXACTLY`. Across the scroll axis a
+  `ListView` now measures to its largest cell and a `GridView` to its largest
+  row or column, the spacing between the views of the group included, plus
+  `android:padding*`, capped at the size offered under `AT_MOST` and uncapped
+  under `UNSPECIFIED`. `EXACTLY` is untouched, so `match_parent` and a fixed
+  size lay out exactly as before. Along the scroll axis `wrap_content` still
+  fills the parent, since wrapping there would mean measuring every item in the
+  adapter, and `GridPatternView`, whose cells are sized from the view, still
+  fills it on both axes. The size comes from the cells present at measure time:
+  the cells laid out, or before the first layout the cells that fill the
+  viewport from the start position, obtained through the recycler and handed
+  back to it the way the platform `ListView` measures under `AT_MOST`. That
+  first estimate cannot see a cell the layout back-fills before the start
+  position, one the over-scroll correction pulls in, or one a scroll reveals
+  later, so a layout that draws a cell larger than the size it was measured to
+  asks the view for one more layout, and the next measure, which reads the
+  drawn cells, grows the view to it. Cells of varying size across the scroll
+  axis are therefore better served by a fixed size, because the view resizes
+  as they come into view (#59, the remaining half of #10).
+- A horizontal `ListView` gave its children the mode of its own *width* spec as
+  their height mode, and a `GridView` did the same for the views it obtains for
+  a jump. They now take the mode of the height spec. Under `wrap_content` that
+  is what lets a `match_parent` child measure to its content rather than to
+  the whole height the parent offered; under a bounded width and an exact
+  height, a horizontal list inside a `HorizontalScrollView` or a
+  `wrap_content`-wide parent, a `match_parent` child is now given the exact
+  height instead of a bound it measured itself to zero against. Under `EXACTLY`
+  on both axes nothing changes.
+
 ## [2.1.0] - 2026-09-16
 
 ### Added

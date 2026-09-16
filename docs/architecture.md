@@ -25,6 +25,116 @@ Adapter (any android.widget.Adapter)
   ChildTouchGestureListener → AdapterAnimator → ScrollAnimator (android.widget.Scroller)
 ```
 
+## The measure pass
+
+`AbstractAdapterView.onMeasure` first sets the measured size to the two spec
+sizes, then asks the `LayoutManager` to store the specs and re-measure the
+cells it holds, and only then asks it for the size across the scroll axis.
+The order matters: the child specs a cell is measured with are built from the
+view's *measured* size inside its padding (`getMaxMeasureHeight` and friends
+read it through `ViewGroupUtilities`), so the spec size has to be in place
+before any cell is measured, and the cap a `wrap_content` view is measured
+against is that same size
+(`horizontalListUnderAnAtMostHeight_measuresAMatchParentChildAgainstTheHeightOffered`).
+
+Along the scroll axis the view is always the spec size, whatever the mode:
+wrapping there would mean measuring every item in the adapter, which the
+recycler exists to avoid. Across it, `LayoutManager.measureBreadth` dispatches
+on the mode of the cross-axis spec and nothing else. `EXACTLY` answers the spec
+size, so `match_parent` and a fixed size are untouched by any of this
+(`listHorizontal_exactHeight_isTheSpecWhateverTheCellsMeasure`). `AT_MOST`
+answers the wrapped breadth capped at the spec size
+(`listHorizontal_atMostHeightSmallerThanTheTallestCell_isCappedAtTheSpec`) and
+`UNSPECIFIED` the wrapped breadth alone. The wrapped breadth is the largest
+cell breadth plus the padding across, and a cell's breadth is what
+`layoutCell` gives it: a `ListView` cell is its view's measured breadth, a
+`GridView` cell is `Group.getBreadth`, the views laid across plus the spacing
+between them, which is exactly the extent the group takes
+(`gridHorizontal_theWrappedBreadth_isTheExtentLayoutCellGivesTheTallestGroup`).
+`GridPatternView` overrides `measureBreadth` to answer the spec size under
+every mode: its cells are sized *from* the view, so its `getCellBreadth` is the
+view's breadth inside the padding and there is nothing to wrap to
+(`gridPattern_aCellsBreadth_isTheViewsBreadthInsideThePadding_soThereIsNothingToWrapTo`,
+`gridPattern_atMostBreadth_withAnEmptyAdapter_stillFillsTheSpec`).
+
+Which cells decide is the question the first measure raises, because it runs
+before any cell has been laid out. When cells are drawn they decide, the
+largest of them, found by an indexed loop over `mCells` that allocates
+nothing. When none are, the manager walks the cells forward from the start
+position, the clamp `layout` applies to it included
+(`listHorizontal_measuredWithAStartCellPastTheAdapter_measuresFromTheLastCell`),
+until they fill the viewport or the adapter runs out, once round under
+circular scrolling
+(`listHorizontal_circularScroll_measuredBeforeAnyLayout_walksEveryCellOnceAndStops`).
+Each cell is obtained through `getCell`, which measures its views with the
+child specs the layout would give them, read, and its views recycled at once,
+so one cell's worth of views serves the whole walk
+(`listHorizontal_measuredBeforeAnyLayout_measuresEveryCellThroughOneRecycledView`)
+and the layout that follows polls it back from the recycler
+(`listHorizontal_measuredBeforeAnyLayout_theLayoutThatFollowsReusesTheMeasuredView`).
+This is how the platform `ListView` measures under `AT_MOST`. The walk runs
+per measure, not per frame, and is the only place on the measure path that
+obtains views.
+
+The walk is an estimate, not a reproduction of the layout. It starts at the
+start padding and goes forward only, while `layout` starts at `mOffset`, which
+is negative after any scroll and is restored verbatim after a rotation,
+back-fills cells before `mStartCellPosition`, and lets `correctOverScroll`
+pull more cells in; and nothing the walk does can see a cell that scrolls in
+later. A cell obtained afterwards never grows the view on its own, either:
+`AdapterViewManager.getView` sets the child's layout parameters before the
+child has a parent, and cells are added with `addViewInLayout`, so no
+`requestLayout` reaches the view from it. So `layout` carries the platform
+`ListView`'s safety net. `measureBreadth` remembers the content breadth it
+measured, uncapped, in `mMeasuredContentBreadth`, and `NOT_WRAPPING` under
+`EXACTLY`; after `layoutCells` and the over-scroll correction,
+`requestLayoutWhenADrawnCellOutgrowsTheMeasure` compares the largest drawn
+cell against it and, when a drawn cell is larger, records that breadth and
+posts one `requestLayout` to the view. The next measure takes the drawn-cells
+path, sees the larger cell, and the view grows to it
+(`listHorizontal_restoredWithANegativeOffset_aLargerCellTheLayoutBackFills_asksForOneLayoutAndThenWrapsToIt`,
+`listHorizontal_restoredAtTheLastCell_aLargerCellTheOverScrollCorrectionPullsIn_asksForOneLayoutAndThenWrapsToIt`,
+`listHorizontal_restoredIntoAWiderView_aLargerCellTheLayoutBackFills_asksForOneLayoutAndThenWrapsToIt`,
+`listHorizontal_aScrollThatRevealsALargerCell_asksForOneLayoutAndTheNextMeasureWrapsToIt`).
+It converges because the comparison is against the uncapped content breadth
+rather than the capped measured size: a cap smaller than the cell would
+otherwise ask on every frame
+(`listHorizontal_atMostHeightSmallerThanTheRevealedCell_asksForOneLayoutAndNoMore`),
+and recording the breadth at the moment of asking is what makes it ask once
+rather than once per frame until the measure lands. A frame that reveals
+nothing larger compares one field and one loop over the drawn cells and asks
+nothing, which is the per-frame guarantee
+(`listHorizontal_scrollsThatRevealNothingLarger_askForNoLayout`); under
+`EXACTLY` nothing is remembered and nothing is asked
+(`listHorizontal_exactHeight_aScrollThatRevealsALargerCell_asksForNoLayout`).
+The request is posted rather than called, because `layout` runs from
+`onLayout`, inside the framework's layout pass, where a direct `requestLayout`
+is honoured only through `ViewRootImpl`'s second pass and logged as
+"improperly called during layout"; the cost is that the frame that reveals
+the cell draws it clipped and the next one grows the view. The animation path
+is unaffected: a frame that asks for a layout is followed by a real layout
+pass, which `onAnimationFrame` already yields to. The net only ever grows the
+view: it shrinks on the next externally driven measure alone, a data set
+change or a parent re-layout, so once the larger cell scrolls out the view
+keeps its size until then. `destroy` removes a posted request that has not
+run, so a detached view is neither held by the handler nor asked for a layout
+(`listHorizontal_aLayoutRequestPendingWhenTheManagerIsDestroyed_isDroppedAndNeverAsks`).
+
+Everything orientation-specific on this path goes through
+`ScrollDirectionManager`: which of the two specs is the breadth spec and which
+the size spec (`getBreadthMeasureSpec`, `getSizeMeasureSpec`), which two
+paddings lie across (`getViewGroupBreadthPadding`), and how a size and a
+breadth map back onto a width and a height for `setMeasuredDimension`
+(`toWidth`, `toHeight`), each pinned in `ScrollDirectionManagerTest`.
+`ListLayoutManager.getChildHeightMeasureSpecMode` used to read the mode of the
+*width* spec for a horizontal list, and `GridLayoutManager`'s did the same;
+both now read the height spec's, which is what hands a `match_parent` child of
+a `wrap_content` list an `AT_MOST` spec
+(`listHorizontal_childHeightSpec_followsTheModeOfTheHeightSpec`) and a child of
+an exact-height list inside a bounded width its exact height
+(`listHorizontal_withAnAtMostWidthAndAnExactHeight_matchParentChildrenGetTheExactHeight`,
+`gridHorizontal_withAnAtMostWidthAndAnExactHeight_childHeightSpecFollowsTheHeightSpec`).
+
 ## The layout pass
 
 `AbstractAdapterView` runs the same frame step from two places: `onLayout`
@@ -528,6 +638,7 @@ same content position without the adapter's help.
 | Why did scrolling stop early / overshoot? | `LayoutManager.layout` bounds handling, `*OverScrollTest`; under `parchment_scrollWithinContent`, `ScrollWithinContentSnapPosition` and `ScrollWithinContentTest` |
 | Why did the snap land in the wrong place? | the strategy in `snapposition/`, `getCellDisplacementFromSnapPositionTests` |
 | Why is padding wrong? | `ListLayoutPaddingTest`; padding is applied in the layout managers, not the views |
+| Why is the view the wrong size across the scroll axis under `wrap_content`? | `LayoutManager.measureBreadth`; `MeasuredBreadthTest` for the maths, `WrapContentCrossAxisTest` for the inflated views |
 | Why is the divider missing or in the wrong place? | `CellDivider` and the edge geometry in `CellEdges`; `CellDividerTest`, `CellDividerGroupTest`, `CellEdgesTest`, `CellDividerPaintTest` |
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |
 | Why did the scroll listener report that? | `ScrollListenerDispatcher`, `ScrollState.from`, `LayoutManager.getFrameDisplacement` |

@@ -18,6 +18,8 @@ import mobi.parchment.widget.adapterview.snapposition.SnapPositionSelector;
 
 public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public static final int INVALID_POSITION = -1;
+    private static final int NO_BREADTH = 0;
+    private static final int NOT_WRAPPING = -1;
 
     private final Map<View, Integer> mPositions = new HashMap<View, Integer>();
 
@@ -46,6 +48,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     private View mPressedView;
     private int mWidthMeasureSpec;
     private int mHeightMeasureSpec;
+    private int mMeasuredContentBreadth = NOT_WRAPPING;
+    private final RequestLayoutRunnable mRequestLayoutRunnable;
 
     public LayoutManager(
             final ViewGroup viewGroup,
@@ -54,6 +58,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             final LayoutManagerAttributes layoutManagerAttributes) {
         super(adapterViewManager);
         mViewGroup = viewGroup;
+        mRequestLayoutRunnable = new RequestLayoutRunnable(viewGroup);
         mStartCellPosition = 0;
         mSelectedPositionManager = new SelectedPositionManager(onSelectedListener);
         mScrollDirectionManager = new ScrollDirectionManager(layoutManagerAttributes);
@@ -111,6 +116,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mPositions.clear();
         super.destroy();
         mCells.clear();
+        mViewGroup.removeCallbacks(mRequestLayoutRunnable);
     }
 
     public void measure(
@@ -119,6 +125,114 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mHeightMeasureSpec = heightMeasureSpec;
         for (final Cell cell : mCells) {
             measure(cell, viewGroup);
+        }
+    }
+
+    public int measureBreadth(final ViewGroup viewGroup, final int breadthMeasureSpec) {
+        final int mode = View.MeasureSpec.getMode(breadthMeasureSpec);
+        final int specBreadth = View.MeasureSpec.getSize(breadthMeasureSpec);
+        switch (mode) {
+            case View.MeasureSpec.AT_MOST:
+                return getWrappedBreadthWithin(viewGroup, specBreadth);
+            case View.MeasureSpec.UNSPECIFIED:
+                return getWrappedBreadth(viewGroup);
+            case View.MeasureSpec.EXACTLY:
+            default:
+                return useTheSpecBreadth(specBreadth);
+        }
+    }
+
+    private int useTheSpecBreadth(final int specBreadth) {
+        mMeasuredContentBreadth = NOT_WRAPPING;
+        return specBreadth;
+    }
+
+    private int getWrappedBreadthWithin(final ViewGroup viewGroup, final int specBreadth) {
+        final int wrappedBreadth = getWrappedBreadth(viewGroup);
+        return Math.min(wrappedBreadth, specBreadth);
+    }
+
+    private int getWrappedBreadth(final ViewGroup viewGroup) {
+        final int contentBreadth = getContentBreadth(viewGroup);
+        final int breadthPadding = mScrollDirectionManager.getViewGroupBreadthPadding(viewGroup);
+        mMeasuredContentBreadth = contentBreadth;
+        return contentBreadth + breadthPadding;
+    }
+
+    private void requestLayoutWhenADrawnCellOutgrowsTheMeasure() {
+        final boolean isWrapping = mMeasuredContentBreadth != NOT_WRAPPING;
+        if (!isWrapping) return;
+
+        final int largestDrawnCellBreadth = getLargestDrawnCellBreadth();
+        final boolean aDrawnCellOutgrewTheMeasure =
+                largestDrawnCellBreadth > mMeasuredContentBreadth;
+        if (!aDrawnCellOutgrewTheMeasure) return;
+
+        mMeasuredContentBreadth = largestDrawnCellBreadth;
+        mViewGroup.post(mRequestLayoutRunnable);
+    }
+
+    private int getContentBreadth(final ViewGroup viewGroup) {
+        final boolean cellsAreDrawn = !mCells.isEmpty();
+        if (cellsAreDrawn) return getLargestDrawnCellBreadth();
+        return getLargestViewportCellBreadth(viewGroup);
+    }
+
+    private int getLargestDrawnCellBreadth() {
+        int largestBreadth = NO_BREADTH;
+        for (int cellIndex = 0; cellIndex < mCells.size(); cellIndex++) {
+            final Cell cell = mCells.get(cellIndex);
+            final int cellBreadth = getCellBreadth(cell);
+            largestBreadth = Math.max(largestBreadth, cellBreadth);
+        }
+        return largestBreadth;
+    }
+
+    private int getLargestViewportCellBreadth(final ViewGroup viewGroup) {
+        final boolean adapterIsEmpty = mAdapterViewManager.isEmpty();
+        if (adapterIsEmpty) return NO_BREADTH;
+
+        final int viewGroupSize = mScrollDirectionManager.getViewGroupSize(viewGroup);
+        final int cellSpacing = getCellSpacing();
+        final int cellCount = getCellCount();
+        final int adapterCount = getAdapterCount();
+        int largestBreadth = NO_BREADTH;
+        int nextCellStart = getStartSizePadding();
+        int cellPosition = getStartCellPositionToDraw();
+        for (int cellsMeasured = 0; cellsMeasured < cellCount; cellsMeasured++) {
+            final boolean viewportIsFilled = nextCellStart > viewGroupSize;
+            if (viewportIsFilled) break;
+
+            final int adapterPosition = getFirstAdapterPositionInCell(cellPosition);
+            final boolean aboveCount = adapterPosition >= adapterCount;
+            if (aboveCount) break;
+
+            final Cell cell = getCell(adapterPosition);
+            final int cellBreadth = getCellBreadth(cell);
+            final int cellSize = getCellSize(cell);
+            recycleViews(cell);
+            final int cellStep = cellSize + cellSpacing;
+            largestBreadth = Math.max(largestBreadth, cellBreadth);
+            nextCellStart += cellStep;
+            cellPosition = incrementCellPosition(cellPosition);
+        }
+        return largestBreadth;
+    }
+
+    private int getStartCellPositionToDraw() {
+        final int adapterCount = getAdapterCount();
+        final int firstAdapterPosition = getFirstAdapterPositionInCell(mStartCellPosition);
+        final boolean startIsPastTheAdapter = firstAdapterPosition >= adapterCount;
+        if (!startIsPastTheAdapter) return mStartCellPosition;
+
+        final int lastAdapterPosition = Math.max(adapterCount - 1, 0);
+        return getCellPosition(lastAdapterPosition);
+    }
+
+    private void recycleViews(final Cell cell) {
+        final List<View> views = getViews(cell);
+        for (final View view : views) {
+            mAdapterViewManager.recycle(view);
         }
     }
 
@@ -133,6 +247,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public abstract int getCellEnd(final Cell cell);
 
     public abstract int getCellSize(final Cell cell);
+
+    public abstract int getCellBreadth(final Cell cell);
 
     public abstract List<View> getViews(final Cell cell);
 
@@ -180,10 +296,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             final int right,
             final int bottom) {
 
-        if (getFirstAdapterPositionInCell(mStartCellPosition) >= getAdapterCount()) {
-            final int lastAdapterPosition = Math.max(getAdapterCount() - 1, 0);
-            mStartCellPosition = getCellPosition(lastAdapterPosition);
-        }
+        mStartCellPosition = getStartCellPositionToDraw();
 
         final int size = mScrollDirectionManager.getDrawSize(left, top, right, bottom);
         final int displacement = animation.getDisplacement();
@@ -198,9 +311,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
                 final int cellSize = getCellSize(cell);
                 mOffset =
                         mSnapPositionInterface.getAbsoluteSnapPosition(this, size, cellSize, move);
-                for (final View view : getViews(cell)) {
-                    mAdapterViewManager.recycle(view);
-                }
+                recycleViews(cell);
             }
         }
 
@@ -239,6 +350,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         correctOverScroll(adapterViewHandler, newSize, breadth);
+        requestLayoutWhenADrawnCellOutgrowsTheMeasure();
         stopAndSelectWhenHeld(newSize);
 
         checkSelectWhileScrollingAttribute(newSize);
@@ -1244,5 +1356,18 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         return null;
+    }
+
+    private static final class RequestLayoutRunnable implements Runnable {
+        private final ViewGroup mViewGroup;
+
+        private RequestLayoutRunnable(final ViewGroup viewGroup) {
+            mViewGroup = viewGroup;
+        }
+
+        @Override
+        public void run() {
+            mViewGroup.requestLayout();
+        }
     }
 }
