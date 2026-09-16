@@ -5,6 +5,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    ignore:
+      # Dependabot orders "2.71828" above "2.8" and keeps proposing the 2018 release.
+      - dependency-name: "com.squareup.picasso:picasso"
     labels:
       - "dependencies"
     groups:
