@@ -12,6 +12,37 @@ behaviour of the views is unchanged; everything around them is new.
 Published to Maven Central as `mobi.parchment:parchment:2.0.0`, the same
 coordinates as 1.x.
 
+### Upgrading from 1.6.x
+
+- Depend on `mobi.parchment:parchment:2.0.0`; the artifact is an AAR now,
+  not an `apklib`. Minimum SDK is 21.
+- Every Parchment XML attribute gained a `parchment_` prefix:
+  `orientation` is `parchment_orientation`, `cellSpacing` is
+  `parchment_cellSpacing`, and so on for all of them. Declare the namespace
+  as `xmlns:parchment="http://schemas.android.com/apk/res-auto"`. The
+  old names are not kept as aliases, so a layout that still uses one fails
+  to build rather than silently ignoring it. The README lists every
+  attribute.
+- Class names, packages and the public Java API are unchanged. Only two
+  `protected` hooks changed shape, `createAdapterViewInitializer` and the
+  constructors of `AdapterAnimator` and `ChildTouchGestureListener`; a
+  subclass that overrides or calls them has to pass the new parameters on.
+
+### Highlights
+
+- `setOnScrollListener` on every view, shaped like
+  `RecyclerView.OnScrollListener`, with the state and the displacement.
+- `parchment_divider` and `parchment_dividerSize` draw a divider between
+  cells, in every view.
+- `parchment_viewPagerInterval` pages a fixed number of cells instead of a
+  viewport.
+- A snapping view comes to rest after a gesture instead of animating
+  forever, and animation frames no longer re-lay-out the whole ancestor tree.
+- The sample app is a playground that reaches every attribute and prints
+  the XML that reproduces what is on screen.
+
+Everything below is the full record.
+
 ### Changed
 
 - **Breaking:** `AbstractAdapterView.createAdapterViewInitializer` takes two
