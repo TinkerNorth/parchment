@@ -34,6 +34,7 @@ public class ListLayoutManagerSnapPaddingTest {
     private static final boolean NO_SELECT_ON_SNAP = false;
     private static final boolean NO_SELECT_WHILE_SCROLLING = false;
     private static final boolean HORIZONTAL = false;
+    private static final boolean SCROLL_PAST_CONTENT = false;
 
     private final MyViewGroup mViewGroup =
             new MyViewGroup(ApplicationProvider.getApplicationContext());
@@ -50,6 +51,7 @@ public class ListLayoutManagerSnapPaddingTest {
                         NOT_VIEW_PAGER,
                         0,
                         snapPosition,
+                        SCROLL_PAST_CONTENT,
                         CELL_SPACING,
                         NO_SELECT_ON_SNAP,
                         NO_SELECT_WHILE_SCROLLING,

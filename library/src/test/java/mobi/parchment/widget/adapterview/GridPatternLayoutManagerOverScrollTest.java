@@ -47,6 +47,7 @@ public class GridPatternLayoutManagerOverScrollTest {
                         false,
                         0,
                         SnapPosition.onScreen,
+                        false,
                         CELL_SPACING,
                         true,
                         true,

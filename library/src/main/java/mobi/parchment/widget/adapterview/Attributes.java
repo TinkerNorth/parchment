@@ -21,6 +21,7 @@ public class Attributes {
         private static final boolean SELECT_ON_SNAP = false;
         private static final SnapPosition SNAP_POSITION = SnapPosition.center;
         private static final boolean SELECT_WHILE_SCROLLING = false;
+        private static final boolean SCROLL_WITHIN_CONTENT = false;
         private static final Drawable DIVIDER = null;
         private static final int DIVIDER_SIZE = CellDivider.INTRINSIC_SIZE;
         private static final int NO_DIVIDER_SIZE = 0;
@@ -34,6 +35,7 @@ public class Attributes {
     private boolean mSelectOnSnap;
     private boolean mIsVertical;
     private boolean mSelectWhileScrolling;
+    private boolean mScrollWithinContent;
 
     private boolean mIsViewPager;
     private int mViewPagerInterval;
@@ -89,6 +91,10 @@ public class Attributes {
                         typedArray.getBoolean(
                                 R.styleable.ListView_parchment_selectWhileScrolling,
                                 DefaultValues.SELECT_WHILE_SCROLLING);
+                mScrollWithinContent =
+                        typedArray.getBoolean(
+                                R.styleable.ListView_parchment_scrollWithinContent,
+                                DefaultValues.SCROLL_WITHIN_CONTENT);
                 mDivider = typedArray.getDrawable(R.styleable.ListView_parchment_divider);
                 mDividerSize = getDividerSize(typedArray);
 
@@ -116,6 +122,7 @@ public class Attributes {
             mCellSpacing = DefaultValues.CELL_SPACING;
             mSelectOnSnap = DefaultValues.SELECT_ON_SNAP;
             mSelectWhileScrolling = DefaultValues.SELECT_WHILE_SCROLLING;
+            mScrollWithinContent = DefaultValues.SCROLL_WITHIN_CONTENT;
             mOrientation = DefaultValues.ORIENTATION;
             mDivider = DefaultValues.DIVIDER;
             mDividerSize = DefaultValues.DIVIDER_SIZE;
@@ -159,6 +166,10 @@ public class Attributes {
 
     public boolean selectWhileScrolling() {
         return mSelectWhileScrolling;
+    }
+
+    public boolean scrollWithinContent() {
+        return mScrollWithinContent;
     }
 
     private static int getDividerSize(final TypedArray typedArray) {

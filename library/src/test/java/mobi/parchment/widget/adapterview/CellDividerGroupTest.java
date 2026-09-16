@@ -66,6 +66,7 @@ public class CellDividerGroupTest {
     private static final int TALL_VIEW_SIZE = 100;
     private static final int SHORT_VIEW_SIZE = 60;
     private static final boolean CIRCULAR = true;
+    private static final boolean SCROLL_PAST_CONTENT = false;
     private static final int NO_CELL_SPACING = 0;
     private static final int THICK_DIVIDER_SIZE = 20;
     private static final int TWO_ITEMS = 2;
@@ -655,6 +656,7 @@ public class CellDividerGroupTest {
                 NOT_A_VIEW_PAGER,
                 VIEWPORT_VIEW_PAGER_INTERVAL,
                 SnapPosition.onScreen,
+                SCROLL_PAST_CONTENT,
                 cellSpacing,
                 NOT_SELECT_ON_SNAP,
                 NOT_SELECT_WHILE_SCROLLING,
@@ -702,6 +704,7 @@ public class CellDividerGroupTest {
                         NOT_A_VIEW_PAGER,
                         VIEWPORT_VIEW_PAGER_INTERVAL,
                         SnapPosition.onScreen,
+                        SCROLL_PAST_CONTENT,
                         cellSpacing,
                         NOT_SELECT_ON_SNAP,
                         NOT_SELECT_WHILE_SCROLLING,
@@ -779,6 +782,7 @@ public class CellDividerGroupTest {
                         NOT_A_VIEW_PAGER,
                         VIEWPORT_VIEW_PAGER_INTERVAL,
                         SnapPosition.onScreen,
+                        SCROLL_PAST_CONTENT,
                         CELL_SPACING,
                         NOT_SELECT_ON_SNAP,
                         NOT_SELECT_WHILE_SCROLLING,

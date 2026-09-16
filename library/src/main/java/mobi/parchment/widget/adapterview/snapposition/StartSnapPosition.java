@@ -49,7 +49,25 @@ public class StartSnapPosition<Cell> implements SnapPositionInterface<Cell> {
     }
 
     @Override
+    public int getCellSettleDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell) {
+        return getCellDistanceFromSnapPosition(layoutManager, size, cell);
+    }
+
+    @Override
     public int getSnapToPixelDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell) {
+        return getUnboundedSnapToPixelDistance(layoutManager, size, cell);
+    }
+
+    @Override
+    public int getUnboundedSnapToPixelDistance(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell) {
         final int snappedCellStart = getSnappedCellStart(layoutManager);
         final int cellStart = layoutManager.getCellStart(cell);

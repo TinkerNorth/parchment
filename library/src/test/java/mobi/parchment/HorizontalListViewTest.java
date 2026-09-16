@@ -184,6 +184,7 @@ public class HorizontalListViewTest {
                         "parchment_viewPagerInterval",
                         "parchment_snapPosition",
                         "parchment_selectWhileScrolling",
+                        "parchment_scrollWithinContent",
                         "parchment_divider",
                         "parchment_dividerSize",
                         "parchment_numberOfViewsPerCell",
@@ -234,6 +235,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(TEST_VIEW_PAGER_INTERVAL);
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.end);
         assertThat(attributes.selectWhileScrolling()).isTrue();
+        assertThat(attributes.scrollWithinContent()).isTrue();
     }
 
     @Test
@@ -409,6 +411,26 @@ public class HorizontalListViewTest {
     }
 
     @Test
+    public void scrollWithinContentSetInXml_reachesTheGridAttributesGetter() {
+        final GridAttributes gridAttributes =
+                gridAttributesFrom(
+                        R.layout.attribute_parsing_scroll_within_content,
+                        R.id.scroll_within_content_grid_view);
+
+        assertThat(gridAttributes.scrollWithinContent()).isTrue();
+    }
+
+    @Test
+    public void scrollWithinContentSetInXml_reachesTheGridPatternAttributesGetter() {
+        final GridPatternAttributes gridPatternAttributes =
+                gridPatternAttributesFrom(
+                        R.layout.attribute_parsing_scroll_within_content,
+                        R.id.scroll_within_content_grid_pattern_view);
+
+        assertThat(gridPatternAttributes.scrollWithinContent()).isTrue();
+    }
+
+    @Test
     public void gridPatternViewRatioSetInXml_reachesTheRatioGetter() {
         final GridPatternAttributes gridPatternAttributes =
                 gridPatternAttributesFrom(
@@ -434,6 +456,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.onScreen);
+        assertThat(attributes.scrollWithinContent()).isFalse();
         assertThat(attributes.getDivider()).isNull();
         assertThat(attributes.getDividerSize()).isEqualTo(DEFAULT_DIVIDER_SIZE);
     }
@@ -452,6 +475,7 @@ public class HorizontalListViewTest {
         assertThat(attributes.getViewPagerInterval()).isEqualTo(VIEWPORT_VIEW_PAGER_INTERVAL);
         assertThat(attributes.selectWhileScrolling()).isFalse();
         assertThat(attributes.getSnapPosition()).isEqualTo(SnapPosition.center);
+        assertThat(attributes.scrollWithinContent()).isFalse();
         assertThat(attributes.getDivider()).isNull();
         assertThat(attributes.getDividerSize()).isEqualTo(DEFAULT_DIVIDER_SIZE);
     }

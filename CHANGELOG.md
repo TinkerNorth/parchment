@@ -5,6 +5,61 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- `parchment_scrollWithinContent`, on all three views, keeps the content inside
+  the view: the first cell's start never moves inside the view's start edge and
+  the last cell's end never moves inside its end edge, the bound that `onScreen`
+  has always applied. With `start` the last cell now stops with its end at the
+  view's end instead of being dragged to the start edge with empty space after
+  it, `end` is the mirror, and `center` holds both ends; content shorter than
+  the view does not scroll and sits at the snap position, at the start, at the
+  end or centred. The content rests either on a cell at the snap position or at
+  one of the two ends, whichever is nearer, so a drag, fling, page, tap or
+  `setSelection` that runs into an end stops there and asks for nothing further,
+  whether or not the cells divide the view evenly; a cell larger than the view is the exception,
+  and rests at its snap point as it does under `onScreen`. At an end,
+  `parchment_selectOnSnap` selects the cell that would have snapped there: the
+  nearest of the cells the bound holds short of their snap point. A page is
+  measured from where the anchor cell would snap without the bound, so paging
+  back from an end returns to the page the gesture came from. Content that fits
+  the view is put in place by the same correction on the first layout, so with
+  `end` or `center` that first layout already selects, as `onScreen` has always
+  done for short content. `android:padding*` bounds the content the way it
+  bounds a snap. The attribute is off by default and is opt-in because the old
+  behaviour is deliberate: letting every cell reach the snap point, the last and
+  first included, is what lets `parchment_selectOnSnap` select every cell, and a
+  layout that relies on that must not change under it. It does nothing under
+  `onScreen`, which already keeps the content inside the view, or under
+  `parchment_isCircularScroll`, which has no ends (#21).
+
+### Changed
+
+- **Breaking:** the `LayoutManagerAttributes`, `GridLayoutManagerAttributes` and
+  `GridPatternLayoutManagerAttributes` constructors take the new flag, after the
+  snap position; `SnapPositionInterface.getSnapToPixelDistance` takes the drawn
+  cells and the interface gains `getCellSettleDistance` and
+  `getUnboundedSnapToPixelDistance`. All are implementation details the views
+  build and call for themselves, so nothing outside the library should be
+  constructing or implementing them.
+
+### Fixed
+
+- A drag that pushes the content past its end used to hold the last cell at the
+  snap position and then move the content one cell back under the finger,
+  reporting a settling state and firing a second selection for
+  `parchment_selectOnSnap`. The clamp stopped the animation from inside the
+  frame, before the correction had been laid out, so the snap that a stop hands
+  off to measured the cells where they had been rather than where they were. The
+  stop and the selection now run once the frame is laid out: the content stays
+  held on the last cell, reports no settling state, and selects it once. The
+  cell selected at an end is the cell nearest the snap position among those laid
+  out, which without `parchment_scrollWithinContent` is the held cell as before,
+  and under `onScreen`, whose every visible cell is at its snap position, is
+  still the held cell.
+
 ## [2.0.0] - 2026-09-15
 
 The first work on Parchment since 2014. Apart from the new cell divider,

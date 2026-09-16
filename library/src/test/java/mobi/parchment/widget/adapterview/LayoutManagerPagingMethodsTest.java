@@ -58,6 +58,7 @@ public class LayoutManagerPagingMethodsTest {
     private static final boolean NOT_SELECT_ON_SNAP = false;
     private static final boolean NOT_SELECT_WHILE_SCROLLING = false;
     private static final boolean NO_GRAVITY_EDGE = false;
+    private static final boolean SCROLL_PAST_CONTENT = false;
     private static final int NO_VIEWPORT_PADDING = 0;
     private static final int VIEWPORT_PADDING = 20;
     private static final int NO_DISTANCE = 0;
@@ -1360,6 +1361,7 @@ public class LayoutManagerPagingMethodsTest {
                         IS_A_VIEW_PAGER,
                         viewPagerInterval,
                         SnapPosition.start,
+                        SCROLL_PAST_CONTENT,
                         NO_CELL_SPACING,
                         NOT_SELECT_ON_SNAP,
                         NOT_SELECT_WHILE_SCROLLING,
@@ -1582,6 +1584,7 @@ public class LayoutManagerPagingMethodsTest {
                         IS_A_VIEW_PAGER,
                         VIEWPORT_PAGING,
                         SnapPosition.start,
+                        SCROLL_PAST_CONTENT,
                         NO_CELL_SPACING,
                         NOT_SELECT_ON_SNAP,
                         NOT_SELECT_WHILE_SCROLLING,
@@ -1646,6 +1649,7 @@ public class LayoutManagerPagingMethodsTest {
                             isViewPager,
                             viewPagerInterval,
                             snapPosition,
+                            SCROLL_PAST_CONTENT,
                             cellSpacing,
                             NOT_SELECT_ON_SNAP,
                             NOT_SELECT_WHILE_SCROLLING,

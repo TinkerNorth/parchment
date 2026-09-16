@@ -35,6 +35,7 @@ final class PlaygroundForm {
     private final CheckBox mSnapToPosition;
     private final RadioGroup mSnapPosition;
     private final TextView mSnapPositionHint;
+    private final CheckBox mScrollWithinContent;
     private final CheckBox mCircularScroll;
     private final CheckBox mViewPager;
     private final TextView mViewPagerHint;
@@ -58,6 +59,7 @@ final class PlaygroundForm {
         mSnapToPosition = activity.findViewById(R.id.playground_snap_to_position);
         mSnapPosition = activity.findViewById(R.id.playground_snap_position);
         mSnapPositionHint = activity.findViewById(R.id.playground_snap_position_hint);
+        mScrollWithinContent = activity.findViewById(R.id.playground_scroll_within_content);
         mCircularScroll = activity.findViewById(R.id.playground_circular_scroll);
         mViewPager = activity.findViewById(R.id.playground_view_pager);
         mViewPagerHint = activity.findViewById(R.id.playground_view_pager_hint);
@@ -81,6 +83,7 @@ final class PlaygroundForm {
         mDivider.setChecked(options.hasDivider());
         mSnapToPosition.setChecked(options.isSnapToPosition());
         check(mSnapPosition, options.getSnapPosition());
+        mScrollWithinContent.setChecked(options.scrollWithinContent());
         mCircularScroll.setChecked(options.isCircularScroll());
         mViewPager.setChecked(options.isViewPager());
         check(mViewPagerInterval, options.getViewPagerInterval());
@@ -101,6 +104,7 @@ final class PlaygroundForm {
                 .hasDivider(mDivider.isChecked())
                 .snapToPosition(mSnapToPosition.isChecked())
                 .snapPosition(checked(mSnapPosition, SnapPositionOption.values()))
+                .scrollWithinContent(mScrollWithinContent.isChecked())
                 .isCircularScroll(mCircularScroll.isChecked())
                 .isViewPager(mViewPager.isChecked())
                 .viewPagerInterval(checked(mViewPagerInterval, ViewPagerIntervalOption.values()))
@@ -119,10 +123,13 @@ final class PlaygroundForm {
         final boolean selectOnSnapHasAnEffect = PlaygroundRules.selectOnSnapHasAnEffect(options);
         final boolean selectWhileScrollingHasAnEffect =
                 PlaygroundRules.selectWhileScrollingHasAnEffect(options);
+        final boolean scrollWithinContentHasAnEffect =
+                PlaygroundRules.scrollWithinContentHasAnEffect(options);
         showSections(options.getViewKind());
         enableEach(mViewPagerInterval, ViewPagerIntervalOption.values(), intervalHasAnEffect);
         mSelectOnSnap.setEnabled(selectOnSnapHasAnEffect);
         mSelectWhileScrolling.setEnabled(selectWhileScrollingHasAnEffect);
+        mScrollWithinContent.setEnabled(scrollWithinContentHasAnEffect);
         showSnapPositionHint(options);
         showViewPagerHint(options);
         enableGravityButtonsWithAnEffect(options);
@@ -139,6 +146,7 @@ final class PlaygroundForm {
         mDivider.setOnCheckedChangeListener(refreshOnCheck);
         mSnapToPosition.setOnCheckedChangeListener(refreshOnCheck);
         mSnapPosition.setOnCheckedChangeListener(refreshOnGroupCheck);
+        mScrollWithinContent.setOnCheckedChangeListener(refreshOnCheck);
         mCircularScroll.setOnCheckedChangeListener(refreshOnCheck);
         mViewPager.setOnCheckedChangeListener(refreshOnCheck);
         mViewPagerInterval.setOnCheckedChangeListener(refreshOnGroupCheck);

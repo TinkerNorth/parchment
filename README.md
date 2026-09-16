@@ -302,6 +302,7 @@ All views:
 | `parchment_snapPosition` | `center`, `start`, `end`, `onScreen` | Where a cell settles |
 | `parchment_selectOnSnap` | boolean | Fire `OnItemSelectedListener` when a snap completes |
 | `parchment_selectWhileScrolling` | boolean | Fire selection while the content is still moving |
+| `parchment_scrollWithinContent` | boolean | Keep the content inside the view: the first cell stops at the start edge and the last at the end edge; see Snapping |
 | `parchment_isViewPager` | boolean | One page per gesture, ViewPager style |
 | `parchment_viewPagerInterval` | integer, or `viewport` | How far one ViewPager gesture pages. `viewport` (or `0`, or unset, the default) advances every cell that fits the viewport whole; `N` advances exactly N cells. Values below zero are read as `viewport` |
 | `parchment_divider` | drawable or colour | Drawn on every edge internal to the content and on none at its outer boundary: between adjacent cells and between the items stacked inside one |
@@ -319,6 +320,36 @@ GridPatternView:
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `parchment_ratio` | float | Aspect ratio of one grid cell |
+
+### Snapping
+
+`parchment_snapToPosition="true"` settles the nearest cell on `parchment_snapPosition`
+after a drag or fling. With `start` or `end` that includes the last or first cell:
+the content can be dragged until the last cell sits at the start edge, leaving the
+rest of the view empty, which is what lets `parchment_selectOnSnap` select that
+cell. `parchment_scrollWithinContent="true"` keeps the content inside the view
+instead: the first cell never moves inside the start edge and the last never
+moves inside the end edge, so with `start` the last cell stops with its end at
+the view's end, with `end` the first cell stops with its start at the view's
+start, and with `center` both hold. Content shorter than the view does not
+scroll and sits at the snap position: at the start, at the end, or centred. The
+content then rests either on a cell at the snap position or at one of those two
+ends, whichever is nearer, so a drag, fling, page, tap or `setSelection` that
+runs into an end stops there even when the cells do not divide the view evenly; a cell larger
+than the view is the exception and rests at its snap point, as under `onScreen`.
+At an end, `parchment_selectOnSnap` selects the cell that would have snapped
+there: the nearest of the cells the bound holds short of their snap point.
+`onScreen` already keeps the content inside the view and circular scrolling has
+no ends, so the attribute changes nothing under either.
+
+```xml
+<mobi.parchment.widget.adapterview.listview.ListView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    parchment:parchment_snapToPosition="true"
+    parchment:parchment_snapPosition="start"
+    parchment:parchment_scrollWithinContent="true" />
+```
 
 ### Paging
 

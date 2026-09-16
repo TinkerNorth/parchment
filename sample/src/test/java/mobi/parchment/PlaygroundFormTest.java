@@ -94,6 +94,35 @@ public class PlaygroundFormTest {
     }
 
     @Test
+    public void scrollWithinContent_withAnotherPositionAndEnds_isEnabled() {
+        final PlaygroundActivity activity = playground(Preset.listView);
+
+        check(activity, R.id.playground_snap_position, R.id.playground_snap_position_start);
+        setChecked(activity, R.id.playground_circular_scroll, false);
+
+        assertThat(isEnabled(activity, R.id.playground_scroll_within_content)).isTrue();
+    }
+
+    @Test
+    public void scrollWithinContent_withOnScreen_isDisabled() {
+        final PlaygroundActivity activity = playground(Preset.listView);
+
+        check(activity, R.id.playground_snap_position, R.id.playground_snap_position_on_screen);
+
+        assertThat(isEnabled(activity, R.id.playground_scroll_within_content)).isFalse();
+    }
+
+    @Test
+    public void scrollWithinContent_underCircularScroll_isDisabled() {
+        final PlaygroundActivity activity = playground(Preset.listView);
+
+        check(activity, R.id.playground_snap_position, R.id.playground_snap_position_start);
+        setChecked(activity, R.id.playground_circular_scroll, true);
+
+        assertThat(isEnabled(activity, R.id.playground_scroll_within_content)).isFalse();
+    }
+
+    @Test
     public void selectWhileScrolling_withOnScreen_isDisabled() {
         final PlaygroundActivity activity = playground(Preset.listView);
 

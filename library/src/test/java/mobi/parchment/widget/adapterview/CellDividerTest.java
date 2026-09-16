@@ -63,6 +63,7 @@ public class CellDividerTest {
     private static final int VIEWPORT_VIEW_PAGER_INTERVAL = 0;
     private static final boolean NOT_SELECT_ON_SNAP = false;
     private static final boolean NOT_SELECT_WHILE_SCROLLING = false;
+    private static final boolean SCROLL_PAST_CONTENT = false;
     private static final int GAP_START = 100;
     private static final int GAP_END = 110;
     private static final int GAP_START_ACROSS_THE_ORIGIN = -5;
@@ -454,6 +455,7 @@ public class CellDividerTest {
                             NOT_A_VIEW_PAGER,
                             VIEWPORT_VIEW_PAGER_INTERVAL,
                             SnapPosition.onScreen,
+                            SCROLL_PAST_CONTENT,
                             cellSpacing,
                             NOT_SELECT_ON_SNAP,
                             NOT_SELECT_WHILE_SCROLLING,

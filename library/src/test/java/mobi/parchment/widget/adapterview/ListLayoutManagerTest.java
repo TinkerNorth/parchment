@@ -44,6 +44,7 @@ public class ListLayoutManagerTest {
                         true,
                         0,
                         SnapPosition.onScreen,
+                        false,
                         CELL_SPACING,
                         true,
                         true,

@@ -25,6 +25,12 @@ public final class PlaygroundRules {
         return settlesOnACell(options);
     }
 
+    public static boolean scrollWithinContentHasAnEffect(final PlaygroundOptions options) {
+        final boolean hasEnds = !options.isCircularScroll();
+        final boolean canScrollPastTheContent = settlesOnACell(options);
+        return hasEnds && canScrollPastTheContent;
+    }
+
     public static boolean snapPositionsAreForcedOnScreen(final PlaygroundOptions options) {
         return options.isCircularScroll();
     }

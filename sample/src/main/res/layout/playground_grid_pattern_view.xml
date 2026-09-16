@@ -20,6 +20,7 @@
     parchment:parchment_isViewPager="?attr/playground_isViewPager"
     parchment:parchment_orientation="?attr/playground_orientation"
     parchment:parchment_ratio="?attr/playground_ratio"
+    parchment:parchment_scrollWithinContent="?attr/playground_scrollWithinContent"
     parchment:parchment_selectOnSnap="?attr/playground_selectOnSnap"
     parchment:parchment_selectWhileScrolling="?attr/playground_selectWhileScrolling"
     parchment:parchment_snapPosition="?attr/playground_snapPosition"

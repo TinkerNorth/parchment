@@ -39,6 +39,7 @@ public class GridPatternOverScrollTest {
     public static final boolean IS_VIEW_PAGER = false;
     public static final boolean SELECT_ON_SNAP = false;
     public static final boolean SELECT_WHILE_SCROLLING = false;
+    public static final boolean SCROLL_PAST_CONTENT = false;
     public static final int ADAPTER_SIZE = 7;
 
     final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
@@ -56,6 +57,7 @@ public class GridPatternOverScrollTest {
                         IS_VIEW_PAGER,
                         0,
                         SNAP_POSITION,
+                        SCROLL_PAST_CONTENT,
                         CELL_SPACING,
                         SELECT_ON_SNAP,
                         SELECT_WHILE_SCROLLING,

@@ -44,6 +44,7 @@ public class OnItemSelectedListenerTest {
                         false,
                         0,
                         SnapPosition.center,
+                        false,
                         CELL_SPACING,
                         true,
                         true,

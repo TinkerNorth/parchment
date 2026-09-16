@@ -16,6 +16,7 @@ public class LayoutManagerAttributes {
     private final int mViewPagerInterval;
     private final boolean mSnapToPosition;
     private final SnapPosition mSnapPosition;
+    private final boolean mScrollWithinContent;
     private final int mCellSpacing;
     private final boolean mSelectOnSnap;
     private final boolean mSelectWhileScrolling;
@@ -26,6 +27,7 @@ public class LayoutManagerAttributes {
             final boolean isViewPager,
             final int viewPagerInterval,
             final SnapPosition snapPosition,
+            final boolean scrollWithinContent,
             final int cellSpacing,
             final boolean selectOnSnap,
             final boolean selectWhileScrolling,
@@ -39,6 +41,7 @@ public class LayoutManagerAttributes {
         mIsViewPager = isViewPager;
         mIsCircularScroll = isCircularScroll;
         mSnapToPosition = snapToPosition;
+        mScrollWithinContent = scrollWithinContent;
         mCellSpacing = cellSpacing;
         mSelectOnSnap = selectOnSnap;
         mIsVertical = isVertical;
@@ -83,5 +86,9 @@ public class LayoutManagerAttributes {
 
     public boolean selectWhileScrolling() {
         return mSelectWhileScrolling;
+    }
+
+    public boolean scrollWithinContent() {
+        return mScrollWithinContent;
     }
 }

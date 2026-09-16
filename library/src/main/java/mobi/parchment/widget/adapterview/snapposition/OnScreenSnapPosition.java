@@ -109,7 +109,25 @@ public class OnScreenSnapPosition<Cell> implements SnapPositionInterface<Cell> {
     }
 
     @Override
+    public int getCellSettleDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell) {
+        return getCellDistanceFromSnapPosition(layoutManager, size, cell);
+    }
+
+    @Override
     public int getSnapToPixelDistance(
+            final LayoutManager<Cell> layoutManager,
+            final List<Cell> cells,
+            final int size,
+            final Cell cell) {
+        return getUnboundedSnapToPixelDistance(layoutManager, size, cell);
+    }
+
+    @Override
+    public int getUnboundedSnapToPixelDistance(
             final LayoutManager<Cell> layoutManager, final int size, final Cell cell) {
         final int startSizePadding = layoutManager.getStartSizePadding();
         final int endSizePadding = layoutManager.getEndSizePadding();
@@ -143,14 +161,6 @@ public class OnScreenSnapPosition<Cell> implements SnapPositionInterface<Cell> {
             final int size,
             final int cellSize,
             final Move move) {
-        final int startSizePadding = layoutManager.getStartSizePadding();
-        switch (move) {
-            case back:
-                return startSizePadding + size - cellSize;
-            case forward:
-            case none:
-            default:
-                return startSizePadding;
-        }
+        return ContentBound.getAbsoluteSnapPosition(layoutManager, size, cellSize, move);
     }
 }

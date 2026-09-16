@@ -48,6 +48,7 @@ public class GridPatternView<ADAPTER extends Adapter>
         final boolean snapToPosition = gridPatternAttributes.isSnapToPosition();
         final int viewPagerInterval = gridPatternAttributes.getViewPagerInterval();
         final SnapPosition snapPosition = gridPatternAttributes.getSnapPosition();
+        final boolean scrollWithinContent = gridPatternAttributes.scrollWithinContent();
         final boolean selectOnSnap = gridPatternAttributes.selectOnSnap();
         final boolean selectWhileScrolling = gridPatternAttributes.selectWhileScrolling();
         final Drawable divider = gridPatternAttributes.getDivider();
@@ -62,6 +63,7 @@ public class GridPatternView<ADAPTER extends Adapter>
                         isViewPager,
                         viewPagerInterval,
                         snapPosition,
+                        scrollWithinContent,
                         cellSpacing,
                         selectOnSnap,
                         selectWhileScrolling,

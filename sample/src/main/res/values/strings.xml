@@ -33,6 +33,7 @@
     <string name="playground_snap_start">start</string>
     <string name="playground_snap_end">end</string>
     <string name="playground_snap_on_screen">onScreen</string>
+    <string name="playground_scroll_within_content">Scroll within the content</string>
     <string name="playground_scrolling">Scrolling</string>
     <string name="playground_circular_scroll">Circular scroll</string>
     <string name="playground_view_pager">ViewPager: one page per gesture</string>
@@ -70,6 +71,7 @@
     <string name="playground_snap_to_position_hint">After a drag or fling, settles the nearest cell on the snap position; a tapped cell snaps there too, and setSelection jumps. With onScreen nothing settles, but a tap still brings its cell fully on screen and setSelection still jumps.</string>
     <string name="playground_snap_position_hint">Where a cell settles, a page lands and setSelection jumps to, and how far the first and last cells can be pulled in from the edges.</string>
     <string name="playground_snap_position_hint_circular">Circular scroll forces onScreen, so center, start and end no longer differ: all three still settle the nearest cell on an edge, and onScreen alone turns that settle off.</string>
+    <string name="playground_scroll_within_content_hint">Keeps the content inside the view: the first cell stops at the start edge and the last cell at the end edge, and content that fits the view sits at the snap position instead of scrolling. Needs a snap position other than onScreen, which already keeps the content inside, and no circular scroll, which has no ends.</string>
     <string name="playground_circular_scroll_hint">After the last cell comes the first again, so the content has no ends to pull against.</string>
     <string name="playground_view_pager_hint_settles">Only a fling turns a page. Snapping to a position other than onScreen is on, so a drag released slowly settles on a cell too.</string>
     <string name="playground_view_pager_hint_needs_snapping">Only a fling turns a page; a drag released slowly stops where it is. To always rest on a page, also snap to a position other than onScreen.</string>

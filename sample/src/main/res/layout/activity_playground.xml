@@ -194,6 +194,18 @@
                 android:layout_height="wrap_content"
                 android:text="@string/playground_snap_position_hint" />
 
+            <CheckBox
+                android:id="@+id/playground_scroll_within_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_scroll_within_content" />
+
+            <TextView
+                style="@style/ControlHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/playground_scroll_within_content_hint" />
+
             <TextView
                 style="@style/Heading"
                 android:layout_width="wrap_content"
