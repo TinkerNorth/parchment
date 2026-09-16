@@ -5,10 +5,12 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
-## [Unreleased]
+## [2.0.0] - 2026-09-15
 
 The first work on Parchment since 2014. Apart from the new cell divider,
 behaviour of the views is unchanged; everything around them is new.
+Published to Maven Central as `mobi.parchment:parchment:2.0.0`, the same
+coordinates as 1.x.
 
 ### Changed
 
@@ -173,6 +175,11 @@ behaviour of the views is unchanged; everything around them is new.
 
 ### Added
 
+- Releases are published to Maven Central by pushing a version tag. The
+  `release.yml` workflow checks the tag against `VERSION_NAME`, runs the
+  fast CI gates, signs and uploads the AAR with its sources and Javadoc
+  through the Central Portal, and creates a GitHub Release whose notes are
+  this file's section for that version, with the AAR attached.
 - `setOnScrollListener` reports scrolling on all three views, which had no way
   to observe it at all (#23, #19). `OnScrollListener` takes the shape of
   `RecyclerView.OnScrollListener` rather than `AbsListView.OnScrollListener`:
