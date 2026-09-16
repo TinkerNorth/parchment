@@ -3,7 +3,7 @@
 <resources>
     <dimen name="picture_request_horizontal_height">800dp</dimen>
     <dimen name="picture_request_gridview_width">420dp</dimen>
-    <dimen name="picture_request_view_pager_width">1280dp</dimen>
+    <dimen name="picture_request_vertical_width">1280dp</dimen>
     <dimen name="picture_request_grid_pattern_width">800dp</dimen>
     <dimen name="picture_request_grid_pattern_height">780dp</dimen>
 </resources>

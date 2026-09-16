@@ -30,6 +30,12 @@ android {
         targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     lint {
         abortOnError = true
         warningsAsErrors = true
@@ -42,8 +48,30 @@ android {
 dependencies {
     implementation(project(":library"))
     implementation(libs.picasso)
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.androidx.test.core)
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(listOf("-Xlint:all,-options,-this-escape", "-Werror"))
+    // -options: AGP's bootclasspath is not a system-modules path. -this-escape: View constructors
+    // must call the overridable AttributeSet hook. -classfile: Robolectric's jar references an
+    // android.annotation type that is not on the unit-test classpath.
+    val lint = mutableListOf("all", "-options", "-this-escape")
+    if (name.contains("UnitTest")) lint += "-classfile"
+    options.compilerArgs.addAll(listOf("-Xlint:" + lint.joinToString(","), "-Werror"))
+}
+
+tasks.withType<Test>().configureEach {
+    maxHeapSize = "1g"
+    jvmArgs("-XX:+ExitOnOutOfMemoryError")
+    // Robolectric URL-encodes the android-all jar path, so a home directory with a space breaks
+    // its native runtime; the gitignored .robolectric/ stands in for ~ on those machines.
+    val home = System.getProperty("user.home")
+    if (home.contains(' ')) {
+        val robolectricHome = rootProject.layout.projectDirectory.dir(".robolectric").asFile
+        systemProperty("user.home", robolectricHome.absolutePath)
+        doFirst { robolectricHome.mkdirs() }
+    }
 }

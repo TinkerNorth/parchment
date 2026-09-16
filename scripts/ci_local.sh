@@ -39,7 +39,7 @@ step "Android lint (library + sample, warnings are errors)"
 $GRADLE :library:lintDebug :sample:lintDebug $GRADLE_ARGS
 
 step "JVM unit tests (Robolectric)"
-$GRADLE :library:test $GRADLE_ARGS
+$GRADLE :library:test :sample:testDebugUnitTest $GRADLE_ARGS
 
 step "Assemble library AAR + sample debug APK"
 $GRADLE :library:assembleRelease :sample:assembleDebug $GRADLE_ARGS

@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="list_item_horizontal_height">750dp</dimen>
-    <item name="list_item_grid_view_column_count" format="integer" type="integer">3</item>
 </resources>

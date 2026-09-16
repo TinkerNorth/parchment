@@ -3,7 +3,7 @@
     android:background="@color/list_item_picture_border"
     android:foreground="@drawable/view_selector"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/list_item_view_pager_height">
+    android:layout_height="@dimen/list_item_vertical_picture_height">
 
     <ImageView
         android:id="@+id/list_item_picture_image_view"

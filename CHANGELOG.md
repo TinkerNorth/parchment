@@ -22,6 +22,27 @@ behaviour of the views is unchanged; everything around them is new.
   sample screen draw a divider, so the feature is visible in the app. A
   colour has no intrinsic size, so both declare an explicit
   `parchment_dividerSize`.
+- The sample's four fixed screens are replaced by a playground that reaches
+  every attribute and every combination of them. The first page lists the
+  high-level items: the three views, and the behaviours that cut across them
+  (paging, snapping, circular scrolling, dividers, selection, the scroll
+  listener). Each opens the playground pre-filled with a preset that shows
+  that item off — the four old screens are four of the presets — where every
+  `parchment_*` attribute is a control, plus the `GridPatternView` pattern.
+  Every control carries a hint saying what its attribute does, and one whose
+  attribute would have no effect under the other settings disables itself
+  and says what it needs; the printed XML leaves such an attribute out too.
+  Show inflates the configured view with a status line of what
+  `setOnScrollListener`, `OnItemSelectedListener` and `OnItemClickListener`
+  report, and an info button shows the layout that reproduces it, which Copy
+  puts on the clipboard. Parchment reads its attributes only when a view is
+  inflated and has no setters for them, so the playground layouts reference
+  `?attr/playground_*` theme attributes and `PlaygroundTheme` applies one
+  overlay style per chosen option to the theme it inflates under. The README
+  had the `GridPatternItemDefinition` parameters as
+  `(left, top, width, height)`; the constructor takes
+  `(top, left, height, width)`, and its example, which tiles either way, is
+  unchanged.
 - **Breaking:** the `AdapterAnimator` and `ChildTouchGestureListener`
   constructors take a `ScrollListenerDispatcher`. Both classes are
   implementation details that the views build for themselves — the in-tree
