@@ -558,9 +558,9 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
 
         @Override
         public void run() {
-            final boolean hasSize = mView.getWidth() > 0 && mView.getHeight() > 0;
+            final boolean hasBeenLaidOut = mView.isLaidOut();
             final boolean layoutIsPending = mView.isLayoutRequested();
-            mIsLaidOut = hasSize && !layoutIsPending;
+            mIsLaidOut = hasBeenLaidOut && !layoutIsPending;
         }
     }
 
