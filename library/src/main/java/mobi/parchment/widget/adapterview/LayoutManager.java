@@ -28,6 +28,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public float mLayoutCellCount;
     private final int MAX = Integer.MAX_VALUE / 2;
     private int mAnimationId = -1;
+    private boolean mAnimationIsAGesture;
+    private boolean mAStopIsOwedToAJump;
     private int mOffset = 0;
     private int mStartCellPosition;
     protected int mViewPageDistanceForward;
@@ -116,6 +118,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mPositions.clear();
         super.destroy();
         mCells.clear();
+        mAStopIsOwedToAJump = false;
         mViewGroup.removeCallbacks(mRequestLayoutRunnable);
     }
 
@@ -299,7 +302,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mStartCellPosition = getStartCellPositionToDraw();
 
         final int size = mScrollDirectionManager.getDrawSize(left, top, right, bottom);
-        final int displacement = animation.getDisplacement();
+        final int displacement = getDisplacementToApply(animation);
 
         if (mIsFirstLayout) {
             final boolean hasViews = getAdapterCount() != 0;
@@ -326,6 +329,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
         if (!continuedAnimation && !mCells.isEmpty()) {
             mAnimationId = animationId;
+            mAnimationIsAGesture = animation.isAGesture();
             setViewPageDistances(newSize);
             mAnimationDisplacement = displacement;
 
@@ -350,7 +354,9 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         correctOverScroll(adapterViewHandler, newSize, breadth);
+        holdTheSeekTarget(adapterViewHandler, animation, displacement, newSize, breadth);
         requestLayoutWhenADrawnCellOutgrowsTheMeasure();
+        stopWhenAJumpIsOwed();
         stopAndSelectWhenHeld(newSize);
 
         checkSelectWhileScrollingAttribute(newSize);
@@ -436,6 +442,61 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mFrameDisplacement += correction;
         mOffset += correction;
         layoutCells(adapterViewHandler, size, breadth);
+    }
+
+    private void holdTheSeekTarget(
+            final AdapterViewHandler adapterViewHandler,
+            final Animation animation,
+            final int displacement,
+            final int size,
+            final int breadth) {
+        final int seekTarget = animation.getSeekTarget();
+        final boolean isSeeking = seekTarget != Animation.NO_SEEK_TARGET;
+        if (!isSeeking) return;
+
+        final boolean isDrawn = isPositionDrawn(seekTarget);
+        if (!isDrawn) return;
+
+        final int overshoot = getSeekOvershoot(seekTarget, displacement, size);
+        applyOverScrollCorrection(adapterViewHandler, size, breadth, overshoot);
+    }
+
+    private int getSeekOvershoot(final int seekTarget, final int displacement, final int size) {
+        final int cellPosition = getCellPosition(seekTarget);
+        final long cellIndex = getCellIndexOf(cellPosition);
+        final int distanceLeft = getScrollDistanceToADrawnCell(size, cellIndex);
+        final int seekDirection = Integer.signum(displacement);
+        final int directionLeft = Integer.signum(distanceLeft);
+        final boolean theFramePassedTheTarget = directionLeft == -seekDirection;
+        if (theFramePassedTheTarget) return distanceLeft;
+        return 0;
+    }
+
+    private int getDisplacementToApply(final Animation animation) {
+        final boolean theJumpSupersedesTheFrame = isAJumpStoppingAnAnimation();
+        if (theJumpSupersedesTheFrame) return 0;
+        return animation.getDisplacement();
+    }
+
+    private void stopWhenAJumpIsOwed() {
+        final boolean stops = isAJumpStoppingAnAnimation();
+        mAStopIsOwedToAJump = false;
+        if (!stops) return;
+
+        mHeldCell = null;
+        onAnimationStopped();
+    }
+
+    private boolean isAJumpStoppingAnAnimation() {
+        if (!mAStopIsOwedToAJump) return false;
+
+        final boolean aFingerIsDown = isAFingerDown();
+        return !aFingerIsDown;
+    }
+
+    private boolean isAFingerDown() {
+        if (mAnimationStoppedListener == null) return false;
+        return mAnimationStoppedListener.isAFingerDown();
     }
 
     private void stopAndSelectWhenHeld(final int size) {
@@ -636,7 +697,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         if (!viewsBeingDrawn || isCircularScroll) return 0;
 
         final boolean isViewPager = mLayoutManagerAttributes.isViewPager();
-        if (isViewPager) {
+        final boolean isHeldToAPage = isViewPager && mAnimationIsAGesture;
+        if (isHeldToAPage) {
             final int viewPageDistance = getViewPageDistanceForAnimation();
             final int animationDistance = Math.abs(mAnimationDisplacement);
             final boolean isPastTheViewPage = animationDistance > viewPageDistance;
@@ -1075,6 +1137,161 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return getCellCount() - 1 - lastCellPosition;
     }
 
+    public boolean hasAScrollTarget() {
+        final boolean adapterHasCells = getAdapterCount() > 0;
+        final boolean cellsAreDrawn = !mCells.isEmpty();
+        return adapterHasCells && cellsAreDrawn;
+    }
+
+    public int clampToAdapter(final int position) {
+        final int lastPosition = getAdapterCount() - 1;
+        final int atMostTheLast = Math.min(position, lastPosition);
+        return Math.max(atMostTheLast, 0);
+    }
+
+    public boolean isPositionDrawn(final int position) {
+        final int cellPosition = getCellPosition(position);
+        final long cellIndex = getCellIndexOf(cellPosition);
+        return isDrawn(cellIndex);
+    }
+
+    private boolean isDrawn(final long cellIndex) {
+        final boolean isBeforeTheFirstCell = cellIndex < 0;
+        final boolean isAfterTheLastCell = cellIndex >= mCells.size();
+        return !isBeforeTheFirstCell && !isAfterTheLastCell;
+    }
+
+    public int getScrollToPositionDistance(final ViewGroup viewGroup, final int position) {
+        final int size = getSizeInsidePadding(viewGroup);
+        final int cellPosition = getCellPosition(position);
+        final long cellIndex = getCellIndexOf(cellPosition);
+
+        final boolean isDrawn = isDrawn(cellIndex);
+        if (isDrawn) return getScrollDistanceToADrawnCell(size, cellIndex);
+
+        final long way = getWayToAnUndrawnCell(size, cellIndex);
+        return getScrollDistanceToAnUndrawnCell(size, way);
+    }
+
+    public int getSeekStepLimit(final ViewGroup viewGroup, final int position) {
+        final int size = getSizeInsidePadding(viewGroup);
+        final int cellPosition = getCellPosition(position);
+        final long cellIndex = getCellIndexOf(cellPosition);
+
+        final boolean isDrawn = isDrawn(cellIndex);
+        if (isDrawn) return getScrollDistanceToADrawnCell(size, cellIndex);
+
+        final long way = getWayToAnUndrawnCell(size, cellIndex);
+        return getSeekStepLimitToAnUndrawnCell(viewGroup, size, way);
+    }
+
+    public int getSeekDistance(final ViewGroup viewGroup, final int position) {
+        final int distance = getScrollToPositionDistance(viewGroup, position);
+        final int direction = Integer.signum(distance);
+        final int runway = getSeekRunway(viewGroup);
+        final int overshoot = direction * runway;
+        return distance + overshoot;
+    }
+
+    public int getSeekRunway(final ViewGroup viewGroup) {
+        return getSizeInsidePadding(viewGroup);
+    }
+
+    private int getScrollDistanceToADrawnCell(final int size, final long cellIndex) {
+        final Cell cell = mCells.get((int) cellIndex);
+        return getSnapToPixelDistance(size, cell);
+    }
+
+    private long getWayToAnUndrawnCell(final int size, final long cellIndex) {
+        final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
+        if (isCircularScroll) return getShorterWayRound(size, cellIndex);
+        return cellIndex;
+    }
+
+    private long getShorterWayRound(final int size, final long cellsForward) {
+        final int cellCount = getCellCount();
+        final long cellsBack = cellsForward - cellCount;
+        final int forward = getScrollDistanceExtrapolatedAfterLast(size, cellsForward);
+        final int back = getScrollDistanceExtrapolatedBeforeFirst(size, cellsBack);
+        final boolean backIsShorter = Math.abs(back) < Math.abs(forward);
+        if (backIsShorter) return cellsBack;
+        return cellsForward;
+    }
+
+    private int getScrollDistanceToAnUndrawnCell(final int size, final long way) {
+        final boolean isBeforeTheFirstCell = way < 0;
+        if (isBeforeTheFirstCell) return getScrollDistanceExtrapolatedBeforeFirst(size, way);
+        return getScrollDistanceExtrapolatedAfterLast(size, way);
+    }
+
+    private int getSeekStepLimitToAnUndrawnCell(
+            final ViewGroup viewGroup, final int size, final long way) {
+        final int distance = getScrollDistanceToAnUndrawnCell(size, way);
+        final int keepsTheEdgeCellDrawn = getDistanceThatKeepsTheEdgeCellDrawn(viewGroup, way);
+        return nearer(distance, keepsTheEdgeCellDrawn);
+    }
+
+    private int getDistanceThatKeepsTheEdgeCellDrawn(final ViewGroup viewGroup, final long way) {
+        final boolean isBeforeTheFirstCell = way < 0;
+        if (isBeforeTheFirstCell) return getDistanceThatKeepsTheFirstCellDrawn(viewGroup);
+        return getDistanceThatKeepsTheLastCellDrawn();
+    }
+
+    private int getDistanceThatKeepsTheFirstCellDrawn(final ViewGroup viewGroup) {
+        final Cell firstCell = mCells.get(0);
+        final int firstStart = getCellStart(firstCell);
+        final int viewSize = getViewGroupSize(viewGroup);
+        return viewSize - firstStart;
+    }
+
+    private int getDistanceThatKeepsTheLastCellDrawn() {
+        final int lastCellIndex = mCells.size() - 1;
+        final Cell lastCell = mCells.get(lastCellIndex);
+        final int lastEnd = getCellEnd(lastCell);
+        return -lastEnd;
+    }
+
+    private static int nearer(final int distance, final int otherDistance) {
+        final boolean theOtherIsNearer = Math.abs(otherDistance) < Math.abs(distance);
+        if (theOtherIsNearer) return otherDistance;
+        return distance;
+    }
+
+    private int getScrollDistanceExtrapolatedBeforeFirst(final int size, final long cellIndex) {
+        final Cell firstCell = mCells.get(0);
+        final int firstDistance = getSnapToPixelDistance(size, firstCell);
+        final int firstStart = getCellStart(firstCell);
+        final int targetStart = getCellStartAtIndex(cellIndex);
+        final int stepsBack = firstStart - targetStart;
+        return firstDistance + stepsBack;
+    }
+
+    private int getScrollDistanceExtrapolatedAfterLast(final int size, final long cellIndex) {
+        final int lastCellIndex = mCells.size() - 1;
+        final Cell lastCell = mCells.get(lastCellIndex);
+        final int lastDistance = getSnapToPixelDistance(size, lastCell);
+        final int lastStart = getCellStart(lastCell);
+        final int targetStart = getCellStartAtIndex(cellIndex);
+        final int stepsOn = lastStart - targetStart;
+        return lastDistance + stepsOn;
+    }
+
+    private long getCellIndexOf(final int cellPosition) {
+        final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
+        if (isCircularScroll) return getCircularCellIndexOf(cellPosition);
+        return getLinearCellIndexOf(cellPosition);
+    }
+
+    private long getLinearCellIndexOf(final int cellPosition) {
+        return (long) cellPosition - mStartCellPosition;
+    }
+
+    private long getCircularCellIndexOf(final int cellPosition) {
+        final long cellCount = getCellCount();
+        final long cellsAhead = (long) cellPosition - mStartCellPosition;
+        return Math.floorMod(cellsAhead, cellCount);
+    }
+
     public int snapTo(final ViewGroup viewGroup) {
         final boolean isSnapToPosition = mLayoutManagerAttributes.isSnapToPosition();
         if (!isSnapToPosition) return 0;
@@ -1091,6 +1308,10 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return distance;
     }
 
+    public void reportTheSelectionAtRest() {
+        mSelectedPositionManager.onViewsDrawn(mPositions);
+    }
+
     @Override
     protected void onDataSetChanged() {
         if (mAdapterViewManager.isEmpty()) {
@@ -1101,6 +1322,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
             final AdapterViewHandler adapterViewHandler = (AdapterViewHandler) mViewGroup;
             recycleCells(adapterViewHandler);
 
+            mAStopIsOwedToAJump = true;
             return;
         }
 
@@ -1119,6 +1341,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         if (incomingPosition != INVALID_POSITION) {
             final AdapterViewHandler adapterViewHandler = (AdapterViewHandler) mViewGroup;
             jumpToPosition(adapterViewHandler, incomingPosition);
+            mAStopIsOwedToAJump = true;
         }
 
         final int currentlySelectedPosition = mSelectedPositionManager.getSelectedPosition();
@@ -1170,6 +1393,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         if (!snapToPosition) return;
 
         jumpToPosition(adapterViewHandler, position);
+        mAStopIsOwedToAJump = true;
     }
 
     public boolean setSelected(final View view) {

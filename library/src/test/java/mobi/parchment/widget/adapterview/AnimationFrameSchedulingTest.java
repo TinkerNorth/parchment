@@ -14,10 +14,12 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import mobi.parchment.test.R;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroup;
@@ -26,6 +28,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 import mobi.parchment.widget.adapterview.gridview.GridView;
 import mobi.parchment.widget.adapterview.gridview.Group;
 import mobi.parchment.widget.adapterview.listview.ListView;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +43,25 @@ public class AnimationFrameSchedulingTest {
     private static final int CELL_SIZE = 100;
     private static final int ADAPTER_SIZE = 10;
     private static final float FLING_VELOCITY = -1000f;
+    private static final int FIRST_CELL = 0;
+    private static final int SECOND_CELL = 1;
+    private static final int THIRD_CELL = 2;
+    private static final int SEVENTH_CELL = 6;
+    private static final int LAST_CELL = ADAPTER_SIZE - 1;
+    private static final int CENTRED_CELL_START = (VIEW_SIZE - CELL_SIZE) / 2;
+    private static final int TWO_CELLS_OF_MOVEMENT = 2 * CELL_SIZE;
+    private static final int FRAMES_INTO_THE_FLING = 3;
+    private static final int SHRUNK_ADAPTER_SIZE = 8;
+    private static final int EMPTY_ADAPTER = 0;
+    private static final long A_LATE_FRAME = 5000;
+    private static final int A_LONG_ADAPTER = 30;
+    private static final int A_CELL_FAR_DOWN_THE_LIST = 20;
+    private static final int FOURTH_CELL = 3;
+    private static final int FIFTH_CELL = 4;
+    private static final int TWO_CELLS = 2;
+    private static final int START_OF_THE_VIEW = 0;
+    private static final List<Integer> A_DRAG_JUMP_DRAG_AND_RELEASE =
+            Arrays.asList(-45, -20, -14, -11, -6, -4);
 
     private FrameLayout mContent;
     private CountingListView mListView;
@@ -702,12 +724,533 @@ public class AnimationFrameSchedulingTest {
         assertThat(listener.mDisplacementSum).isEqualTo(before - CELL_SIZE);
     }
 
+    @Test
+    public void aSmoothScrollToPositionFromRest_reportsSettlingThenIdleOnceEach() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void aSmoothScrollToADrawnCell_reportsSettlingThenIdleOnceEach() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.smoothScrollToPosition(SECOND_CELL);
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SECOND_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void theSummedDisplacementOfASmoothScroll_isTheDistanceTheContentMoved() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        final int before = mListView.mLayoutManager.getViewForPosition(FIRST_CELL).getLeft();
+
+        mListView.smoothScrollToPosition(THIRD_CELL);
+        idleMainLooper();
+
+        final int after = mListView.mLayoutManager.getViewForPosition(FIRST_CELL).getLeft();
+        assertThat(after - before).isEqualTo(-TWO_CELLS_OF_MOVEMENT);
+        assertThat(listener.mDisplacementSum).isEqualTo(after - before);
+    }
+
+    @Test
+    public void aSmoothScrollToTheCellAlreadyInPlace_reportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.smoothScrollToPosition(FIRST_CELL);
+        idleMainLooper();
+
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aSmoothScroll_runsOnAnimationFramesWithoutLayoutPasses() {
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mFramesRun).isGreaterThan(1);
+        assertThat(mListView.mLayoutPasses).isEqualTo(0);
+        assertThat(mListView.mLayoutRequests).isEqualTo(0);
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+    }
+
+    @Test
+    public void aSmoothScroll_whileALayoutIsPending_isCarriedForwardByTheLayoutPass() {
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        mListView.requestLayout();
+        assertThat(mListView.mLayoutRequests).isEqualTo(1);
+
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutPasses).isEqualTo(1);
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+    }
+
+    @Test
+    public void detachingTheViewMidSmoothScroll_stopsTheCallbacks() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        runOneFrame();
+        final int callsBeforeDetach = listener.mCalls.size();
+        assertThat(callsBeforeDetach).isGreaterThan(0);
+
+        mContent.removeView(mListView);
+        assertThat(mListView.isAttachedToWindow()).isFalse();
+        idleMainLooper();
+
+        assertThat(listener.mCalls).hasSize(callsBeforeDetach);
+    }
+
+    @Test
+    public void setSelectionMidFling_restsAtTheJumpAndReportsIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        fling();
+        runFrames(FRAMES_INTO_THE_FLING);
+        assertThat(firstChild().getLeft()).isNotEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling);
+
+        mListView.setSelection(SEVENTH_CELL);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void setSelectionMidFling_withSelectOnSnap_selectsTheCellThatRestsOnce() {
+        final CountingListView listView = selectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        listView.setOnItemSelectedListener(selections);
+        fling(listView);
+        runFrames(FRAMES_INTO_THE_FLING);
+
+        listView.setSelection(SEVENTH_CELL);
+        layOut(listView);
+        idleMainLooper();
+
+        assertThat(listView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(selections.mPositions).containsExactly(FIRST_CELL, SEVENTH_CELL);
+
+        layOut(listView);
+        idleMainLooper();
+
+        assertThat(listView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(selections.mPositions).containsExactly(FIRST_CELL, SEVENTH_CELL);
+    }
+
+    @Test
+    public void aDataSetChangeMidFling_restsAtTheJumpAndReportsIdle() {
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        fling();
+        runFrames(FRAMES_INTO_THE_FLING);
+        assertThat(childLefts()).doesNotContain(CENTRED_CELL_START);
+
+        adapter.setCount(SHRUNK_ADAPTER_SIZE);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(childLefts()).contains(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void setSelectionMidSmoothScroll_restsAtTheJumpAndReportsIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.smoothScrollToPosition(LAST_CELL);
+        runFrames(FRAMES_INTO_THE_FLING);
+        assertThat(firstChild().getLeft()).isNotEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling);
+
+        mListView.setSelection(SEVENTH_CELL);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void setSelection_atRest_runsNoFrameAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.setSelection(SEVENTH_CELL);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void setSelectionToTheCellInPlace_atRest_runsNoFrameAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.setSelection(FIRST_CELL);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(CENTRED_CELL_START);
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aDataSetChangeKeepingTheCount_atRest_runsNoFrameAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        mListView.setOnScrollListener(listener);
+        mListView.reset();
+
+        adapter.setCount(ADAPTER_SIZE);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(CENTRED_CELL_START);
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aDataSetChangeEmptyingTheAdapter_atRest_runsNoFrameAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        mListView.setOnScrollListener(listener);
+        mListView.reset();
+
+        adapter.setCount(EMPTY_ADAPTER);
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.getChildCount()).isEqualTo(EMPTY_ADAPTER);
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void setSelectionDuringADrag_leavesTheDragToTheFinger() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(155f), 45f, 0f);
+        idleMainLooper();
+
+        mListView.setSelection(FOURTH_CELL);
+        measureAndLayout();
+        mListView.mGestureListener.onScroll(down(), moveTo(135f), 20f, 0f);
+        idleMainLooper();
+        mListView.mGestureListener.onUp();
+        idleMainLooper();
+
+        assertThat(listener.mScrollStates)
+                .containsExactly(ScrollState.dragging, ScrollState.settling, ScrollState.idle);
+        assertThat(listener.mDisplacements).isEqualTo(A_DRAG_JUMP_DRAG_AND_RELEASE);
+        assertThat(mListView.mLayoutManager.getViewForPosition(FOURTH_CELL).getLeft())
+                .isEqualTo(START_OF_THE_VIEW);
+    }
+
+    @Test
+    public void aDataSetChangeDuringADrag_leavesTheDragToTheFinger() {
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(155f), 45f, 0f);
+        idleMainLooper();
+
+        adapter.setCount(SHRUNK_ADAPTER_SIZE);
+        measureAndLayout();
+        mListView.mGestureListener.onScroll(down(), moveTo(135f), 20f, 0f);
+        idleMainLooper();
+        mListView.mGestureListener.onUp();
+        idleMainLooper();
+
+        assertThat(listener.mScrollStates)
+                .containsExactly(ScrollState.dragging, ScrollState.settling, ScrollState.idle);
+        assertThat(listener.mDisplacements).isEqualTo(A_DRAG_JUMP_DRAG_AND_RELEASE);
+    }
+
+    @Test
+    public void aJumpDuringADragOnAPager_pagesFromWhereItRests() {
+        final CountingListView listView = viewPagerListView();
+        listView.mGestureListener.onDown(down());
+        listView.mGestureListener.onScroll(down(), moveTo(155f), 45f, 0f);
+        idleMainLooper();
+
+        listView.setSelection(FOURTH_CELL);
+        layOut(listView);
+        listView.mGestureListener.onUp();
+        idleMainLooper();
+        assertThat(listView.mLayoutManager.getViewForPosition(FOURTH_CELL).getLeft())
+                .isEqualTo(START_OF_THE_VIEW);
+
+        layOut(listView);
+        fling(listView);
+        idleMainLooper();
+
+        assertThat(listView.mLayoutManager.getViewForPosition(FIFTH_CELL).getLeft())
+                .isEqualTo(START_OF_THE_VIEW);
+    }
+
+    @Test
+    public void aDataSetChangeShrinkingBelowTheView_scrollWithinContent_atRest_runsNoFrame() {
+        final CountingListView listView = withinContentListView();
+        final ResizableAdapter adapter = new ResizableAdapter(listView.getContext());
+        listView.setAdapter(adapter);
+        layOut(listView);
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        listView.setOnScrollListener(listener);
+        listView.reset();
+
+        adapter.setCount(TWO_CELLS);
+        layOut(listView);
+        idleMainLooper();
+
+        assertThat(listView.getChildCount()).isEqualTo(TWO_CELLS);
+        assertThat(listView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mScrollStates).isEmpty();
+    }
+
+    @Test
+    public void setSelectionThenDetach_theFirstLayoutAfterReattachAppliesTheFrameNormally() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.setSelection(SEVENTH_CELL);
+        mContent.removeView(mListView);
+        idleMainLooper();
+        mContent.addView(mListView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+        mListView.reset();
+
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(mListView.mFrameRequests).isEqualTo(0);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aFlingRefusedAtTheStart_movesNothingAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        final int before = firstChild().getLeft();
+
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(245f), -45f, 0f);
+        idleMainLooper();
+        mListView.mGestureListener.onFling(down(), moveTo(300f), -FLING_VELOCITY, 0f);
+        mListView.mGestureListener.onUp();
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(before);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aSmoothScrollThatEndsInItsFirstFrame_stillReportsSettlingThenIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void aFlingThatEndsInItsFirstFrame_stillReportsSettlingThenIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        fling();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void
+            aFlingThatEndsOnASnapPoint_withSelectOnSnap_reportsTheSelectionWithoutALayoutPass() {
+        final CountingListView listView = selectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        listView.setOnItemSelectedListener(selections);
+        listView.reset();
+
+        fling(listView);
+        idleMainLooper();
+
+        assertThat(listView.mGestureListener.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(listView.mLayoutPasses).isEqualTo(0);
+        assertThat(selections.mPositions).containsExactly(FIRST_CELL, THIRD_CELL);
+    }
+
+    @Test
+    public void reattachingMidSeekAfterAStall_neverStepsBackAndLandsExactly() {
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        adapter.setCount(A_LONG_ADAPTER);
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.smoothScrollToPosition(A_CELL_FAR_DOWN_THE_LIST);
+        runFrames(FRAMES_INTO_THE_FLING);
+        mContent.removeView(mListView);
+        idleMainLooper();
+        mContent.addView(mListView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(A_CELL_FAR_DOWN_THE_LIST).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mDisplacements).are(new IsNegative());
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void reattachingTheViewAfterADetachMidSmoothScroll_resumesTheScrollAndLands() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        runOneFrame();
+        mContent.removeView(mListView);
+        idleMainLooper();
+
+        mContent.addView(mListView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
     private static void layOut(final View view) {
         final int measureSpec =
                 View.MeasureSpec.makeMeasureSpec(VIEW_SIZE, View.MeasureSpec.EXACTLY);
         view.forceLayout();
         view.measure(measureSpec, measureSpec);
         view.layout(0, 0, VIEW_SIZE, VIEW_SIZE);
+    }
+
+    private void runFrames(final int frames) {
+        for (int frame = 0; frame < frames; frame++) {
+            runOneFrame();
+        }
+    }
+
+    private List<Integer> childLefts() {
+        final List<Integer> lefts = new ArrayList<Integer>();
+        for (int index = 0; index < mListView.getChildCount(); index++) {
+            lefts.add(mListView.getChildAt(index).getLeft());
+        }
+        return lefts;
+    }
+
+    private CountingListView viewPagerListView() {
+        return countingListView(R.layout.counting_view_pager_list_view);
+    }
+
+    private CountingListView withinContentListView() {
+        return countingListView(R.layout.counting_within_content_list_view);
+    }
+
+    private CountingListView countingListView(final int layoutId) {
+        final Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        final FrameLayout content = new FrameLayout(activity);
+        activity.setContentView(content);
+        final CountingListView listView = (CountingListView) View.inflate(activity, layoutId, null);
+        listView.setAdapter(new FixedSizeAdapter(activity));
+        content.addView(listView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+        layOut(listView);
+        return listView;
+    }
+
+    private CountingListView selectOnSnapListView() {
+        final Activity activity = Robolectric.buildActivity(Activity.class).setup().get();
+        final FrameLayout content = new FrameLayout(activity);
+        activity.setContentView(content);
+        final CountingListView listView =
+                (CountingListView)
+                        View.inflate(activity, R.layout.counting_select_on_snap_list_view, null);
+        listView.setAdapter(new FixedSizeAdapter(activity));
+        content.addView(listView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+        layOut(listView);
+        return listView;
+    }
+
+    private static void fling(final CountingListView listView) {
+        listView.mGestureListener.onDown(down());
+        listView.mGestureListener.onFling(down(), moveTo(100f), FLING_VELOCITY, 0f);
+        listView.mGestureListener.onUp();
     }
 
     private void runOneFrame() {
@@ -900,12 +1443,14 @@ public class AnimationFrameSchedulingTest {
 
         final List<ScrollState> mScrollStates = new ArrayList<ScrollState>();
         final List<String> mCalls = new ArrayList<String>();
+        final List<Integer> mDisplacements = new ArrayList<Integer>();
         int mDisplacementSum;
         int mFirstChildLeftAtFirstCallback = NOT_RECORDED;
 
         @Override
         public void onScrolled(final AbstractAdapterView<?, ?> view, final int displacement) {
             mDisplacementSum += displacement;
+            mDisplacements.add(displacement);
             mCalls.add("scrolled:" + displacement);
             recordFirstChildLeft(view);
         }
@@ -923,6 +1468,27 @@ public class AnimationFrameSchedulingTest {
             if (view.getChildCount() == 0) return;
             mFirstChildLeftAtFirstCallback = view.getChildAt(0).getLeft();
         }
+    }
+
+    private static final class IsNegative extends Condition<Integer> {
+        @Override
+        public boolean matches(final Integer displacement) {
+            return displacement < 0;
+        }
+    }
+
+    private static final class RecordingItemSelectedListener
+            implements AdapterView.OnItemSelectedListener {
+        private final List<Integer> mPositions = new ArrayList<Integer>();
+
+        @Override
+        public void onItemSelected(
+                final AdapterView<?> parent, final View view, final int position, final long id) {
+            mPositions.add(position);
+        }
+
+        @Override
+        public void onNothingSelected(final AdapterView<?> parent) {}
     }
 
     private static final class SelfRemovingScrollListener implements OnScrollListener {

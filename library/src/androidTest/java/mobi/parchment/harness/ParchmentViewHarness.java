@@ -118,6 +118,13 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         waitForLayout();
     }
 
+    /** Calls smoothScrollToPosition on the main thread; settle() waits for where it lands. */
+    public void smoothScrollToPosition(final int position) {
+        final SmoothScrollToPosition<VIEW> smoothScrollToPosition =
+                new SmoothScrollToPosition<>(mView, position);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(smoothScrollToPosition);
+    }
+
     /** Reads getSelectedItemPosition on the main thread. */
     public int selectedItemPosition() {
         final ReadSelectedPosition<VIEW> readSelectedPosition = new ReadSelectedPosition<>(mView);
@@ -501,6 +508,24 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         @Override
         public void run() {
             mView.setSelection(mPosition);
+        }
+    }
+
+    private static final class SmoothScrollToPosition<
+                    VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            implements Runnable {
+
+        private final VIEW mView;
+        private final int mPosition;
+
+        SmoothScrollToPosition(final VIEW view, final int position) {
+            mView = view;
+            mPosition = position;
+        }
+
+        @Override
+        public void run() {
+            mView.smoothScrollToPosition(mPosition);
         }
     }
 

@@ -5,4 +5,8 @@ package mobi.parchment.widget.adapterview;
 
 public interface AnimationStoppedListener {
     public void onAnimationStopped();
+
+    public default boolean isAFingerDown() {
+        return false;
+    }
 }

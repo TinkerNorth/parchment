@@ -71,6 +71,8 @@ public class ViewPagerTest {
     private static final int A_CELL_SHORT_OF_THE_CONTENT_END = -30;
     private static final int BACK_TO_THE_CELL_AT_THE_START = 30;
     private static final int THE_LAST_CELL_INTO_THE_END = -30;
+    private static final int THREE_STEPS = 3;
+    private static final boolean NOT_A_GESTURE = false;
 
     final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
     final AdapterViewManager adapterViewManager = new AdapterViewManager();
@@ -1015,6 +1017,54 @@ public class ViewPagerTest {
         assertThat(pager.startOf(2)).isEqualTo(THE_UNEVEN_END_SNAP_POSITION);
     }
 
+    @Test
+    public void aProgrammaticAnimation_isNotHeldToOnePage() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startProgrammaticAnimation();
+        pager.dragThreeCellsForwardInSteps();
+
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void aProgrammaticAnimationAfterAGesture_isNotHeldToTheGesturesPage() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+        pager.startGesture();
+        pager.dragBy(A_REST_PART_WAY_THROUGH_A_CELL);
+
+        pager.startProgrammaticAnimation();
+        pager.dragThreeCellsForwardInSteps();
+
+        assertThat(pager.startOf(3)).isEqualTo(A_REST_PART_WAY_THROUGH_A_CELL);
+    }
+
+    @Test
+    public void aDrag_isStillHeldToOnePage() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+
+        pager.startGesture();
+        pager.dragThreeCellsForwardInSteps();
+
+        assertThat(pager.startOf(1)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
+    @Test
+    public void aDragAfterAProgrammaticScroll_pagesFromWhereItRests() {
+        final Pager pager = equalCellPager(ONE_CELL_PER_GESTURE, NOT_CIRCULAR);
+        pager.startProgrammaticAnimation();
+        pager.dragThreeCellsForwardInSteps();
+        assertThat(pager.startOf(3)).isEqualTo(START_OF_THE_VIEWPORT);
+
+        pager.startGesture();
+
+        assertThat(pager.pageDistance(Move.forward)).isEqualTo(-SMALL_CELL_SIZE);
+
+        pager.page(Move.forward);
+
+        assertThat(pager.startOf(4)).isEqualTo(START_OF_THE_VIEWPORT);
+    }
+
     private static Pager unevenWithinContentPager(final SnapPosition snapPosition) {
         return new Pager(
                 THREE_CELL_VIEWPORT,
@@ -1171,6 +1221,11 @@ public class ViewPagerTest {
             layout();
         }
 
+        private void startProgrammaticAnimation() {
+            mPagerAnimation.newAnimation(NOT_A_GESTURE);
+            layout();
+        }
+
         /** Starts a gesture whose first frame already carries a drag, as one on a device can. */
         private void startGestureWith(final int displacement) {
             mPagerAnimation.newAnimation();
@@ -1181,6 +1236,12 @@ public class ViewPagerTest {
         private void dragBy(final int displacement) {
             mPagerAnimation.setDisplacement(displacement);
             layout();
+        }
+
+        private void dragThreeCellsForwardInSteps() {
+            for (int step = 0; step < THREE_STEPS; step++) {
+                dragBy(-SMALL_CELL_SIZE);
+            }
         }
 
         private int pageDistance(final Move move) {

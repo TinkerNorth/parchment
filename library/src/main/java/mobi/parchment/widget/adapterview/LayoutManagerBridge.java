@@ -41,6 +41,54 @@ public class LayoutManagerBridge {
         return mLayoutManager.getFlingSnapAdjustment(viewGroup, displacement);
     }
 
+    public boolean hasAScrollTarget() {
+        if (mLayoutManager == null) return false;
+
+        return mLayoutManager.hasAScrollTarget();
+    }
+
+    public int clampToAdapter(final int position) {
+        if (mLayoutManager == null) return position;
+
+        return mLayoutManager.clampToAdapter(position);
+    }
+
+    public boolean isPositionDrawn(final int position) {
+        if (mLayoutManager == null) return false;
+
+        return mLayoutManager.isPositionDrawn(position);
+    }
+
+    public int getScrollToPositionDistance(final ViewGroup viewGroup, final int position) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getScrollToPositionDistance(viewGroup, position);
+    }
+
+    public int getSeekDistance(final ViewGroup viewGroup, final int position) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getSeekDistance(viewGroup, position);
+    }
+
+    public int getSeekStepLimit(final ViewGroup viewGroup, final int position) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getSeekStepLimit(viewGroup, position);
+    }
+
+    public int getSeekRunway(final ViewGroup viewGroup) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getSeekRunway(viewGroup);
+    }
+
+    public int getFrameDisplacement() {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getFrameDisplacement();
+    }
+
     public int getViewPagerScrollDistance(final float velocityX, final float velocityY) {
         if (mLayoutManager == null) return 0;
         final Move move = getMove(mLayoutManager.isVerticalScroll() ? velocityY : velocityX);

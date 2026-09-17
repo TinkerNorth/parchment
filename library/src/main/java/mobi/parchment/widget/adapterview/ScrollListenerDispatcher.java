@@ -22,12 +22,25 @@ public final class ScrollListenerDispatcher {
     public void dispatch(
             final AbstractAdapterView<?, ?> view,
             final int displacement,
-            final ScrollState scrollState) {
+            final ScrollState scrollStateDuringTheFrame,
+            final ScrollState scrollStateAtTheEnd) {
         if (mOnScrollListener == null) return;
 
         final boolean contentMoved = displacement != NO_DISPLACEMENT;
-        if (contentMoved) mOnScrollListener.onScrolled(view, displacement);
+        if (contentMoved) reportTheMovement(view, displacement, scrollStateDuringTheFrame);
 
+        report(view, scrollStateAtTheEnd);
+    }
+
+    private void reportTheMovement(
+            final AbstractAdapterView<?, ?> view,
+            final int displacement,
+            final ScrollState scrollStateDuringTheFrame) {
+        mOnScrollListener.onScrolled(view, displacement);
+        report(view, scrollStateDuringTheFrame);
+    }
+
+    private void report(final AbstractAdapterView<?, ?> view, final ScrollState scrollState) {
         if (mOnScrollListener == null) return;
         if (scrollState == mDispatchedScrollState) return;
 

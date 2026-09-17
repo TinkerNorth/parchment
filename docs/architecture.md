@@ -192,11 +192,11 @@ frame makes afterwards still counts, because that one does move the cells.
 
 The state comes from `AdapterAnimator.State` through `ScrollState.from`:
 `scrolling` is `dragging`, `notMoving` is `idle`, and everything that moves the
-content on its own — `flinging`, `snapingTo`, `animatingTo`, `jumpingTo` — is
-`settling`. The dispatcher keeps the last state it reported and says nothing when
-it has not changed, which is what swallows the `notMoving` that `setState`
-passes through on its way to `snapingTo` when a drag is released off the snap
-position.
+content on its own — `flinging`, `snapingTo`, `animatingTo`, `jumpingTo`,
+`seekingTo` — is `settling`. The dispatcher keeps the last state it reported
+and says nothing when it has not changed, which is what swallows the
+`notMoving` that `setState` passes through on its way to `snapingTo` when a
+drag is released off the snap position.
 
 `AdapterAnimator.setState` asks the dispatcher whether the new state is one the
 listener has not been told about yet, and if so requests a frame. Every state
@@ -220,8 +220,17 @@ nothing — a whole frame per gesture, spent only because a listener was attache
 and `onFrameLaidOut` bracket the frame step, and a state change inside it needs no
 frame of its own because the step dispatches at its end.
 
-The dispatcher reports a change, not a snapshot. It keeps the last state it
-reported for the view, not for the listener, so a listener set mid-gesture is
+The dispatcher reports a change, not a snapshot. `layoutFrame` hands it the
+state the frame ran in and the state it ended in, and it reports each that
+differs from the last one reported, in that order after `onScrolled` — the
+state it ran in only when the frame moved the content, so a frame the clamp
+refused entirely still reports nothing
+(`aFlingRefusedAtTheStart_movesNothingAndReportsNothing`) — so an
+animation that starts and rests within one frame — a short snap, or a smooth
+scroll on a main thread that stalled for a frame — still reports `settling`
+then `idle` rather than nothing
+(`aSmoothScrollThatEndsInItsFirstFrame_stillReportsSettlingThenIdle`). It
+keeps the last state it reported for the view, not for the listener, so a listener set mid-gesture is
 told the current state only when it differs from that, and setting the same
 listener again does not repeat it
 (`reAttachingTheSameListenerMidDrag_doesNotReportDraggingTwice`). It also reads
@@ -529,6 +538,205 @@ from finger-up to rest. The snap that follows a stop still runs as a safety
 net for anything the extrapolation could not know, such as cells of
 different sizes.
 
+## Scrolling to a position
+
+`smoothScrollToPosition` is a fling that knows where it is going. It runs
+through the same objects a fling does — `AdapterAnimator` owns the policy,
+`ScrollAnimator` the curves, `LayoutManager` the geometry — and it comes to
+rest the way a fling does, so everything that shapes a fling shapes it: the
+draw limits, `parchment_scrollWithinContent`, circular wrapping, padding,
+`parchment_selectOnSnap`, the scroll listener.
+
+It has two legs. When the target cell is drawn, the animator *lands*: one
+decelerating scroll of exactly the cell's bounded snap distance, the number
+`SnapPositionInterface.getSnapToPixelDistance` answers, so under
+`parchment_scrollWithinContent` a cell the bound holds short of its snap point
+decelerates onto the bound and rests there
+(`smoothScrollToPosition_scrollWithinContent_toACellHeldShortOfItsSnapPoint_restsAtTheBound`).
+When it is not, the animator *seeks*: a linear scroll toward the target by an
+estimate, and in the frame the target is laid out `onFrameLaidOut` hands off to
+the landing measured from where the cell actually is
+(`smoothScrollToPosition_theFrameTheTargetIsDrawn_handsOffToTheLandingInThatFrame`).
+The seek is linear because its length is a guess: a decelerating curve would
+have to know its end, and the estimate is only ever as good as the edge cell it
+was made from. The landing is not capped at half a second the way a snap is,
+because the two legs must meet at one speed: the landing's duration is the
+seek's time for the same distance divided by `LANDING_TIME_RATIO`, and with a
+`DecelerateInterpolator` whose curve starts twice as steep as a straight line
+that ratio is one half, so the landing's first frame moves as far as the
+seek's last (`landBy_startsAtTheSeekSpeed`). Both legs run at
+`SCROLL_TO_POSITION_MILLISECONDS_PER_INCH`, RecyclerView's programmatic speed
+and four times a snap's.
+
+The estimate is `LayoutManager.getScrollToPositionDistance`: the edge cell's
+snap distance plus the gap between the edge cell's start and
+`getCellStartAtIndex` for the target's index, which extrapolates with the edge
+cell's size plus spacing and is what paging already uses
+(`centerSnap_scrollToACellBeyondTheDrawnCells_extrapolatesWithTheLastCellSize`).
+The seek is given more than the estimate: `getSeekDistance` adds one viewport,
+the seek's *runway*, in the direction of travel
+(`seekDistance_isTheEstimatePlusAViewportInItsDirection`). The seek distance
+is only an upper bound, because the landing takes over the moment the target
+is drawn, and a bound with room to spare is what keeps the motion even: a seek
+that ran exactly to its estimate would finish part-way through a frame
+whenever the estimate was short, and the frame that restarted it would move
+only the remainder. A running seek is never re-targeted — `Scroller.setFinalX`
+rescales the whole curve and would jump — but `continueTheSeek` starts a fresh
+seek from where the content is whenever less than a viewport of runway is
+left, so a seek whose estimate was short by any amount (cells larger than the
+edge cell it was extrapolated from, a `GridPatternView`'s taller groups) runs
+on at the same speed without a short frame
+(`smoothScrollToPosition_aSeekThatEndsShortOfTheTarget_seeksAgainWithoutStopping`,
+`smoothScrollToPosition_aReSeek_keepsEveryFrameMovingAFullStep`). The runway
+is never applied, though: a frame can carry the scroller any distance — on a
+real framework a stalled main thread hands one frame the whole seek — so
+`computeScrollOffset` caps each seek frame's step at
+`LayoutManager.getSeekStepLimit`. For a drawn target that is its exact snap
+distance. For an undrawn one it is the nearer of two distances: the
+extrapolated distance to its snap point, and the distance that keeps the
+edge drawn cell on screen — the last cell's end brought to the start edge
+when seeking forward, the first cell's start brought to the end edge when
+seeking back. The bound this gives is what makes a stalled frame safe: the
+edge cell stays drawn, so `mCells` is never emptied and a seek frame can
+never reach `resetWhenNoCellsAreDrawn`, which would zero the frame and stop
+the animator at a reset with nothing reported; and since the target lies
+beyond the edge cell, it can never be carried off the far side of the view —
+at worst a stalled frame moves about one viewport and the next frames catch
+up at the seek's speed
+(`smoothScrollToPosition_aFrameThatWouldPassTheTarget_keepsTheEdgeCellDrawnAndLandsWithoutComingBack`,
+the `…_stalledSmoothScrollsThereAndBack_neverResetTheContent` set). The
+extrapolated half of the cap is exact for uniform cells, where no frame can
+reach past the snap point
+(`smoothScrollToPosition_onScreen_aFrameThatWouldPassTheTarget_restsWithItAtTheEdgeItCameFrom`,
+`listOnScreenSnap_smoothScrollWhoseFrameCarriesTheWholeSeek_settlesWithItsEndAtTheViewEnd`);
+where the cells beyond the drawn run are smaller than the edge cell it runs
+long by their difference, and a stalled frame can carry a drawn target past
+its snap point by that much. `layout` therefore holds a seek target the way
+it holds the content bounds: the `Animation` carries the target while the
+animator seeks, and `holdTheSeekTarget`, after the over-scroll correction,
+measures the drawn target from its real cells and applies the same
+correction when the frame's displacement has taken it past its snap point,
+so the frame ends on the snap point rather than beyond it and nothing is
+reversed in the frames that follow
+(`gridPatternEndSnap_smoothScrollWithEveryFrameDoubled_restsOnTheTargetWithoutAReversal`,
+`gridPatternCenterSnap_smoothScrollAcrossManyGroupsAfterAStall_restsOnTheTargetAndReportsSettlingThenIdle`).
+What is guaranteed, then: uniform cells land exactly however large the
+frame, an `onScreen` target at the edge it came from; non-uniform cells never
+leave the view, never reset, and a frame that overshoots is held at the snap
+point in that same frame, which under `onScreen` is wherever the cell is
+whole on screen, edge-aligned only when the cells are uniform. When no cell is
+drawn to measure from, after a jump or a detach, the frame applies nothing:
+the layout
+that follows drops or redraws it at the offset it kept, and `continueTheSeek`
+then sees the scroller spent and seeks again from a measured position with
+the cap in force, rather than applying a stalled scroller's whole runway
+blind and stepping back a viewport
+(`reattachingMidSeekAfterAStall_neverStepsBackAndLandsExactly`). Every re-seek
+moves at least one cell's step toward a target inside the adapter, so it ends;
+and as a safety net against any clamp the animator cannot see, a seek frame
+that asked for movement and was refused entirely by the layout rests rather
+than asking for another frame forever
+(`smoothScrollToPosition_aSeekFrameTheLayoutRefuses_restsInsteadOfSeekingForever`).
+The target's cell index is `getCellIndexOf`, a dispatcher over the linear and
+the circular case: linear is the position less `mStartCellPosition`; circular
+is the index forward from the drawn cells, and for an undrawn cell
+`getScrollDistanceTheShorterWayRound` extrapolates both ways round and takes
+the shorter in pixels, forward on a tie, because a tie in cells can be the
+longer path when the drawn run sits off the viewport edge
+(`circularScroll_theShorterWayInPixels_wins`, `circularScroll_aTie_goesForward`).
+Nothing per frame allocates: the index is arithmetic, and
+`isPositionBeingDrawn`, which iterates the position map, is not used.
+
+The seek is a state of its own, `seekingTo`, because `onFrameLaidOut` has to
+ask a different question of it: not "has the scroller finished?" but "is the
+target drawn yet, and if not, has the estimate run out?" `ScrollState.from`
+maps it to `settling`, and the seek-to-landing handoff is settling to
+settling, so a listener hears one `settling` and one `idle`
+(`aSmoothScrollToPositionFromRest_reportsSettlingThenIdleOnceEach`). The
+landing reuses `animatingTo` and ends through the ordinary stop: the residual
+snap the stop asks for is zero by construction, so it rests without a snap
+(`smoothScrollToPosition_theLandingEndsOnTheTargetsSnapPoint_andRestsWithoutASnap`),
+and `parchment_selectOnSnap` selects the cell at the snap position there. That
+selection used to be reported only by the next layout's `onViewsDrawn`, which
+a landing never produces and which a fling retargeted onto a snap point never
+produced either, so `AbstractAdapterView.layoutFrame` now asks the layout
+manager to report the selection whenever a frame ends at rest; it does so
+before that frame's own `onScrolled` and `onScrollStateChanged`, so an item
+listener that reads the scroll state sees the state the frame started with
+(`smoothScroll_withSelectOnSnap_selectsTheTargetOnce`,
+`aFlingThatEndsOnASnapPoint_withSelectOnSnap_reportsTheSelectionWithoutALayoutPass`). A target already at
+its snap point is a no-op from rest: no state change, no frame, no animation
+id (`smoothScrollToPosition_toTheCellAlreadyAtTheSnapPosition_changesNoStateAndRequestsNoFrame`).
+
+The ViewPager page clamp used to hold every animation to one page, whatever
+started it: `getOverDrawAdjust` refuses a frame once the animation's running
+displacement passes the page distance, for any animation id. A programmatic
+scroll across three pages would land one page on. `Animation` now records
+whether it was started by a gesture — `AdapterAnimator.State` says which
+states a finger starts, and `moveToState` passes that into `newAnimation` —
+and `LayoutManager.layout` keeps the flag with the id, so the clamp applies to
+a gesture and not to a smooth scroll (`aProgrammaticAnimation_isNotHeldToOnePage`,
+`aDrag_isStillHeldToOnePage`). A pager fling is already a snap of exactly one
+page, so no gesture changes. `moveToState` takes a new `Animation` not only
+when leaving rest but whenever the gesture flag changes hands, because a
+smooth scroll started during a page fling or a drag-release snap would
+otherwise keep the gesture's id, be held to its page, and, since a seek ends
+only when its target is drawn, ask for a frame forever
+(`smoothScrollToPosition_duringAPageFling_takesAnAnimationOfItsOwnAndCrossesThePages`,
+`viewPager_smoothScrollDuringAPageFling_landsOnTheTargetWithOneSettling`). The next gesture takes a new id and measures its
+page from wherever the scroll rested
+(`aDragAfterAProgrammaticScroll_pagesFromWhereItRests`).
+
+A jump ends a running animation. `setSelection` and a data set change move
+`mOffset` outside the animator, which used to carry on regardless: a fling
+interrupted by `setSelection` ran on from the jumped offset, and a seek would
+have kept seeking a target the jump had already put in place. The jump's
+geometry is left alone — `jumpToPosition` puts the incoming cell where the
+outgoing one *is*, which at rest is its snap point and mid-animation is
+wherever the animation had got to — so the stop cannot run at the jump: the
+jump has just emptied `mCells`, and a stop measured then would answer zero
+without looking and rest off the snap point. The jump sites instead record
+that a stop is owed, and `layout` performs it after `layoutCells` and the
+over-scroll correction of the pass the jump asked for, where the stop's snap
+measures the cells where they are and starts the residual snap in that same
+pass. That pass applies no displacement of the animation it is about to stop:
+the jump supersedes the frame, and a frame step laid over the jumped offset
+would only be snapped back again. A drag is not an animation: while a finger
+is down the owed stop is dropped and the frame's drag displacement applied, so
+a jump under the finger leaves the drag to the finger exactly as before
+(`setSelectionDuringADrag_leavesTheDragToTheFinger`,
+`aDataSetChangeDuringADrag_leavesTheDragToTheFinger`). When the jump's pass
+also runs into the clamp, the jump's stop wins and releases the held cell, so
+the pass stops once. Under `parchment_selectOnSnap` a jump that lands
+mid-animation reports its selection where the cell is at the jump, and the
+residual snap then moves it the last few pixels; main did the same with the
+fling still running.
+A fling's settling runs into the snap's settling, so a listener hears one
+`settling` and one `idle`, and the cell rests at its snap point; at rest the
+residual is zero and nothing moves or is reported
+(`setSelectionMidFling_restsAtTheJumpAndReportsIdle`,
+`aDataSetChangeMidFling_restsAtTheJumpAndReportsIdle`,
+`setSelectionMidSmoothScroll_restsAtTheJumpAndReportsIdle`,
+`setSelection_atRest_runsNoFrameAndReportsNothing`). `setAdapter` is not a
+jump; a smaller adapter set mid-seek is met by the seek re-clamping its target
+to the adapter on every frame
+(`smoothScrollToPosition_thenASmallerAdapterIsSet_restsOnItsLastCell`), and an
+empty one by the seek resting for want of a target
+(`smoothScrollToPosition_thenAnEmptyAdapterIsSet_rests`). A touch ends a
+smooth scroll the way it ends a fling: `onDown` stops it and the nearest cell
+snaps (`smoothScrollToPosition_thenATouchDown_stopsAndSnapsLikeAnInterruptedFling`);
+while a finger is down the call is ignored, because a seek frame under the
+finger would fight the drag and churn the listener
+(`smoothScrollToPosition_isIgnoredWhileTheFingerIsDown`). A frame of the seek
+that reveals a larger cell under `wrap_content` posts the one `requestLayout`
+the measure pass describes, the next animation frame yields to it, and the
+layout pass carries the seek forward
+(`smoothScroll_onAWrapContentViewThatRevealsALargerCell_stillSettlesOnTheTarget`).
+A detach mid-scroll clears the cells and the posted frame; on re-attach the
+layout pass redraws the cells from the kept offset and the seek resumes and
+lands, since the target is still the target
+(`reattachingTheViewAfterADetachMidSmoothScroll_resumesTheScrollAndLands`).
+
 ## Circular scrolling
 
 `parchment_isCircularScroll` is handled entirely in `LayoutManager`: adapter positions
@@ -621,7 +829,7 @@ from wherever a cell rests. It composes with `parchment_isCircularScroll`.
 `ACTION_UP`/`ACTION_CANCEL` the platform detector swallows.
 `ChildTouchGestureListener` turns scrolls and flings into `AdapterAnimator`
 state (`scrolling`, `flinging`, `snapingTo`, `animatingTo`, `jumpingTo`,
-`notMoving`) and decides whether a child consumed the touch, so item
+`seekingTo`, `notMoving`) and decides whether a child consumed the touch, so item
 clicks still reach `OnItemClickListener` through `AdapterView.performItemClick`.
 
 ## Saved state
@@ -642,3 +850,4 @@ same content position without the adapter's help.
 | Why is the divider missing or in the wrong place? | `CellDivider` and the edge geometry in `CellEdges`; `CellDividerTest`, `CellDividerGroupTest`, `CellEdgesTest`, `CellDividerPaintTest` |
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |
 | Why did the scroll listener report that? | `ScrollListenerDispatcher`, `ScrollState.from`, `LayoutManager.getFrameDisplacement` |
+| Why did a programmatic scroll stop short / land elsewhere? | `AdapterAnimator.continueTheSeek`, `LayoutManager.getScrollToPositionDistance`, `SnapSettleTest` |

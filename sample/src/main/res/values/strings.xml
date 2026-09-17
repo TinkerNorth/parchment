@@ -92,4 +92,7 @@
     <string name="demo_copy">Copy</string>
     <string name="demo_close">Close</string>
     <string name="demo_copied">Copied</string>
+    <string name="demo_scroll_to">Scroll to…</string>
+    <string name="demo_scroll_to_hint">Adapter position</string>
+    <string name="demo_scroll">Scroll</string>
 </resources>
