@@ -141,6 +141,12 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         return adapter.getItemId(selectedPosition);
     }
 
+    public void smoothScrollToPosition(final int position) {
+        final ChildTouchGestureListener childTouchListener =
+                mAdapterViewInitializer.getChildTouchListener();
+        childTouchListener.smoothScrollToPosition(position);
+    }
+
     @Override
     public void setSelection(final int position) {
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
@@ -258,6 +264,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             case flinging:
             case jumpingTo:
             case snapingTo:
+            case seekingTo:
                 requestAnimationFrame();
                 awakenScrollBars();
                 break;
@@ -266,10 +273,17 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
                 break;
             case notMoving:
             default:
+                reportTheSelectionAtRest(layoutManager);
                 break;
         }
         final ScrollState scrollState = ScrollState.from(state);
         mScrollListenerDispatcher.dispatch(this, frameDisplacement, scrollState);
+    }
+
+    private void reportTheSelectionAtRest(final LayoutManager<Cell> layoutManager) {
+        if (layoutManager == null) return;
+
+        layoutManager.reportTheSelectionAtRest();
     }
 
     private int layOutCells(

@@ -18,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import mobi.parchment.test.R;
@@ -85,6 +86,36 @@ public class SnapSettleTest {
     private static final float DRAG_STEP_PAST_THE_LAST_CELL = 150f;
     private static final int DRAG_STEPS_PAST_THE_LAST_CELL = 6;
     private static final int SEVENTH_CELL = 6;
+    private static final int FIRST_CELL = 0;
+    private static final int FOURTH_CELL = 3;
+    private static final int SIXTH_CELL = 5;
+    private static final int FIRST_VIEW_OF_THE_THIRD_CELL = 6;
+    private static final int FIRST_VIEW_OF_THE_FOURTH_ROW = 6;
+    private static final int LAST_VIEW_OF_THE_FOURTH_ROW = 7;
+    private static final int NON_UNIFORM_ADAPTER_SIZE = 20;
+    private static final int A_POSITION_IN_A_LATE_TALL_GROUP = 16;
+    private static final int FIRST_POSITION_OF_THAT_TALL_GROUP = 15;
+    private static final int NARROW_CELL_BREADTH = 100;
+    private static final int WIDE_CELL_BREADTH = 200;
+    private static final int FIRST_WIDE_CELL = 6;
+    // Recorded on main at a0688d7, before smoothScrollToPosition, with a scroll listener attached:
+    // a
+    // change to any of them is a change to a gesture. They count requests, not frames; the
+    // listener's
+    // undispatched-state request adds one call to a fling that the view dedups, which is the one
+    // more
+    // than FLING_THEN_SNAP_FRAME_REQUESTS.
+    private static final int FLING_FRAME_REQUESTS = FLING_THEN_SNAP_FRAME_REQUESTS + 1;
+    private static final List<Integer> FLING_DISPLACEMENTS =
+            Arrays.asList(
+                    -17, -17, -16, -15, -15, -13, -12, -12, -10, -10, -8, -8, -8, -6, -6, -6, -5,
+                    -4, -5, -3, -4, -3, -3, -2, -3, -2, -1, -2, -1, -1, -1, -1, -1, -1);
+    private static final int DRAG_RELEASE_SNAP_FRAME_REQUESTS = 9;
+    private static final List<Integer> DRAG_RELEASE_SNAP_DISPLACEMENTS =
+            Arrays.asList(-45, 15, 11, 9, 6, 3, 1);
+    private static final int TAP_TO_SNAP_FRAME_REQUESTS = 16;
+    private static final List<Integer> TAP_TO_SNAP_DISPLACEMENTS =
+            Arrays.asList(-16, -14, -13, -12, -11, -10, -8, -7, -7, -5, -3, -3, -2);
 
     private Activity mActivity;
     private FrameLayout mContent;
@@ -640,6 +671,259 @@ public class SnapSettleTest {
         assertThat(contentEnd(view)).isEqualTo(VIEW_SIZE);
     }
 
+    @Test
+    public void aFling_runsTheSameFramesAndDisplacementsAsBeforeSmoothScrolling() {
+        final SettleListView view = listView();
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+
+        fling(view, FLING_VELOCITY);
+
+        assertSettled(view);
+        assertThat(view.getFrameRequests()).isEqualTo(FLING_FRAME_REQUESTS);
+        assertThat(scrollListener.mDisplacements).isEqualTo(FLING_DISPLACEMENTS);
+    }
+
+    @Test
+    public void aDragReleaseSnap_runsTheSameFramesAndDisplacementsAsBefore() {
+        final SettleListView view = listView();
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+
+        drag(view);
+
+        assertSettled(view);
+        assertThat(view.getFrameRequests()).isEqualTo(DRAG_RELEASE_SNAP_FRAME_REQUESTS);
+        assertThat(scrollListener.mDisplacements).isEqualTo(DRAG_RELEASE_SNAP_DISPLACEMENTS);
+    }
+
+    @Test
+    public void aTapToSnap_runsTheSameFramesAndDisplacementsAsBefore() {
+        final SettleListView view = listView();
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+        final View secondCell = view.getChildAt(SECOND_CELL);
+
+        tap(view, secondCell);
+
+        assertSettled(view);
+        assertThat(view.getFrameRequests()).isEqualTo(TAP_TO_SNAP_FRAME_REQUESTS);
+        assertThat(scrollListener.mDisplacements).isEqualTo(TAP_TO_SNAP_DISPLACEMENTS);
+    }
+
+    @Test
+    public void listCenterSnap_smoothScrollToACellOffScreen_settlesWithThatCellCentred() {
+        final SettleListView view = listView();
+        assertThat(view.getLayoutManager().getViewForPosition(SEVENTH_CELL)).isNull();
+
+        smoothScroll(view, SEVENTH_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, SEVENTH_CELL)).isEqualTo(CENTRED_LIST_CELL_START);
+    }
+
+    @Test
+    public void listStartSnap_smoothScrollBackToAnEarlierCell_settlesWithItAtTheStart() {
+        final SettleListView view =
+                listView(R.layout.settle_list_start, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        select(view, SEVENTH_CELL);
+        assertThat(topOfPosition(view, SEVENTH_CELL)).isEqualTo(FIRST_ROW_START);
+
+        smoothScroll(view, THIRD_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, THIRD_CELL)).isEqualTo(FIRST_ROW_START);
+    }
+
+    @Test
+    public void listEndSnap_smoothScrollToALaterCell_settlesWithItsEndAtTheViewEnd() {
+        final SettleListView view =
+                listView(R.layout.settle_list_end, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+
+        smoothScroll(view, SEVENTH_CELL);
+
+        assertSettled(view);
+        assertThat(bottomOfPosition(view, SEVENTH_CELL)).isEqualTo(VIEW_SIZE);
+    }
+
+    @Test
+    public void listOnScreenSnap_smoothScrollToACellPastTheEnd_settlesWithItsEndAtTheViewEnd() {
+        final SettleListView view =
+                listView(R.layout.settle_list_on_screen, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+
+        smoothScroll(view, SEVENTH_CELL);
+
+        assertSettled(view);
+        assertThat(bottomOfPosition(view, SEVENTH_CELL)).isEqualTo(VIEW_SIZE);
+    }
+
+    @Test
+    public void
+            listOnScreenSnap_smoothScrollToACellBeforeTheStart_settlesWithItsStartAtTheViewStart() {
+        final SettleListView view =
+                listView(R.layout.settle_list_on_screen, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        smoothScroll(view, SEVENTH_CELL);
+        assertThat(view.getLayoutManager().getViewForPosition(THIRD_CELL)).isNull();
+
+        smoothScroll(view, THIRD_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, THIRD_CELL)).isEqualTo(FIRST_ROW_START);
+    }
+
+    @Test
+    public void gridCenterSnap_smoothScrollToAPositionInALaterRow_settlesWithThatRowCentred() {
+        final SettleGridView view = gridView();
+
+        smoothScroll(view, LAST_VIEW_OF_THE_FOURTH_ROW);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, FIRST_VIEW_OF_THE_FOURTH_ROW))
+                .isEqualTo(CENTRED_LIST_CELL_START);
+    }
+
+    @Test
+    public void
+            gridPatternCenterSnap_smoothScrollToAPositionInALaterGroup_settlesWithThatGroupCentred() {
+        final SettleGridPatternView view = nonUniformGridPatternView();
+        assertThat(view.getLayoutManager().getViewForPosition(A_POSITION_IN_A_LATE_TALL_GROUP))
+                .isNull();
+
+        smoothScroll(view, A_POSITION_IN_A_LATE_TALL_GROUP);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, FIRST_POSITION_OF_THAT_TALL_GROUP))
+                .isEqualTo(CENTRED_CELL_START);
+    }
+
+    @Test
+    public void
+            gridPatternCenterSnap_scrollingHorizontally_smoothScroll_settlesWithTheGroupCentred() {
+        final SettleGridPatternView view =
+                gridPatternView(R.layout.settle_grid_pattern_horizontal, ADAPTER_SIZE, false);
+
+        smoothScroll(view, FIRST_VIEW_OF_THE_THIRD_CELL);
+
+        assertSettled(view);
+        assertThat(leftOfPosition(view, FIRST_VIEW_OF_THE_THIRD_CELL))
+                .isEqualTo(HORIZONTAL_CENTRED_CELL_START);
+    }
+
+    @Test
+    public void listStartSnap_scrollWithinContent_smoothScrollToTheLastCell_restsAtTheContentEnd() {
+        final SettleListView view =
+                listView(
+                        R.layout.settle_list_start_within_content,
+                        WITHIN_CONTENT_CELL_SIZE,
+                        ADAPTER_SIZE);
+
+        smoothScroll(view, LAST_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, LAST_CELL)).isEqualTo(THIRD_ROW_START);
+        assertThat(contentEnd(view)).isEqualTo(VIEW_SIZE);
+    }
+
+    @Test
+    public void circularScroll_smoothScrollToTheLastCellFromTheFirst_goesBackOneCell() {
+        final SettleListView view =
+                listView(R.layout.settle_list_circular, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+
+        smoothScroll(view, LAST_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, LAST_CELL)).isEqualTo(FIRST_ROW_START);
+        assertThat(topOfPosition(view, FIRST_CELL)).isEqualTo(SECOND_ROW_START);
+    }
+
+    @Test
+    public void viewPager_smoothScrollToACellThreePagesAway_crossesThePages() {
+        final SettleListView view =
+                listView(R.layout.settle_list_view_pager, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        layOutAtRest(view);
+
+        smoothScroll(view, FOURTH_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, FOURTH_CELL)).isEqualTo(FIRST_ROW_START);
+    }
+
+    @Test
+    public void viewPager_smoothScrollDuringAPageFling_landsOnTheTargetWithOneSettling() {
+        final SettleListView view =
+                listView(R.layout.settle_list_view_pager, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        layOutAtRest(view);
+        final RecordingScrollListener scrollStates = new RecordingScrollListener();
+        view.setOnScrollListener(scrollStates);
+        final ChildTouchGestureListener gestureListener = view.getGestureListener();
+        gestureListener.onDown(down());
+        gestureListener.onFling(down(), moveBy(DRAG_DISTANCE), FLING_VELOCITY, FLING_VELOCITY);
+        gestureListener.onUp();
+        runOneFrame();
+        runOneFrame();
+
+        smoothScroll(view, SIXTH_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, SIXTH_CELL)).isEqualTo(FIRST_ROW_START);
+        assertThat(scrollStates.mStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void smoothScroll_thenATouchDown_settlesOnTheNearestCell() {
+        final SettleListView view = listView();
+        view.smoothScrollToPosition(SEVENTH_CELL);
+        runOneFrame();
+        runOneFrame();
+        assertThat(childTops(view)).doesNotContain(CENTRED_LIST_CELL_START);
+
+        touch(view);
+
+        assertSettled(view);
+        assertThat(childTops(view)).contains(CENTRED_LIST_CELL_START);
+    }
+
+    @Test
+    public void smoothScroll_withSelectOnSnap_selectsTheTargetOnce() {
+        final SettleListView view =
+                listView(
+                        R.layout.settle_list_start_select_on_snap,
+                        WITHIN_CONTENT_CELL_SIZE,
+                        ADAPTER_SIZE);
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+
+        smoothScroll(view, SEVENTH_CELL);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, SEVENTH_CELL)).isEqualTo(FIRST_ROW_START);
+        assertThat(selections.mSelectionCount).isEqualTo(1);
+        assertThat(selections.mLastPosition).isEqualTo(SEVENTH_CELL);
+    }
+
+    @Test
+    public void smoothScroll_toTheCellAlreadyAtTheSnapPosition_requestsNoFrame() {
+        final SettleListView view = listView();
+        assertThat(topOfPosition(view, FIRST_CELL)).isEqualTo(CENTRED_LIST_CELL_START);
+
+        smoothScroll(view, FIRST_CELL);
+
+        assertThat(view.getFrameRequests()).isEqualTo(0);
+        assertThat(view.getGestureListener().getState()).isEqualTo(AdapterAnimator.State.notMoving);
+    }
+
+    @Test
+    public void smoothScroll_onAWrapContentViewThatRevealsALargerCell_stillSettlesOnTheTarget() {
+        final SettleListView view = wrappingListView();
+        assertThat(view.getWidth()).isEqualTo(NARROW_CELL_BREADTH);
+
+        smoothScroll(view, LAST_CELL);
+
+        assertSettled(view);
+        assertThat(view.getWidth()).isEqualTo(WIDE_CELL_BREADTH);
+        assertThat(topOfPosition(view, LAST_CELL)).isEqualTo(SECOND_ROW_START);
+    }
+
     private void assertSettled(final SettleView view) {
         assertThat(view.getFrameRequests()).isLessThanOrEqualTo(FRAME_BUDGET);
         assertThat(view.getGestureListener().getState()).isEqualTo(AdapterAnimator.State.notMoving);
@@ -691,10 +975,25 @@ public class SnapSettleTest {
     }
 
     private int topOfPosition(final ViewGroup view, final int position) {
+        final View child = childOfPosition(view, position);
+        return child.getTop();
+    }
+
+    private int bottomOfPosition(final ViewGroup view, final int position) {
+        final View child = childOfPosition(view, position);
+        return child.getBottom();
+    }
+
+    private int leftOfPosition(final ViewGroup view, final int position) {
+        final View child = childOfPosition(view, position);
+        return child.getLeft();
+    }
+
+    private View childOfPosition(final ViewGroup view, final int position) {
         for (int index = 0; index < view.getChildCount(); index++) {
             final View child = view.getChildAt(index);
             final boolean isThePosition = child.getTag().equals(position);
-            if (isThePosition) return child.getTop();
+            if (isThePosition) return child;
         }
         throw new IllegalStateException("position " + position + " is not laid out");
     }
@@ -747,6 +1046,48 @@ public class SnapSettleTest {
         view.setAdapter(new StretchAdapter(mActivity, adapterSize));
         attachAndLayout(view);
         return view;
+    }
+
+    /**
+     * Groups of two rows and groups of one row in turn, so an estimate made from the size of one
+     * kind of group runs short or long of the other.
+     */
+    private SettleGridPatternView nonUniformGridPatternView() {
+        final SettleGridPatternView view =
+                (SettleGridPatternView)
+                        View.inflate(mActivity, R.layout.settle_grid_pattern_center, null);
+        final List<GridPatternItemDefinition> twoRows = new ArrayList<GridPatternItemDefinition>();
+        twoRows.add(new GridPatternItemDefinition(0, 0, 1, 2));
+        twoRows.add(new GridPatternItemDefinition(1, 0, 1, 1));
+        twoRows.add(new GridPatternItemDefinition(1, 1, 1, 1));
+        view.addGridPatternGroupDefinition(twoRows);
+        final List<GridPatternItemDefinition> oneRow = new ArrayList<GridPatternItemDefinition>();
+        oneRow.add(new GridPatternItemDefinition(0, 0, 1, 1));
+        oneRow.add(new GridPatternItemDefinition(0, 1, 1, 1));
+        view.addGridPatternGroupDefinition(oneRow);
+        view.setAdapter(new StretchAdapter(mActivity, NON_UNIFORM_ADAPTER_SIZE));
+        attachAndLayout(view);
+        return view;
+    }
+
+    private SettleListView wrappingListView() {
+        final SettleListView view =
+                (SettleListView) View.inflate(mActivity, R.layout.settle_list_wrap_content, null);
+        view.setAdapter(new WideningAdapter(mActivity, ADAPTER_SIZE));
+        mContent.addView(
+                view, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, VIEW_SIZE));
+        layOutWrapping(view);
+        return view;
+    }
+
+    private void layOutWrapping(final View view) {
+        final int breadthSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEW_BREADTH, View.MeasureSpec.AT_MOST);
+        final int sizeSpec = View.MeasureSpec.makeMeasureSpec(VIEW_SIZE, View.MeasureSpec.EXACTLY);
+        view.forceLayout();
+        view.measure(breadthSpec, sizeSpec);
+        final int measuredBreadth = view.getMeasuredWidth();
+        view.layout(0, 0, measuredBreadth, VIEW_SIZE);
     }
 
     private SettleListView listView() {
@@ -868,6 +1209,16 @@ public class SnapSettleTest {
         idleMainLooper();
     }
 
+    private void smoothScroll(final SettleView view, final int position) {
+        view.reset();
+        view.smoothScrollToPosition(position);
+        idleMainLooper();
+    }
+
+    private void runOneFrame() {
+        shadowOf(Looper.getMainLooper()).runOneTask();
+    }
+
     private void idleMainLooper() {
         shadowOf(Looper.getMainLooper()).idle();
     }
@@ -901,9 +1252,12 @@ public class SnapSettleTest {
 
     private static final class RecordingScrollListener implements OnScrollListener {
         private final List<ScrollState> mStates = new ArrayList<ScrollState>();
+        private final List<Integer> mDisplacements = new ArrayList<Integer>();
 
         @Override
-        public void onScrolled(final AbstractAdapterView<?, ?> view, final int displacement) {}
+        public void onScrolled(final AbstractAdapterView<?, ?> view, final int displacement) {
+            mDisplacements.add(displacement);
+        }
 
         @Override
         public void onScrollStateChanged(
@@ -914,6 +1268,8 @@ public class SnapSettleTest {
 
     private interface SettleView {
         void reset();
+
+        void smoothScrollToPosition(int position);
 
         int getFrameRequests();
 
@@ -1129,6 +1485,12 @@ public class SnapSettleTest {
 
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final View view = viewToFill(convertView);
+            view.setTag(position);
+            return view;
+        }
+
+        private View viewToFill(final View convertView) {
             if (convertView != null) return convertView;
             final FrameLayout view = new FrameLayout(mContext);
             view.setLayoutParams(
@@ -1218,12 +1580,82 @@ public class SnapSettleTest {
 
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final View view = viewToFill(position, convertView);
+            view.setTag(position);
+            return view;
+        }
+
+        private View viewToFill(final int position, final View convertView) {
             if (convertView != null) return convertView;
             final boolean isTall = position % 2 == 0;
             final int size = isTall ? TALL_SIZE : SHORT_SIZE;
             final FrameLayout view = new FrameLayout(mContext);
             view.setLayoutParams(new ViewGroup.LayoutParams(size, size));
             return view;
+        }
+    }
+
+    /** Cells of one height whose breadth doubles from the seventh cell on. */
+    private static final class WideningAdapter extends BaseAdapter {
+        private static final int NARROW_VIEW_TYPE = 0;
+        private static final int WIDE_VIEW_TYPE = 1;
+        private static final int VIEW_TYPE_COUNT = 2;
+        private final Context mContext;
+        private final int mCount;
+
+        WideningAdapter(final Context context, final int count) {
+            mContext = context;
+            mCount = count;
+        }
+
+        @Override
+        public int getCount() {
+            return mCount;
+        }
+
+        @Override
+        public Object getItem(final int position) {
+            return position;
+        }
+
+        @Override
+        public long getItemId(final int position) {
+            return position;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return VIEW_TYPE_COUNT;
+        }
+
+        @Override
+        public int getItemViewType(final int position) {
+            if (isWide(position)) return WIDE_VIEW_TYPE;
+            return NARROW_VIEW_TYPE;
+        }
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final View view = viewToFill(position, convertView);
+            view.setTag(position);
+            return view;
+        }
+
+        private View viewToFill(final int position, final View convertView) {
+            if (convertView != null) return convertView;
+            final int breadth = breadthOf(position);
+            final FrameLayout view = new FrameLayout(mContext);
+            view.setLayoutParams(new ViewGroup.LayoutParams(breadth, WITHIN_CONTENT_CELL_SIZE));
+            return view;
+        }
+
+        private static int breadthOf(final int position) {
+            if (isWide(position)) return WIDE_CELL_BREADTH;
+            return NARROW_CELL_BREADTH;
+        }
+
+        private static boolean isWide(final int position) {
+            return position >= FIRST_WIDE_CELL;
         }
     }
 }

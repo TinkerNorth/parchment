@@ -7,8 +7,42 @@ All notable changes to Parchment, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `smoothScrollToPosition(int)`, on all three views, animates the cell holding
+  the position to `parchment_snapPosition` the way a fling gets there, where
+  `setSelection` jumps. It runs at RecyclerView's programmatic speed, 25 ms
+  per inch, four times a snap's: a cell already laid out is landed on with one
+  decelerating scroll of exactly its snap distance; a cell that is not is
+  sought at a constant speed by the distance extrapolated from the edge cell's
+  size plus a viewport of runway, handed to the landing in the frame it is
+  laid out, and sought again from wherever it is whenever less than a viewport
+  of runway is left, so the motion stays even when the cells between were
+  larger than the estimate assumed. The landing is not capped at half a
+  second, so a long scroll decelerates from the seek's speed rather than
+  snapping the rest of the way. It obeys every bound a fling obeys:
+  `android:padding*`, `parchment_scrollWithinContent`, under which a cell the
+  bound holds short of its snap point decelerates onto the bound and rests
+  there, and `parchment_isCircularScroll`, under which it takes the shorter
+  way round. A `parchment_isViewPager` view is crossed page by page rather
+  than held to one, which needed the page clamp to learn that an animation is
+  not a gesture. It reports `settling` then `idle` to the scroll listener, and
+  under `parchment_selectOnSnap` selects the cell at the snap position when it
+  comes to rest, once. The position is clamped to the adapter; before the first
+  layout, on an empty adapter, or when the cell is already at its snap point
+  nothing happens; it is ignored while a finger is down, and a touch cancels it
+  like a fling. Under `onScreen` it scrolls the minimum that shows the cell
+  whole. A position asked for before the first layout is not remembered; a
+  pending target is a follow-up (#54, asked for in #19).
+
 ### Changed
 
+- A jump ends a running animation. `setSelection` and a data set change now
+  stop whatever was moving the content, a fling included, in the layout pass
+  the jump asks for, snapping whatever residual the jump left, so the view
+  rests with the incoming cell at its snap point and reports one `idle`; the
+  fling used to carry on from the jumped offset. At rest nothing changes: no
+  frame runs and nothing is reported.
 - **Breaking:** `LayoutManager` gains an abstract `getCellBreadth`, a cell's
   extent across the scroll axis, and `measureBreadth`, which
   `AbstractAdapterView.onMeasure` asks for the view's size across it;
@@ -19,6 +53,19 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Fixed
 
+- `parchment_selectOnSnap` reported the selection a stop made only on the next
+  layout pass, so a fling that ended exactly on a snap point, with no residual
+  snap to run a further frame, selected the cell but did not tell the
+  `OnItemSelectedListener` until something else laid the view out. A frame
+  that ends at rest now reports the selection its stop made, which is what
+  every `smoothScrollToPosition` landing needs
+  (`aFlingThatEndsOnASnapPoint_withSelectOnSnap_reportsTheSelectionWithoutALayoutPass`).
+  Two consequences to know about: under `parchment_selectOnSnap` a data set
+  change at rest that keeps or grows the count now reports its unchanged
+  selection one layout pass earlier, the same cell in the same place, once;
+  and a jump that lands mid-animation reports its selection where the cell is
+  at the jump, after which the residual snap moves it the few pixels to its
+  snap point, as it already did on main with the fling still running.
 - `android:layout_height="wrap_content"` on a horizontal view and
   `android:layout_width="wrap_content"` on a vertical one used to take every
   pixel the parent had left, pushing the next sibling of a `LinearLayout` off

@@ -2,6 +2,8 @@
 <lint>
     <!-- Picasso's unused RemoteViews path; the sample posts no notifications. -->
     <issue id="NotificationPermission" severity="ignore" />
+    <!-- The only text field takes an adapter position, which no autofill service could know. -->
+    <issue id="Autofill" severity="ignore" />
     <!-- Queries Maven Central as it runs, so an upstream release fails a build that changed
          nothing. Informational still reports it; Dependabot owns upgrades. -->
     <issue id="NewerVersionAvailable" severity="informational" />

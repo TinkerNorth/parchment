@@ -66,6 +66,8 @@ public class ScrollWithinContentTest {
     private static final int CENTRED_SHORT_CONTENT_END =
             VIEW_GROUP_SIZE - CENTRED_SHORT_CONTENT_START;
     private static final int NO_MOVEMENT = 0;
+    private static final int TO_THE_LAST_CELLS = -600;
+    private static final int THE_LAST_CELL_INTO_THE_END = -100;
     private static final int NOTHING_SELECTED = -1;
     private static final boolean NOT_CIRCULAR = false;
     private static final boolean CIRCULAR = true;
@@ -747,6 +749,47 @@ public class ScrollWithinContentTest {
 
         assertThat(start(FIRST_POSITION)).isEqualTo(CENTRED_CELL_START);
         assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(FIRST_POSITION);
+    }
+
+    @Test
+    public void startSnap_scrollWithinContent_scrollToTheLastCell_isTheBoundedDistance() {
+        setup(SnapPosition.start, SCROLL_WITHIN_CONTENT);
+        scrollBy(TO_THE_LAST_CELLS);
+        assertThat(start(LAST_POSITION)).isEqualTo(VIEW_GROUP_SIZE);
+
+        final int distance =
+                mListLayoutManager.getScrollToPositionDistance(mViewGroup, LAST_POSITION);
+
+        assertThat(distance).isEqualTo(THE_LAST_CELL_INTO_THE_END);
+    }
+
+    @Test
+    public void endSnap_scrollWithinContent_scrollToTheFirstCell_isTheBoundedDistance() {
+        setup(SnapPosition.end, SCROLL_WITHIN_CONTENT);
+        assertThat(start(FIRST_POSITION)).isEqualTo(0);
+
+        final int distance =
+                mListLayoutManager.getScrollToPositionDistance(mViewGroup, FIRST_POSITION);
+
+        assertThat(distance).isEqualTo(NO_MOVEMENT);
+    }
+
+    @Test
+    public void centerSnap_scrollWithinContent_contentShorterThanTheView_scrollToAnyCell_isZero() {
+        setup(
+                SnapPosition.center,
+                SCROLL_WITHIN_CONTENT,
+                SHORT_ADAPTER_SIZE,
+                START_PADDING,
+                END_PADDING);
+
+        final int distanceToTheFirst =
+                mListLayoutManager.getScrollToPositionDistance(mViewGroup, FIRST_POSITION);
+        final int distanceToTheSecond =
+                mListLayoutManager.getScrollToPositionDistance(mViewGroup, SECOND_POSITION);
+
+        assertThat(distanceToTheFirst).isEqualTo(NO_MOVEMENT);
+        assertThat(distanceToTheSecond).isEqualTo(NO_MOVEMENT);
     }
 
     private void setupWithUnevenCells(final SnapPosition snapPosition, final boolean selectOnSnap) {

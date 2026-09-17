@@ -16,6 +16,7 @@ public enum ScrollState {
             case snapingTo:
             case animatingTo:
             case jumpingTo:
+            case seekingTo:
                 return settling;
             case notMoving:
             default:

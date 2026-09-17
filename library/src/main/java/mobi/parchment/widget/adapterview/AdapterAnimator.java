@@ -12,12 +12,23 @@ import android.view.ViewGroup;
 public class AdapterAnimator implements OnGestureListener, AnimationStoppedListener {
 
     public static enum State {
-        scrolling,
-        animatingTo,
-        jumpingTo,
-        flinging,
-        snapingTo,
-        notMoving
+        scrolling(true),
+        animatingTo(false),
+        jumpingTo(false),
+        flinging(true),
+        snapingTo(true),
+        seekingTo(false),
+        notMoving(true);
+
+        private final boolean mIsAGesture;
+
+        State(final boolean isAGesture) {
+            mIsAGesture = isAGesture;
+        }
+
+        public boolean isAGesture() {
+            return mIsAGesture;
+        }
     }
 
     private final int mScaledTouchSlop;
@@ -34,6 +45,8 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
 
     private int mPreviousDisplacement;
     private int mPendingScrollDisplacement;
+    // Re-clamped on every seek frame because the adapter can shrink beneath it.
+    private int mScrollToPosition;
     private State mState = State.notMoving;
 
     private boolean mComputedOffsetReady;
@@ -162,8 +175,10 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     private void moveToState(final State state) {
         if (!mScrollAnimator.isFinished()) mScrollAnimator.forceFinished(true);
 
-        final boolean isNotMoving = mState.equals(State.notMoving);
-        if (isNotMoving) mAnimation.newAnimation();
+        final boolean isLeavingRest = mState.equals(State.notMoving);
+        final boolean isChangingHands = state.isAGesture() != mAnimation.isAGesture();
+        final boolean needsAnAnimationOfItsOwn = isLeavingRest || isChangingHands;
+        if (needsAnAnimationOfItsOwn) mAnimation.newAnimation(state.isAGesture());
 
         mState = state;
         mPreviousDisplacement = 0;
@@ -205,9 +220,55 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     }
 
     public void onFrameLaidOut() {
-        final boolean isAnimating = mState != State.scrolling && mState != State.notMoving;
-        if (isAnimating && mScrollAnimator.isFinished()) setState(State.notMoving);
+        switch (mState) {
+            case seekingTo:
+                continueTheSeek();
+                break;
+            case animatingTo:
+            case flinging:
+            case jumpingTo:
+            case snapingTo:
+                restWhenTheAnimationHasEnded();
+                break;
+            case scrolling:
+            case notMoving:
+            default:
+                break;
+        }
         mIsInsideAFrame = false;
+    }
+
+    private void restWhenTheAnimationHasEnded() {
+        final boolean hasEnded = mScrollAnimator.isFinished();
+        if (hasEnded) setState(State.notMoving);
+    }
+
+    private void continueTheSeek() {
+        final boolean hasAScrollTarget = mLayoutManagerBridge.hasAScrollTarget();
+        if (!hasAScrollTarget) {
+            setState(State.notMoving);
+            return;
+        }
+
+        mScrollToPosition = mLayoutManagerBridge.clampToAdapter(mScrollToPosition);
+        final boolean isDrawn = mLayoutManagerBridge.isPositionDrawn(mScrollToPosition);
+        if (isDrawn) {
+            landOnTheTarget();
+            return;
+        }
+
+        final boolean theSeekMoved = mAnimation.getDisplacement() != 0;
+        final boolean nothingMoved = mLayoutManagerBridge.getFrameDisplacement() == 0;
+        final boolean theLayoutRefusedTheFrame = theSeekMoved && nothingMoved;
+        if (theLayoutRefusedTheFrame) {
+            setState(State.notMoving);
+            return;
+        }
+
+        final int runway = mLayoutManagerBridge.getSeekRunway(mViewGroup);
+        final int remainingDistance = mScrollAnimator.getRemainingDistance();
+        final boolean theRunwayIsShort = remainingDistance < runway;
+        if (theRunwayIsShort) seekTheTarget();
     }
 
     public Animation getAnimation() {
@@ -220,6 +281,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
             case animatingTo:
             case snapingTo:
             case flinging:
+            case seekingTo:
                 if (!mComputedOffsetReady) mAnimation.setDisplacement(0);
                 return mAnimation;
             case notMoving:
@@ -227,6 +289,50 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
                 mAnimation.newAnimation();
                 return mAnimation;
         }
+    }
+
+    public void smoothScrollToPosition(final int position) {
+        final boolean theFingerIsDown = mState == State.scrolling;
+        if (theFingerIsDown) return;
+
+        final boolean hasAScrollTarget = mLayoutManagerBridge.hasAScrollTarget();
+        if (!hasAScrollTarget) return;
+
+        mScrollToPosition = mLayoutManagerBridge.clampToAdapter(position);
+        final boolean isDrawn = mLayoutManagerBridge.isPositionDrawn(mScrollToPosition);
+        if (isDrawn) {
+            landOnTheTarget();
+        } else {
+            seekTheTarget();
+        }
+    }
+
+    private void landOnTheTarget() {
+        final int distance =
+                mLayoutManagerBridge.getScrollToPositionDistance(mViewGroup, mScrollToPosition);
+        final boolean isAlreadyThere = distance == 0;
+        if (isAlreadyThere) {
+            restOnTheTarget();
+            return;
+        }
+
+        setState(State.animatingTo);
+        mScrollAnimator.landBy(distance);
+        mFrameScheduler.requestAnimationFrame();
+    }
+
+    private void restOnTheTarget() {
+        final boolean isAtRest = mState == State.notMoving;
+        if (isAtRest) return;
+        setState(State.notMoving);
+    }
+
+    private void seekTheTarget() {
+        final int seekDistance =
+                mLayoutManagerBridge.getSeekDistance(mViewGroup, mScrollToPosition);
+        setState(State.seekingTo);
+        mScrollAnimator.seekBy(seekDistance);
+        mFrameScheduler.requestAnimationFrame();
     }
 
     // Is this used at all?
@@ -243,6 +349,11 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
     @Override
     public void onAnimationStopped() {
         setState(State.notMoving);
+    }
+
+    @Override
+    public boolean isAFingerDown() {
+        return mState == State.scrolling;
     }
 
     public static float getXTouchSlop(final MotionEvent e1, final MotionEvent e2) {

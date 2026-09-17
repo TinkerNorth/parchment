@@ -15,10 +15,12 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import mobi.parchment.playground.Cell;
@@ -35,9 +37,14 @@ public final class DemoActivity extends Activity {
 
     private static final String EXTRA_OPTIONS = "options";
     private static final String STATE_IS_XML_SHOWN = "isXmlShown";
+    private static final String STATE_IS_SCROLL_TO_SHOWN = "isScrollToShown";
+    private static final String STATE_SCROLL_TO_POSITION = "scrollToPosition";
     private static final boolean ATTACH_TO_CONTAINER = true;
+    private static final int NO_POSITION = -1;
 
     private Dialog mXmlDialog;
+    private Dialog mScrollToDialog;
+    private EditText mScrollToPositionView;
 
     public static Intent intentFor(final Context context, final PlaygroundOptions options) {
         final Intent intent = new Intent(context, DemoActivity.class);
@@ -56,30 +63,57 @@ public final class DemoActivity extends Activity {
 
         final AbstractAdapterView<BaseAdapter, ?> view = inflate(options);
         report(view);
-        view.setAdapter(createAdapter(viewKind.getCell(options.getOrientation())));
+        final ProductsAdapter adapter = createAdapter(viewKind.getCell(options.getOrientation()));
+        view.setAdapter(adapter);
 
         mXmlDialog = createXmlDialog(options);
         findViewById(R.id.demo_show_xml).setOnClickListener(new ShowDialog(mXmlDialog));
-        if (wasXmlShown(savedInstanceState)) {
+        if (wasShown(savedInstanceState, STATE_IS_XML_SHOWN)) {
             mXmlDialog.show();
         }
+
+        final ViewGroup contentRoot = findViewById(android.R.id.content);
+        final View scrollToContent =
+                getLayoutInflater().inflate(R.layout.dialog_scroll_to, contentRoot, false);
+        mScrollToPositionView = scrollToContent.findViewById(R.id.demo_scroll_to_position);
+        mScrollToDialog = createScrollToDialog(view, scrollToContent, mScrollToPositionView);
+        final int lastPosition = adapter.getCount() - 1;
+        final String offeredPosition = savedScrollToPosition(savedInstanceState, lastPosition);
+        mScrollToPositionView.setText(offeredPosition);
+        if (wasShown(savedInstanceState, STATE_IS_SCROLL_TO_SHOWN)) {
+            mScrollToDialog.show();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        getMenuInflater().inflate(R.menu.demo, menu);
+        return true;
     }
 
     @Override
     protected void onSaveInstanceState(final Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_IS_XML_SHOWN, mXmlDialog.isShowing());
+        outState.putBoolean(STATE_IS_SCROLL_TO_SHOWN, mScrollToDialog.isShowing());
+        outState.putString(STATE_SCROLL_TO_POSITION, offeredScrollToPosition());
     }
 
     @Override
     protected void onDestroy() {
         mXmlDialog.dismiss();
+        mScrollToDialog.dismiss();
         super.onDestroy();
     }
 
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         if (UpIsBack.handles(this, item)) {
+            return true;
+        }
+        final boolean isScrollTo = item.getItemId() == R.id.demo_scroll_to;
+        if (isScrollTo) {
+            mScrollToDialog.show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -137,11 +171,37 @@ public final class DemoActivity extends Activity {
                 .create();
     }
 
-    private static boolean wasXmlShown(final Bundle savedInstanceState) {
+    private Dialog createScrollToDialog(
+            final AbstractAdapterView<BaseAdapter, ?> view,
+            final View content,
+            final EditText positionView) {
+        return new AlertDialog.Builder(this)
+                .setTitle(R.string.demo_scroll_to)
+                .setView(content)
+                .setPositiveButton(R.string.demo_scroll, new ScrollTo(view, positionView))
+                .setNegativeButton(R.string.demo_close, null)
+                .create();
+    }
+
+    private String offeredScrollToPosition() {
+        final CharSequence positionText = mScrollToPositionView.getText();
+        return positionText.toString();
+    }
+
+    private static String savedScrollToPosition(
+            final Bundle savedInstanceState, final int lastPosition) {
+        final String lastPositionText = Integer.toString(lastPosition);
+        if (savedInstanceState == null) {
+            return lastPositionText;
+        }
+        return savedInstanceState.getString(STATE_SCROLL_TO_POSITION, lastPositionText);
+    }
+
+    private static boolean wasShown(final Bundle savedInstanceState, final String key) {
         if (savedInstanceState == null) {
             return false;
         }
-        return savedInstanceState.getBoolean(STATE_IS_XML_SHOWN);
+        return savedInstanceState.getBoolean(key);
     }
 
     private static final class ShowDialog implements View.OnClickListener {
@@ -187,6 +247,37 @@ public final class DemoActivity extends Activity {
 
         private void confirm() {
             Toast.makeText(mContext, R.string.demo_copied, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static final class ScrollTo implements DialogInterface.OnClickListener {
+
+        private final AbstractAdapterView<BaseAdapter, ?> mView;
+        private final EditText mPositionView;
+
+        private ScrollTo(
+                final AbstractAdapterView<BaseAdapter, ?> view, final EditText positionView) {
+            mView = view;
+            mPositionView = positionView;
+        }
+
+        @Override
+        public void onClick(final DialogInterface dialog, final int which) {
+            final CharSequence positionText = mPositionView.getText();
+            final int position = parsePosition(positionText);
+            final boolean isAPosition = position != NO_POSITION;
+            if (isAPosition) {
+                mView.smoothScrollToPosition(position);
+            }
+        }
+
+        private static int parsePosition(final CharSequence positionText) {
+            final String trimmed = positionText.toString().trim();
+            try {
+                return Integer.parseInt(trimmed);
+            } catch (final NumberFormatException notAPosition) {
+                return NO_POSITION;
+            }
         }
     }
 }

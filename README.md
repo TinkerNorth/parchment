@@ -250,15 +250,45 @@ the behaviours that cut across them: paging, snapping, circular scrolling,
 dividers, selection, the scroll listener. Each opens the playground with a
 preset that shows that item off, where every attribute above is a control;
 Show then inflates the configured view with a status line of what its
-listeners report, and the info button shows the layout that reproduces it,
-which Copy puts on the clipboard. Every control carries a hint saying what
-its attribute does, and a control whose attribute would have no effect under
-the other settings — the paging interval without `parchment_isViewPager`,
-say — disables itself and says what it needs. Parchment reads its attributes
+listeners report, the action bar's Scroll to… asks for a position and calls
+`smoothScrollToPosition` with it, and the info button shows the layout that
+reproduces it, which Copy puts on the clipboard. Every control carries a hint
+saying what its attribute does, and a control whose attribute would have no
+effect under the other settings — the paging interval without
+`parchment_isViewPager`, say — disables itself and says what it needs. Parchment reads its attributes
 only when a view is inflated, so the playground drives them through theme
 attributes: the layouts under `sample/src/main/res/layout/playground_*.xml`
 reference `?attr/playground_*`, and `PlaygroundTheme` applies one overlay
 style per chosen option before inflating.
+
+### Scrolling programmatically
+
+Two methods move the content from code, on all three views. `setSelection`
+jumps: the cell holding the position is laid out at `parchment_snapPosition`
+in the next layout pass and becomes the selected item, with no animation and
+no scroll reported. `smoothScrollToPosition` animates there instead, through
+the same path a fling takes, so everything that shapes a fling shapes it too:
+`android:padding*`, `parchment_scrollWithinContent` (a cell the bound holds
+short of its snap point decelerates onto the bound and rests there),
+`parchment_isCircularScroll` (the shorter way round, in pixels), and a
+`parchment_isViewPager` view, which it crosses page by page rather than being
+held to one. It reports `settling` and then `idle` to the scroll listener, and
+it selects only under `parchment_selectOnSnap`: the cell at the snap position
+when it comes to rest, once; the selection is otherwise `setSelection`'s job.
+The position is clamped to the adapter, so anything past the end scrolls to
+the last cell and anything negative to the first. It does nothing before the
+first layout, on an empty adapter, or when the cell is already at its snap
+point; it is ignored while a finger is down, and a touch cancels it the way a
+touch cancels a fling. Under `onScreen` it scrolls the minimum that shows the
+cell whole.
+
+```java
+listView.smoothScrollToPosition(42);
+```
+
+The name follows `AbsListView`, which `android.widget.AdapterView` does not
+declare, so as with `setOnScrollListener` nothing here overrides or shadows a
+platform method.
 
 ### Scroll listener
 
@@ -307,7 +337,7 @@ same state twice in a row:
 | `ScrollState` | When |
 |---|---|
 | `dragging` | a finger is moving the content, past the touch slop |
-| `settling` | the content is moving on its own: a fling, a snap, a tap-to-snap, or a programmatic move |
+| `settling` | the content is moving on its own: a fling, a snap, a tap-to-snap, a programmatic move, or `smoothScrollToPosition` |
 | `idle` | nothing is moving |
 
 A gesture that never passes the touch slop reports nothing at all. Both callbacks
