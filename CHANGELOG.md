@@ -65,7 +65,22 @@ All notable changes to Parchment, newest first. The format follows
   selection one layout pass earlier, the same cell in the same place, once;
   and a jump that lands mid-animation reports its selection where the cell is
   at the jump, after which the residual snap moves it the few pixels to its
-  snap point, as it already did on main with the fling still running.
+  snap point, as it already did on main with the fling still running. Under
+  `parchment_isCircularScroll` with `parchment_selectOnSnap`, a tap on a cell
+  reports that cell and then the cell nearest the start edge, because the
+  stop's snap selects the nearest cell to the `onScreen` position circular
+  scrolling forces; main did the same silently, and this is now reported
+  rather than fixed.
+- A fling, snap or smooth scroll that ran to rest within its first frame, as a
+  short snap does and as any animation does when the main thread stalls for a
+  frame, reported its displacement but no scroll state: the dispatcher reports
+  a change at the end of a frame and the frame ended where it began, at
+  `idle`. It now reports the state the frame ran in before the state it ended
+  in, when the frame moved the content, so such a frame reports `settling`
+  then `idle` after its `onScrolled` and a frame that moved nothing still
+  reports nothing
+  (`aSmoothScrollThatEndsInItsFirstFrame_stillReportsSettlingThenIdle`,
+  `aFlingThatEndsInItsFirstFrame_stillReportsSettlingThenIdle`).
 - `android:layout_height="wrap_content"` on a horizontal view and
   `android:layout_width="wrap_content"` on a vertical one used to take every
   pixel the parent had left, pushing the next sibling of a `LinearLayout` off

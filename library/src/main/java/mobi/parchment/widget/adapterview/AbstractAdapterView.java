@@ -254,6 +254,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
 
         childTouchListener.computeScrollOffset();
         final Animation animation = childTouchListener.getAnimation();
+        final AdapterAnimator.State stateDuringTheFrame = childTouchListener.getState();
 
         final int frameDisplacement =
                 layOutCells(layoutManager, animation, left, top, right, bottom);
@@ -276,8 +277,10 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
                 reportTheSelectionAtRest(layoutManager);
                 break;
         }
-        final ScrollState scrollState = ScrollState.from(state);
-        mScrollListenerDispatcher.dispatch(this, frameDisplacement, scrollState);
+        final ScrollState scrollStateDuringTheFrame = ScrollState.from(stateDuringTheFrame);
+        final ScrollState scrollStateAtTheEnd = ScrollState.from(state);
+        mScrollListenerDispatcher.dispatch(
+                this, frameDisplacement, scrollStateDuringTheFrame, scrollStateAtTheEnd);
     }
 
     private void reportTheSelectionAtRest(final LayoutManager<Cell> layoutManager) {

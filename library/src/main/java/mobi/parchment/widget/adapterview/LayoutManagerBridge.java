@@ -71,6 +71,12 @@ public class LayoutManagerBridge {
         return mLayoutManager.getSeekDistance(viewGroup, position);
     }
 
+    public int getSeekStepLimit(final ViewGroup viewGroup, final int position) {
+        if (mLayoutManager == null) return 0;
+
+        return mLayoutManager.getSeekStepLimit(viewGroup, position);
+    }
+
     public int getSeekRunway(final ViewGroup viewGroup) {
         if (mLayoutManager == null) return 0;
 

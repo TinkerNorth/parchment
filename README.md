@@ -343,7 +343,10 @@ same state twice in a row:
 A gesture that never passes the touch slop reports nothing at all. Both callbacks
 run after the frame's layout, so a listener that reads the view sees the cells
 where they landed rather than half-updated; within a frame `onScrolled` comes
-first, so `idle` always means every movement has already been reported.
+first, so `idle` always means every movement has already been reported. An
+animation that starts and comes to rest within a single frame, as a short snap
+or a smooth scroll on a stalled main thread can, still reports `settling` and
+then `idle`, after that frame's `onScrolled`.
 
 What is reported is a change, not a snapshot: a listener set while the content is
 already moving is told the current state on the next frame if it differs from the

@@ -220,8 +220,17 @@ nothing — a whole frame per gesture, spent only because a listener was attache
 and `onFrameLaidOut` bracket the frame step, and a state change inside it needs no
 frame of its own because the step dispatches at its end.
 
-The dispatcher reports a change, not a snapshot. It keeps the last state it
-reported for the view, not for the listener, so a listener set mid-gesture is
+The dispatcher reports a change, not a snapshot. `layoutFrame` hands it the
+state the frame ran in and the state it ended in, and it reports each that
+differs from the last one reported, in that order after `onScrolled` — the
+state it ran in only when the frame moved the content, so a frame the clamp
+refused entirely still reports nothing
+(`aFlingRefusedAtTheStart_movesNothingAndReportsNothing`) — so an
+animation that starts and rests within one frame — a short snap, or a smooth
+scroll on a main thread that stalled for a frame — still reports `settling`
+then `idle` rather than nothing
+(`aSmoothScrollThatEndsInItsFirstFrame_stillReportsSettlingThenIdle`). It
+keeps the last state it reported for the view, not for the listener, so a listener set mid-gesture is
 told the current state only when it differs from that, and setting the same
 listener again does not repeat it
 (`reAttachingTheSameListenerMidDrag_doesNotReportDraggingTwice`). It also reads
@@ -578,7 +587,51 @@ left, so a seek whose estimate was short by any amount (cells larger than the
 edge cell it was extrapolated from, a `GridPatternView`'s taller groups) runs
 on at the same speed without a short frame
 (`smoothScrollToPosition_aSeekThatEndsShortOfTheTarget_seeksAgainWithoutStopping`,
-`smoothScrollToPosition_aReSeek_keepsEveryFrameMovingAFullStep`). Every re-seek
+`smoothScrollToPosition_aReSeek_keepsEveryFrameMovingAFullStep`). The runway
+is never applied, though: a frame can carry the scroller any distance — on a
+real framework a stalled main thread hands one frame the whole seek — so
+`computeScrollOffset` caps each seek frame's step at
+`LayoutManager.getSeekStepLimit`. For a drawn target that is its exact snap
+distance. For an undrawn one it is the nearer of two distances: the
+extrapolated distance to its snap point, and the distance that keeps the
+edge drawn cell on screen — the last cell's end brought to the start edge
+when seeking forward, the first cell's start brought to the end edge when
+seeking back. The bound this gives is what makes a stalled frame safe: the
+edge cell stays drawn, so `mCells` is never emptied and a seek frame can
+never reach `resetWhenNoCellsAreDrawn`, which would zero the frame and stop
+the animator at a reset with nothing reported; and since the target lies
+beyond the edge cell, it can never be carried off the far side of the view —
+at worst a stalled frame moves about one viewport and the next frames catch
+up at the seek's speed
+(`smoothScrollToPosition_aFrameThatWouldPassTheTarget_keepsTheEdgeCellDrawnAndLandsWithoutComingBack`,
+the `…_stalledSmoothScrollsThereAndBack_neverResetTheContent` set). The
+extrapolated half of the cap is exact for uniform cells, where no frame can
+reach past the snap point
+(`smoothScrollToPosition_onScreen_aFrameThatWouldPassTheTarget_restsWithItAtTheEdgeItCameFrom`,
+`listOnScreenSnap_smoothScrollWhoseFrameCarriesTheWholeSeek_settlesWithItsEndAtTheViewEnd`);
+where the cells beyond the drawn run are smaller than the edge cell it runs
+long by their difference, and a stalled frame can carry a drawn target past
+its snap point by that much. `layout` therefore holds a seek target the way
+it holds the content bounds: the `Animation` carries the target while the
+animator seeks, and `holdTheSeekTarget`, after the over-scroll correction,
+measures the drawn target from its real cells and applies the same
+correction when the frame's displacement has taken it past its snap point,
+so the frame ends on the snap point rather than beyond it and nothing is
+reversed in the frames that follow
+(`gridPatternEndSnap_smoothScrollWithEveryFrameDoubled_restsOnTheTargetWithoutAReversal`,
+`gridPatternCenterSnap_smoothScrollAcrossManyGroupsAfterAStall_restsOnTheTargetAndReportsSettlingThenIdle`).
+What is guaranteed, then: uniform cells land exactly however large the
+frame, an `onScreen` target at the edge it came from; non-uniform cells never
+leave the view, never reset, and a frame that overshoots is held at the snap
+point in that same frame, which under `onScreen` is wherever the cell is
+whole on screen, edge-aligned only when the cells are uniform. When no cell is
+drawn to measure from, after a jump or a detach, the frame applies nothing:
+the layout
+that follows drops or redraws it at the offset it kept, and `continueTheSeek`
+then sees the scroller spent and seeks again from a measured position with
+the cap in force, rather than applying a stalled scroller's whole runway
+blind and stepping back a viewport
+(`reattachingMidSeekAfterAStall_neverStepsBackAndLandsExactly`). Every re-seek
 moves at least one cell's step toward a target inside the adapter, so it ends;
 and as a safety net against any clamp the animator cannot see, a seek frame
 that asked for movement and was refused entirely by the layout rests rather

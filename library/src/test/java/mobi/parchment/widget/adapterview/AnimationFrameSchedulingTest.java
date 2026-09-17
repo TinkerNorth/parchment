@@ -28,6 +28,7 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 import mobi.parchment.widget.adapterview.gridview.GridView;
 import mobi.parchment.widget.adapterview.gridview.Group;
 import mobi.parchment.widget.adapterview.listview.ListView;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,6 +53,9 @@ public class AnimationFrameSchedulingTest {
     private static final int FRAMES_INTO_THE_FLING = 3;
     private static final int SHRUNK_ADAPTER_SIZE = 8;
     private static final int EMPTY_ADAPTER = 0;
+    private static final long A_LATE_FRAME = 5000;
+    private static final int A_LONG_ADAPTER = 30;
+    private static final int A_CELL_FAR_DOWN_THE_LIST = 20;
     private static final int FOURTH_CELL = 3;
     private static final int FIFTH_CELL = 4;
     private static final int TWO_CELLS = 2;
@@ -1085,6 +1089,51 @@ public class AnimationFrameSchedulingTest {
     }
 
     @Test
+    public void aFlingRefusedAtTheStart_movesNothingAndReportsNothing() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        final int before = firstChild().getLeft();
+
+        mListView.mGestureListener.onDown(down());
+        mListView.mGestureListener.onScroll(down(), moveTo(245f), -45f, 0f);
+        idleMainLooper();
+        mListView.mGestureListener.onFling(down(), moveTo(300f), -FLING_VELOCITY, 0f);
+        mListView.mGestureListener.onUp();
+        idleMainLooper();
+
+        assertThat(firstChild().getLeft()).isEqualTo(before);
+        assertThat(listener.mCalls).isEmpty();
+    }
+
+    @Test
+    public void aSmoothScrollThatEndsInItsFirstFrame_stillReportsSettlingThenIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        mListView.smoothScrollToPosition(SEVENTH_CELL);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void aFlingThatEndsInItsFirstFrame_stillReportsSettlingThenIdle() {
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+
+        fling();
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertThat(mListView.mGestureListener.getState())
+                .isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
     public void
             aFlingThatEndsOnASnapPoint_withSelectOnSnap_reportsTheSelectionWithoutALayoutPass() {
         final CountingListView listView = selectOnSnapListView();
@@ -1098,6 +1147,30 @@ public class AnimationFrameSchedulingTest {
         assertThat(listView.mGestureListener.getState()).isEqualTo(AdapterAnimator.State.notMoving);
         assertThat(listView.mLayoutPasses).isEqualTo(0);
         assertThat(selections.mPositions).containsExactly(FIRST_CELL, THIRD_CELL);
+    }
+
+    @Test
+    public void reattachingMidSeekAfterAStall_neverStepsBackAndLandsExactly() {
+        final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
+        adapter.setCount(A_LONG_ADAPTER);
+        mListView.setAdapter(adapter);
+        measureAndLayout();
+        final RecordingScrollListener listener = new RecordingScrollListener();
+        mListView.setOnScrollListener(listener);
+        mListView.smoothScrollToPosition(A_CELL_FAR_DOWN_THE_LIST);
+        runFrames(FRAMES_INTO_THE_FLING);
+        mContent.removeView(mListView);
+        idleMainLooper();
+        mContent.addView(mListView, new FrameLayout.LayoutParams(VIEW_SIZE, VIEW_SIZE));
+
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        measureAndLayout();
+        idleMainLooper();
+
+        assertThat(mListView.mLayoutManager.getViewForPosition(A_CELL_FAR_DOWN_THE_LIST).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(listener.mDisplacements).are(new IsNegative());
+        assertThat(listener.mScrollStates).containsExactly(ScrollState.settling, ScrollState.idle);
     }
 
     @Test
@@ -1394,6 +1467,13 @@ public class AnimationFrameSchedulingTest {
             if (mFirstChildLeftAtFirstCallback != NOT_RECORDED) return;
             if (view.getChildCount() == 0) return;
             mFirstChildLeftAtFirstCallback = view.getChildAt(0).getLeft();
+        }
+    }
+
+    private static final class IsNegative extends Condition<Integer> {
+        @Override
+        public boolean matches(final Integer displacement) {
+            return displacement < 0;
         }
     }
 

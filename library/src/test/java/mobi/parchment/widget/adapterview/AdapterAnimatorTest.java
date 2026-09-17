@@ -52,7 +52,8 @@ public class AdapterAnimatorTest {
     private static final int SIXTH_CELL = 5;
     private static final int FRAMES_OF_THE_FIRST_SEEK = 9;
     private static final int A_FULL_SEEK_STEP = 102;
-    private static final long MILLISECONDS_TO_SEEK_SIX_CELLS = 94;
+    private static final int THIRD_CELL = 2;
+    private static final int FIFTH_CELL = 4;
     private static final boolean REFUSES_EVERY_FRAME = true;
     private static final boolean HONOURS_EVERY_FRAME = false;
     private static final long ONE_FRAME = 16;
@@ -295,6 +296,18 @@ public class AdapterAnimatorTest {
             frame();
             final boolean isAtRest = mAdapterAnimator.getState() == AdapterAnimator.State.notMoving;
             if (isAtRest) return;
+        }
+        throw new AssertionError("the animation never came to rest");
+    }
+
+    private List<Integer> runToRestCollectingDisplacements() {
+        final List<Integer> displacements = new ArrayList<Integer>();
+        for (int frames = 0; frames < REST_FRAME_LIMIT; frames++) {
+            ShadowSystemClock.advanceBy(Duration.ofMillis(ONE_FRAME));
+            frame();
+            displacements.add(mLayoutManager.getFrameDisplacement());
+            final boolean isAtRest = mAdapterAnimator.getState() == AdapterAnimator.State.notMoving;
+            if (isAtRest) return displacements;
         }
         throw new AssertionError("the animation never came to rest");
     }
@@ -863,15 +876,51 @@ public class AdapterAnimatorTest {
     }
 
     @Test
-    public void smoothScrollToPosition_aSeekFrameThatLandsExactlyOnTheTarget_restsInThatFrame() {
+    public void
+            smoothScrollToPosition_onScreen_aFrameThatWouldPassTheTarget_restsWithItAtTheEdgeItCameFrom() {
+        layOutList(true, SnapPosition.onScreen, false, VIEWPORT_PAGING);
+        mAdapterAnimator.smoothScrollToPosition(SEVENTH_CELL);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_WHOLE_ANIMATION));
+
+        frame();
+        runToRest();
+
+        assertThat(mLayoutManager.getViewForPosition(SEVENTH_CELL).getRight())
+                .isEqualTo(VIEW_GROUP_SIZE);
+    }
+
+    @Test
+    public void
+            smoothScrollToPosition_aFrameThatWouldPassTheTarget_keepsTheEdgeCellDrawnAndLandsWithoutComingBack() {
         layOutCenterSnappingList();
         mAdapterAnimator.smoothScrollToPosition(SEVENTH_CELL);
-        ShadowSystemClock.advanceBy(Duration.ofMillis(MILLISECONDS_TO_SEEK_SIX_CELLS));
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_WHOLE_ANIMATION));
+
+        frame();
+
+        assertThat(mLayoutManager.getViewForPosition(THIRD_CELL).getRight())
+                .isEqualTo(START_OF_THE_VIEW);
+        assertThat(mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(VIEW_GROUP_SIZE);
+
+        final List<Integer> displacements = runToRestCollectingDisplacements();
+
+        assertThat(mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(displacements).doesNotContain(0);
+        assertThat(Collections.max(displacements)).isLessThan(0);
+    }
+
+    @Test
+    public void smoothScrollToPosition_aSeekFrameThatLandsExactlyOnTheTarget_restsInThatFrame() {
+        layOutCenterSnappingList();
+        mAdapterAnimator.smoothScrollToPosition(FIFTH_CELL);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_WHOLE_ANIMATION));
         mFrameScheduler.mRequests = 0;
 
         frame();
 
-        assertThat(mLayoutManager.getViewForPosition(SEVENTH_CELL).getLeft())
+        assertThat(mLayoutManager.getViewForPosition(FIFTH_CELL).getLeft())
                 .isEqualTo(CENTRED_CELL_START);
         assertThat(mAdapterAnimator.getState()).isEqualTo(AdapterAnimator.State.notMoving);
         assertThat(mFrameScheduler.mRequests).isEqualTo(0);

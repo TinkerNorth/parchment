@@ -4,11 +4,13 @@
 package mobi.parchment.widget.adapterview;
 
 public class Animation {
+    public static final int NO_SEEK_TARGET = -1;
     private static final int ANIMATION_ID_LIMIT = 100;
     private static final boolean A_GESTURE = true;
     private int mId;
     private int mDisplacement;
     private boolean mIsAGesture = A_GESTURE;
+    private int mSeekTarget = NO_SEEK_TARGET;
 
     public int getId() {
         return mId;
@@ -26,6 +28,14 @@ public class Animation {
         return mIsAGesture;
     }
 
+    public int getSeekTarget() {
+        return mSeekTarget;
+    }
+
+    protected void setSeekTarget(final int seekTarget) {
+        mSeekTarget = seekTarget;
+    }
+
     protected void newAnimation() {
         newAnimation(A_GESTURE);
     }
@@ -34,6 +44,7 @@ public class Animation {
         mId = (mId + 1) % ANIMATION_ID_LIMIT;
         mDisplacement = 0;
         mIsAGesture = isAGesture;
+        mSeekTarget = NO_SEEK_TARGET;
     }
 
     @Override

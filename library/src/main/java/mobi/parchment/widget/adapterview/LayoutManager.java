@@ -354,6 +354,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         }
 
         correctOverScroll(adapterViewHandler, newSize, breadth);
+        holdTheSeekTarget(adapterViewHandler, animation, displacement, newSize, breadth);
         requestLayoutWhenADrawnCellOutgrowsTheMeasure();
         stopWhenAJumpIsOwed();
         stopAndSelectWhenHeld(newSize);
@@ -441,6 +442,34 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         mFrameDisplacement += correction;
         mOffset += correction;
         layoutCells(adapterViewHandler, size, breadth);
+    }
+
+    private void holdTheSeekTarget(
+            final AdapterViewHandler adapterViewHandler,
+            final Animation animation,
+            final int displacement,
+            final int size,
+            final int breadth) {
+        final int seekTarget = animation.getSeekTarget();
+        final boolean isSeeking = seekTarget != Animation.NO_SEEK_TARGET;
+        if (!isSeeking) return;
+
+        final boolean isDrawn = isPositionDrawn(seekTarget);
+        if (!isDrawn) return;
+
+        final int overshoot = getSeekOvershoot(seekTarget, displacement, size);
+        applyOverScrollCorrection(adapterViewHandler, size, breadth, overshoot);
+    }
+
+    private int getSeekOvershoot(final int seekTarget, final int displacement, final int size) {
+        final int cellPosition = getCellPosition(seekTarget);
+        final long cellIndex = getCellIndexOf(cellPosition);
+        final int distanceLeft = getScrollDistanceToADrawnCell(size, cellIndex);
+        final int seekDirection = Integer.signum(displacement);
+        final int directionLeft = Integer.signum(distanceLeft);
+        final boolean theFramePassedTheTarget = directionLeft == -seekDirection;
+        if (theFramePassedTheTarget) return distanceLeft;
+        return 0;
     }
 
     private int getDisplacementToApply(final Animation animation) {
@@ -1140,7 +1169,20 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final boolean isDrawn = isDrawn(cellIndex);
         if (isDrawn) return getScrollDistanceToADrawnCell(size, cellIndex);
 
-        return getScrollDistanceToAnUndrawnCell(size, cellIndex);
+        final long way = getWayToAnUndrawnCell(size, cellIndex);
+        return getScrollDistanceToAnUndrawnCell(size, way);
+    }
+
+    public int getSeekStepLimit(final ViewGroup viewGroup, final int position) {
+        final int size = getSizeInsidePadding(viewGroup);
+        final int cellPosition = getCellPosition(position);
+        final long cellIndex = getCellIndexOf(cellPosition);
+
+        final boolean isDrawn = isDrawn(cellIndex);
+        if (isDrawn) return getScrollDistanceToADrawnCell(size, cellIndex);
+
+        final long way = getWayToAnUndrawnCell(size, cellIndex);
+        return getSeekStepLimitToAnUndrawnCell(viewGroup, size, way);
     }
 
     public int getSeekDistance(final ViewGroup viewGroup, final int position) {
@@ -1160,26 +1202,59 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         return getSnapToPixelDistance(size, cell);
     }
 
-    private int getScrollDistanceToAnUndrawnCell(final int size, final long cellIndex) {
+    private long getWayToAnUndrawnCell(final int size, final long cellIndex) {
         final boolean isCircularScroll = mLayoutManagerAttributes.isCircularScroll();
-        if (isCircularScroll) return getScrollDistanceTheShorterWayRound(size, cellIndex);
-        return getScrollDistanceTheOneWay(size, cellIndex);
+        if (isCircularScroll) return getShorterWayRound(size, cellIndex);
+        return cellIndex;
     }
 
-    private int getScrollDistanceTheOneWay(final int size, final long cellIndex) {
-        final boolean isBeforeTheFirstCell = cellIndex < 0;
-        if (isBeforeTheFirstCell) return getScrollDistanceExtrapolatedBeforeFirst(size, cellIndex);
-        return getScrollDistanceExtrapolatedAfterLast(size, cellIndex);
-    }
-
-    private int getScrollDistanceTheShorterWayRound(final int size, final long cellsForward) {
+    private long getShorterWayRound(final int size, final long cellsForward) {
         final int cellCount = getCellCount();
         final long cellsBack = cellsForward - cellCount;
         final int forward = getScrollDistanceExtrapolatedAfterLast(size, cellsForward);
         final int back = getScrollDistanceExtrapolatedBeforeFirst(size, cellsBack);
         final boolean backIsShorter = Math.abs(back) < Math.abs(forward);
-        if (backIsShorter) return back;
-        return forward;
+        if (backIsShorter) return cellsBack;
+        return cellsForward;
+    }
+
+    private int getScrollDistanceToAnUndrawnCell(final int size, final long way) {
+        final boolean isBeforeTheFirstCell = way < 0;
+        if (isBeforeTheFirstCell) return getScrollDistanceExtrapolatedBeforeFirst(size, way);
+        return getScrollDistanceExtrapolatedAfterLast(size, way);
+    }
+
+    private int getSeekStepLimitToAnUndrawnCell(
+            final ViewGroup viewGroup, final int size, final long way) {
+        final int distance = getScrollDistanceToAnUndrawnCell(size, way);
+        final int keepsTheEdgeCellDrawn = getDistanceThatKeepsTheEdgeCellDrawn(viewGroup, way);
+        return nearer(distance, keepsTheEdgeCellDrawn);
+    }
+
+    private int getDistanceThatKeepsTheEdgeCellDrawn(final ViewGroup viewGroup, final long way) {
+        final boolean isBeforeTheFirstCell = way < 0;
+        if (isBeforeTheFirstCell) return getDistanceThatKeepsTheFirstCellDrawn(viewGroup);
+        return getDistanceThatKeepsTheLastCellDrawn();
+    }
+
+    private int getDistanceThatKeepsTheFirstCellDrawn(final ViewGroup viewGroup) {
+        final Cell firstCell = mCells.get(0);
+        final int firstStart = getCellStart(firstCell);
+        final int viewSize = getViewGroupSize(viewGroup);
+        return viewSize - firstStart;
+    }
+
+    private int getDistanceThatKeepsTheLastCellDrawn() {
+        final int lastCellIndex = mCells.size() - 1;
+        final Cell lastCell = mCells.get(lastCellIndex);
+        final int lastEnd = getCellEnd(lastCell);
+        return -lastEnd;
+    }
+
+    private static int nearer(final int distance, final int otherDistance) {
+        final boolean theOtherIsNearer = Math.abs(otherDistance) < Math.abs(distance);
+        if (theOtherIsNearer) return otherDistance;
+        return distance;
     }
 
     private int getScrollDistanceExtrapolatedBeforeFirst(final int size, final long cellIndex) {

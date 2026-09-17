@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,11 +29,13 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 import mobi.parchment.widget.adapterview.gridview.GridView;
 import mobi.parchment.widget.adapterview.gridview.Group;
 import mobi.parchment.widget.adapterview.listview.ListView;
+import org.assertj.core.api.Condition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.shadows.ShadowSystemClock;
 
 @RunWith(RobolectricTestRunner.class)
 public class SnapSettleTest {
@@ -89,10 +92,20 @@ public class SnapSettleTest {
     private static final int FIRST_CELL = 0;
     private static final int FOURTH_CELL = 3;
     private static final int SIXTH_CELL = 5;
+    private static final long A_LATE_FRAME = 5000;
+    private static final long ONE_FRAME = 16;
+    private static final int NINTH_CELL = 8;
+    private static final int A_CELL_HALF_WAY_ROUND = 4;
+    private static final int LAST_OF_THE_NINTH_CELLS_GROUP = 9;
+    private static final int MANY_GROUPS_ADAPTER_SIZE = 40;
+    private static final int A_POSITION_MANY_GROUPS_ON = 36;
+    private static final int FIRST_POSITION_OF_THAT_FAR_GROUP = 35;
+    private static final int DOUBLED_FRAME_LIMIT = FRAME_BUDGET;
     private static final int FIRST_VIEW_OF_THE_THIRD_CELL = 6;
     private static final int FIRST_VIEW_OF_THE_FOURTH_ROW = 6;
     private static final int LAST_VIEW_OF_THE_FOURTH_ROW = 7;
     private static final int NON_UNIFORM_ADAPTER_SIZE = 20;
+    private static final int LAST_NON_UNIFORM_CELL = NON_UNIFORM_ADAPTER_SIZE - 1;
     private static final int A_POSITION_IN_A_LATE_TALL_GROUP = 16;
     private static final int FIRST_POSITION_OF_THAT_TALL_GROUP = 15;
     private static final int NARROW_CELL_BREADTH = 100;
@@ -759,6 +772,21 @@ public class SnapSettleTest {
 
     @Test
     public void
+            listOnScreenSnap_smoothScrollWhoseFrameCarriesTheWholeSeek_settlesWithItsEndAtTheViewEnd() {
+        final SettleListView view =
+                listView(R.layout.settle_list_on_screen, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        view.reset();
+
+        view.smoothScrollToPosition(SEVENTH_CELL);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertSettled(view);
+        assertThat(bottomOfPosition(view, SEVENTH_CELL)).isEqualTo(VIEW_SIZE);
+    }
+
+    @Test
+    public void
             listOnScreenSnap_smoothScrollToACellBeforeTheStart_settlesWithItsStartAtTheViewStart() {
         final SettleListView view =
                 listView(R.layout.settle_list_on_screen, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
@@ -867,6 +895,123 @@ public class SnapSettleTest {
         assertSettled(view);
         assertThat(topOfPosition(view, SIXTH_CELL)).isEqualTo(FIRST_ROW_START);
         assertThat(scrollStates.mStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void
+            gridPatternEndSnap_smoothScrollWithEveryFrameDoubled_restsOnTheTargetWithoutAReversal() {
+        final SettleGridPatternView view =
+                nonUniformGridPatternView(
+                        R.layout.settle_grid_pattern_end, NON_UNIFORM_ADAPTER_SIZE);
+        view.setSelection(FOURTH_CELL);
+        layOutAtRest(view);
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+        view.reset();
+
+        view.smoothScrollToPosition(NINTH_CELL);
+        runFramesDoubled(view);
+
+        assertSettled(view);
+        assertThat(bottomOfPosition(view, LAST_OF_THE_NINTH_CELLS_GROUP)).isEqualTo(VIEW_SIZE);
+        assertThat(scrollListener.mDisplacements).are(new IsNegative());
+        assertThat(scrollListener.mStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void
+            gridPatternCenterSnap_smoothScrollAcrossManyGroupsAfterAStall_restsOnTheTargetAndReportsSettlingThenIdle() {
+        final SettleGridPatternView view =
+                nonUniformGridPatternView(
+                        R.layout.settle_grid_pattern_center, MANY_GROUPS_ADAPTER_SIZE);
+        view.setSelection(FOURTH_CELL);
+        layOutAtRest(view);
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+        view.reset();
+
+        view.smoothScrollToPosition(A_POSITION_MANY_GROUPS_ON);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, FIRST_POSITION_OF_THAT_FAR_GROUP))
+                .isEqualTo(CENTRED_CELL_START);
+        assertThat(scrollListener.mStates).containsExactly(ScrollState.settling, ScrollState.idle);
+    }
+
+    @Test
+    public void listCenterSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(listView(), LAST_CELL);
+    }
+
+    @Test
+    public void listStartSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                listView(R.layout.settle_list_start, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE),
+                LAST_CELL);
+    }
+
+    @Test
+    public void listEndSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                listView(R.layout.settle_list_end, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE),
+                LAST_CELL);
+    }
+
+    @Test
+    public void listOnScreenSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                listView(R.layout.settle_list_on_screen, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE),
+                LAST_CELL);
+    }
+
+    @Test
+    public void circularScroll_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                listView(R.layout.settle_list_circular, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE),
+                A_CELL_HALF_WAY_ROUND);
+    }
+
+    @Test
+    public void viewPager_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        final SettleListView view =
+                listView(R.layout.settle_list_view_pager, WITHIN_CONTENT_CELL_SIZE, ADAPTER_SIZE);
+        layOutAtRest(view);
+        assertStalledScrollsThereAndBack(view, LAST_CELL);
+    }
+
+    @Test
+    public void
+            listStartSnap_scrollWithinContent_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                listView(
+                        R.layout.settle_list_start_within_content,
+                        WITHIN_CONTENT_CELL_SIZE,
+                        ADAPTER_SIZE),
+                LAST_CELL);
+    }
+
+    @Test
+    public void gridCenterSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(gridView(), LAST_CELL);
+    }
+
+    @Test
+    public void gridPatternCenterSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(centerGridPatternView(ADAPTER_SIZE), LAST_CELL);
+    }
+
+    @Test
+    public void gridPatternEndSnap_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(
+                gridPatternView(R.layout.settle_grid_pattern_end, ADAPTER_SIZE, true), LAST_CELL);
+    }
+
+    @Test
+    public void
+            gridPatternCenterSnap_nonUniformGroups_stalledSmoothScrollsThereAndBack_neverResetTheContent() {
+        assertStalledScrollsThereAndBack(nonUniformGridPatternView(), LAST_NON_UNIFORM_CELL);
     }
 
     @Test
@@ -1053,9 +1198,14 @@ public class SnapSettleTest {
      * kind of group runs short or long of the other.
      */
     private SettleGridPatternView nonUniformGridPatternView() {
+        return nonUniformGridPatternView(
+                R.layout.settle_grid_pattern_center, NON_UNIFORM_ADAPTER_SIZE);
+    }
+
+    private SettleGridPatternView nonUniformGridPatternView(
+            final int layoutId, final int adapterSize) {
         final SettleGridPatternView view =
-                (SettleGridPatternView)
-                        View.inflate(mActivity, R.layout.settle_grid_pattern_center, null);
+                (SettleGridPatternView) View.inflate(mActivity, layoutId, null);
         final List<GridPatternItemDefinition> twoRows = new ArrayList<GridPatternItemDefinition>();
         twoRows.add(new GridPatternItemDefinition(0, 0, 1, 2));
         twoRows.add(new GridPatternItemDefinition(1, 0, 1, 1));
@@ -1065,7 +1215,7 @@ public class SnapSettleTest {
         oneRow.add(new GridPatternItemDefinition(0, 0, 1, 1));
         oneRow.add(new GridPatternItemDefinition(0, 1, 1, 1));
         view.addGridPatternGroupDefinition(oneRow);
-        view.setAdapter(new StretchAdapter(mActivity, NON_UNIFORM_ADAPTER_SIZE));
+        view.setAdapter(new StretchAdapter(mActivity, adapterSize));
         attachAndLayout(view);
         return view;
     }
@@ -1209,6 +1359,43 @@ public class SnapSettleTest {
         idleMainLooper();
     }
 
+    private void assertStalledScrollsThereAndBack(final SettleView view, final int lastPosition) {
+        final RecordingScrollListener scrollListener = new RecordingScrollListener();
+        view.setOnScrollListener(scrollListener);
+
+        stalledSmoothScroll(view, lastPosition);
+        assertSettled(view);
+        assertThat(childOfPosition((ViewGroup) view, lastPosition)).isNotNull();
+        assertThat(scrollListener.mStates).containsExactly(ScrollState.settling, ScrollState.idle);
+
+        stalledSmoothScroll(view, FIRST_CELL);
+        assertSettled(view);
+        assertThat(childOfPosition((ViewGroup) view, FIRST_CELL)).isNotNull();
+        assertThat(scrollListener.mStates)
+                .containsExactly(
+                        ScrollState.settling,
+                        ScrollState.idle,
+                        ScrollState.settling,
+                        ScrollState.idle);
+    }
+
+    private void stalledSmoothScroll(final SettleView view, final int position) {
+        view.reset();
+        view.smoothScrollToPosition(position);
+        ShadowSystemClock.advanceBy(Duration.ofMillis(A_LATE_FRAME));
+        idleMainLooper();
+    }
+
+    private void runFramesDoubled(final SettleView view) {
+        for (int frame = 0; frame < DOUBLED_FRAME_LIMIT; frame++) {
+            final boolean isAtRest =
+                    view.getGestureListener().getState() == AdapterAnimator.State.notMoving;
+            if (isAtRest) return;
+            ShadowSystemClock.advanceBy(Duration.ofMillis(ONE_FRAME));
+            runOneFrame();
+        }
+    }
+
     private void smoothScroll(final SettleView view, final int position) {
         view.reset();
         view.smoothScrollToPosition(position);
@@ -1250,6 +1437,13 @@ public class SnapSettleTest {
         }
     }
 
+    private static final class IsNegative extends Condition<Integer> {
+        @Override
+        public boolean matches(final Integer displacement) {
+            return displacement < 0;
+        }
+    }
+
     private static final class RecordingScrollListener implements OnScrollListener {
         private final List<ScrollState> mStates = new ArrayList<ScrollState>();
         private final List<Integer> mDisplacements = new ArrayList<Integer>();
@@ -1270,6 +1464,8 @@ public class SnapSettleTest {
         void reset();
 
         void smoothScrollToPosition(int position);
+
+        void setOnScrollListener(OnScrollListener onScrollListener);
 
         int getFrameRequests();
 

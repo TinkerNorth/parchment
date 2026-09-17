@@ -181,6 +181,7 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         if (needsAnAnimationOfItsOwn) mAnimation.newAnimation(state.isAGesture());
 
         mState = state;
+        mAnimation.setSeekTarget(getSeekTargetOf(state));
         mPreviousDisplacement = 0;
         if (state != State.scrolling) mPendingScrollDisplacement = 0;
 
@@ -193,6 +194,12 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         moveToState(State.snapingTo);
         mScrollAnimator.snapTo(scrollDistance);
         mFrameScheduler.requestAnimationFrame();
+    }
+
+    private int getSeekTargetOf(final State state) {
+        final boolean isSeeking = state == State.seekingTo;
+        if (isSeeking) return mScrollToPosition;
+        return Animation.NO_SEEK_TARGET;
     }
 
     public void requestFrameForUndispatchedScrollState() {
@@ -215,8 +222,28 @@ public class AdapterAnimator implements OnGestureListener, AnimationStoppedListe
         if (!mComputedOffsetReady) return;
 
         final int currentOffset = mScrollAnimator.getCurrrentOffset();
-        mAnimation.setDisplacement(currentOffset - mPreviousDisplacement);
+        final int step = currentOffset - mPreviousDisplacement;
+        final int displacement = getDisplacementOf(step);
+        mAnimation.setDisplacement(displacement);
         mPreviousDisplacement = currentOffset;
+    }
+
+    private int getDisplacementOf(final int step) {
+        final boolean isSeeking = mState == State.seekingTo;
+        if (isSeeking) return getSeekDisplacementOf(step);
+        return step;
+    }
+
+    private int getSeekDisplacementOf(final int step) {
+        final boolean theTargetCanBeMeasured = mLayoutManagerBridge.hasAScrollTarget();
+        if (!theTargetCanBeMeasured) return 0;
+
+        final int stepLimit = mLayoutManagerBridge.getSeekStepLimit(mViewGroup, mScrollToPosition);
+        final int stepMagnitude = Math.abs(step);
+        final int limitMagnitude = Math.abs(stepLimit);
+        final boolean theStepWouldPassTheLimit = stepMagnitude > limitMagnitude;
+        if (theStepWouldPassTheLimit) return stepLimit;
+        return step;
     }
 
     public void onFrameLaidOut() {
