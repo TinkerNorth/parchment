@@ -1212,8 +1212,8 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     }
 
     private long getCircularCellIndexOf(final int cellPosition) {
-        final int cellCount = getCellCount();
-        final int cellsAhead = cellPosition - mStartCellPosition;
+        final long cellCount = getCellCount();
+        final long cellsAhead = (long) cellPosition - mStartCellPosition;
         return Math.floorMod(cellsAhead, cellCount);
     }
 
