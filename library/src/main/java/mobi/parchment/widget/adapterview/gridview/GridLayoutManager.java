@@ -113,8 +113,8 @@ public class GridLayoutManager extends LayoutManager<Group> {
 
     @Override
     protected int getChildHeightMeasureSpecMode() {
-        final int widthMeasureSpec = getWidthMeasureSpec();
-        return View.MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMeasureSpec = getHeightMeasureSpec();
+        return View.MeasureSpec.getMode(heightMeasureSpec);
     }
 
     @Override
@@ -309,6 +309,12 @@ public class GridLayoutManager extends LayoutManager<Group> {
     protected int getGroupBreadth(final Group group) {
         if (isVerticalScroll()) return group.getMeasuredWidth();
         return group.getMeasuredHeight();
+    }
+
+    @Override
+    public int getCellBreadth(final Group group) {
+        final int cellSpacing = getCellSpacing();
+        return group.getBreadth(cellSpacing);
     }
 
     private View getRepresentative(final Group group) {

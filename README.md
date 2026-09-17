@@ -133,6 +133,38 @@ cd parchment
     parchment:parchment_viewPagerInterval="viewport" />
 ```
 
+### Sizing
+
+`match_parent` and a fixed size behave as on any view. `wrap_content` wraps
+across the scroll axis only: a horizontal `ListView` is as tall as its tallest
+cell and a vertical one as wide as its widest; a `GridView` wraps to its
+tallest column or widest row, the spacing between the views of the group
+included; `android:padding*` is added, and under a parent that offers a bound
+the result never exceeds it. Along the scroll axis `wrap_content` still fills
+the parent, because wrapping there would mean measuring every item in the
+adapter. `GridPatternView` sizes its cells from the view (`parchment_ratio`
+and the pattern), so it has nothing to wrap to and fills the parent on both
+axes whatever it is asked for.
+
+The wrapped size comes from the cells present when the view is measured: the
+cells already laid out, or, before the first layout, the cells that fill the
+viewport from the start position, obtained through the recycler and handed
+back to it. When a layout then draws a cell larger than that — one scrolled
+into view, or one the layout places before the start position after a
+rotation — the view asks for one more layout and grows to it on the next
+measure, so a scroll through cells of varying size across the scroll axis
+resizes the view as they come in; it grows on its own, but shrinks only on the
+next measure something else asks for, a data set change or a parent
+re-layout, so it keeps its size after the larger cell scrolls out. Cells of
+varying size across the scroll axis are therefore better served by a fixed `layout_height` (or `layout_width`).
+
+```xml
+<mobi.parchment.widget.adapterview.listview.ListView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    parchment:parchment_orientation="horizontal" />
+```
+
 ### Dividers
 
 `parchment_divider` paints a drawable or a colour on every edge internal to

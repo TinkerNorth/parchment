@@ -134,7 +134,8 @@ public class HorizontalListViewTest {
     }
 
     @Test
-    public void onMeasure_withAnAtMostSpec_takesTheAvailableSizeWithoutStateBits() {
+    public void
+            onMeasure_withAnAtMostSpecAlongTheScrollAxis_takesTheAvailableSizeWithoutStateBits() {
         final ListView<?> horizontalListView = inflateBasicListView();
 
         final int widthSpec =
@@ -143,8 +144,22 @@ public class HorizontalListViewTest {
         final int heightSpec = View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.AT_MOST);
         horizontalListView.measure(widthSpec, heightSpec);
 
-        assertThat(horizontalListView.getMeasuredWidth()).isEqualTo(HORIZONTAL_LIST_VIEW_WIDTH);
         assertThat(horizontalListView.getMeasuredHeight()).isEqualTo(300);
+        assertThat(horizontalListView.getMeasuredState()).isEqualTo(0);
+    }
+
+    @Test
+    public void onMeasure_withAnAtMostSpecAcrossTheScrollAxis_wrapsTheWidestCellWithoutStateBits() {
+        final ListView<?> horizontalListView = inflateBasicListView();
+
+        final int widthSpec =
+                View.MeasureSpec.makeMeasureSpec(
+                        HORIZONTAL_LIST_VIEW_WIDTH, View.MeasureSpec.AT_MOST);
+        final int heightSpec = View.MeasureSpec.makeMeasureSpec(300, View.MeasureSpec.AT_MOST);
+        horizontalListView.measure(widthSpec, heightSpec);
+
+        assertThat(horizontalListView.getMeasuredWidth())
+                .isEqualTo(dimensionPixelSize(R.dimen.list_item_test_width));
         assertThat(horizontalListView.getMeasuredState()).isEqualTo(0);
     }
 

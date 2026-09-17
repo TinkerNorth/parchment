@@ -60,6 +60,43 @@ public class ScrollDirectionManager {
         return ViewGroupUtilities.getViewGroupMeasuredWidth(viewGroup);
     }
 
+    public int getViewGroupBreadthPadding(final ViewGroup viewGroup) {
+        if (isVerticalScroll()) return getHorizontalPadding(viewGroup);
+        return getVerticalPadding(viewGroup);
+    }
+
+    private static int getHorizontalPadding(final ViewGroup viewGroup) {
+        final int paddingLeft = viewGroup.getPaddingLeft();
+        final int paddingRight = viewGroup.getPaddingRight();
+        return paddingLeft + paddingRight;
+    }
+
+    private static int getVerticalPadding(final ViewGroup viewGroup) {
+        final int paddingTop = viewGroup.getPaddingTop();
+        final int paddingBottom = viewGroup.getPaddingBottom();
+        return paddingTop + paddingBottom;
+    }
+
+    public int getSizeMeasureSpec(final int widthMeasureSpec, final int heightMeasureSpec) {
+        if (isVerticalScroll()) return heightMeasureSpec;
+        return widthMeasureSpec;
+    }
+
+    public int getBreadthMeasureSpec(final int widthMeasureSpec, final int heightMeasureSpec) {
+        if (isVerticalScroll()) return widthMeasureSpec;
+        return heightMeasureSpec;
+    }
+
+    public int toWidth(final int size, final int breadth) {
+        if (isVerticalScroll()) return breadth;
+        return size;
+    }
+
+    public int toHeight(final int size, final int breadth) {
+        if (isVerticalScroll()) return size;
+        return breadth;
+    }
+
     public int getDrawSize(int left, int top, int right, int bottom) {
         if (isVerticalScroll()) return bottom - top;
         return right - left;

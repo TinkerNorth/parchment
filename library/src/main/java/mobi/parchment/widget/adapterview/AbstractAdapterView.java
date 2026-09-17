@@ -202,9 +202,20 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         setMeasuredDimension(width, height);
 
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
-        if (layoutManager != null) {
-            layoutManager.measure(this, widthMeasureSpec, heightMeasureSpec);
-        }
+        if (layoutManager == null) return;
+
+        layoutManager.measure(this, widthMeasureSpec, heightMeasureSpec);
+        final ScrollDirectionManager scrollDirectionManager =
+                layoutManager.getScrollDirectionManager();
+        final int sizeMeasureSpec =
+                scrollDirectionManager.getSizeMeasureSpec(widthMeasureSpec, heightMeasureSpec);
+        final int breadthMeasureSpec =
+                scrollDirectionManager.getBreadthMeasureSpec(widthMeasureSpec, heightMeasureSpec);
+        final int size = MeasureSpec.getSize(sizeMeasureSpec);
+        final int breadth = layoutManager.measureBreadth(this, breadthMeasureSpec);
+        final int measuredWidth = scrollDirectionManager.toWidth(size, breadth);
+        final int measuredHeight = scrollDirectionManager.toHeight(size, breadth);
+        setMeasuredDimension(measuredWidth, measuredHeight);
     }
 
     public void setOnScrollListener(final OnScrollListener onScrollListener) {

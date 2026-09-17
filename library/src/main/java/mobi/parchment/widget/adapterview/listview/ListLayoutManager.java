@@ -67,8 +67,8 @@ public class ListLayoutManager extends LayoutManager<View> {
         if (isVerticalScroll()) {
             return View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         }
-        final int widthMeasureSpec = getWidthMeasureSpec();
-        return View.MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMeasureSpec = getHeightMeasureSpec();
+        return View.MeasureSpec.getMode(heightMeasureSpec);
     }
 
     @Override
@@ -132,6 +132,11 @@ public class ListLayoutManager extends LayoutManager<View> {
     @Override
     public int getCellSize(final View view) {
         return getViewSize(view);
+    }
+
+    @Override
+    public int getCellBreadth(final View view) {
+        return getViewBreadth(view);
     }
 
     @Override

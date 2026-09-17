@@ -57,13 +57,39 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
                     final int layoutResource,
                     final int width,
                     final int height) {
+        final ParchmentViewHarness<VIEW> harness =
+                attachAndLayOut(scenario, layoutResource, width, height);
+        harness.requireViewport(width, height);
+        return harness;
+    }
+
+    /**
+     * Inflates a layout whose root is a parent of the Parchment view, attaches that root to the
+     * harness Activity at exactly the requested pixel size, and returns once the framework has laid
+     * it out. The Parchment view takes whatever size the parent gives it, which is what a test of
+     * {@code wrap_content} asserts, so nothing here requires it to fill the root.
+     */
+    public static <VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            ParchmentViewHarness<VIEW> attachInsideAParent(
+                    final ActivityScenario<HarnessActivity> scenario,
+                    final int layoutResource,
+                    final int parentWidth,
+                    final int parentHeight) {
+        return attachAndLayOut(scenario, layoutResource, parentWidth, parentHeight);
+    }
+
+    private static <VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            ParchmentViewHarness<VIEW> attachAndLayOut(
+                    final ActivityScenario<HarnessActivity> scenario,
+                    final int layoutResource,
+                    final int width,
+                    final int height) {
         final InflateAndAttach<VIEW> inflateAndAttach =
                 new InflateAndAttach<>(layoutResource, width, height);
         scenario.onActivity(inflateAndAttach);
         final VIEW view = inflateAndAttach.view();
         final ParchmentViewHarness<VIEW> harness = new ParchmentViewHarness<>(view);
         harness.waitForLayout();
-        harness.requireViewport(width, height);
         return harness;
     }
 
@@ -532,9 +558,9 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
 
         @Override
         public void run() {
-            final boolean hasSize = mView.getWidth() > 0 && mView.getHeight() > 0;
+            final boolean hasBeenLaidOut = mView.isLaidOut();
             final boolean layoutIsPending = mView.isLayoutRequested();
-            mIsLaidOut = hasSize && !layoutIsPending;
+            mIsLaidOut = hasBeenLaidOut && !layoutIsPending;
         }
     }
 
