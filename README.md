@@ -79,7 +79,7 @@ coordinates as the 2014 releases.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("mobi.parchment:parchment:2.1.0")
+    implementation("mobi.parchment:parchment:2.2.0")
 }
 ```
 
@@ -87,7 +87,7 @@ Or in a version catalog:
 
 ```toml
 [libraries]
-parchment = { group = "mobi.parchment", name = "parchment", version = "2.1.0" }
+parchment = { group = "mobi.parchment", name = "parchment", version = "2.2.0" }
 ```
 
 2.0 is a breaking upgrade from 1.6.x: every XML attribute gained a
