@@ -5,6 +5,30 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- `parchment_selectOnSnap` under `parchment_isCircularScroll` overrode a tap.
+  Circular scrolling forces the `onScreen` snap, under which every cell fully
+  inside the view is at the snap position, so the stop after a tap ranked them
+  all equal, the first drawn won the tie, and the listener heard the tapped
+  cell and then that one, with the selection ending on it (#62). A stop now
+  selects the cell the snap lands on, and when more than one drawn cell is
+  already at the snap position the snap lands on none of them and the stop
+  leaves the selection as it is, so a tap's selection survives its own snap
+  (`circularScroll_selectOnSnap_snapToWithSeveralCellsFullyOnScreen_keepsTheSelection`,
+  `circularScroll_withSelectOnSnap_aTapOnACellFullyOnScreen_keepsThatCellSelected`).
+  The consequence, under circular scrolling with the flag and two or more cells
+  that fit the view: a fling, a drag released, a touch at rest and
+  `smoothScrollToPosition` no longer select the first fully visible cell, which
+  they used to, and a drag released with no residual snap used to change the
+  selection without reporting it. Cells the size of the view still select the
+  cell the stop snaps on. `start`, `end` and `center` are unchanged: at most
+  one cell is at their snap position. `onScreen` without circular scrolling is
+  unchanged: it never selected mid-content and still selects the held cell at
+  an end. `setSelection` is unchanged.
+
 ## [2.2.0] - 2026-09-17
 
 ### Added

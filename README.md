@@ -407,6 +407,12 @@ there: the nearest of the cells the bound holds short of their snap point.
 `onScreen` already keeps the content inside the view and circular scrolling has
 no ends, so the attribute changes nothing under either.
 
+`parchment_selectOnSnap` selects the cell a snap lands on. Under `onScreen`, which
+circular scrolling forces, every cell fully inside the view is at the snap
+position, so a stop selects only when one cell alone is there: the cell pushed
+against an end, or the only cell that fits the view. A tap's selection otherwise
+stands.
+
 ```xml
 <mobi.parchment.widget.adapterview.listview.ListView
     android:layout_width="match_parent"

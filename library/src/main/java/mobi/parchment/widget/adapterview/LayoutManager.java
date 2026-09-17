@@ -1301,11 +1301,39 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final Cell nearestCell = getCellToSnapTo(size);
         if (nearestCell == null) return 0;
 
-        final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
-        if (selectOnSnap) setSelected(getView(nearestCell));
+        selectTheCellTheSnapLandsOn(size, nearestCell);
 
         final int distance = getSnapToPixelDistance(size, nearestCell);
         return distance;
+    }
+
+    private void selectTheCellTheSnapLandsOn(final int size, final Cell nearestCell) {
+        final boolean selectOnSnap = mLayoutManagerAttributes.selectOnSnap();
+        if (!selectOnSnap) return;
+
+        final boolean isShared = isTheSnapPositionShared(size);
+        if (isShared) return;
+
+        final View selectedView = getView(nearestCell);
+        setSelected(selectedView);
+    }
+
+    private boolean isTheSnapPositionShared(final int size) {
+        int cellsAtTheSnapPosition = 0;
+        for (int cellIndex = 0; cellIndex < mCells.size(); cellIndex++) {
+            final boolean isAtTheSnapPosition = isAtTheSnapPosition(size, cellIndex);
+            if (isAtTheSnapPosition) cellsAtTheSnapPosition++;
+        }
+        return cellsAtTheSnapPosition > 1;
+    }
+
+    private boolean isAtTheSnapPosition(final int size, final int cellIndex) {
+        final int settleDistance = getCellSettleDistance(size, cellIndex);
+        final boolean settlesThere = settleDistance == 0;
+        if (!settlesThere) return false;
+
+        final int distanceFromTheSnapPosition = getCellDistanceFromSnapPosition(size, cellIndex);
+        return distanceFromTheSnapPosition == 0;
     }
 
     public void reportTheSelectionAtRest() {
