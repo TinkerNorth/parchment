@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:parchment="http://schemas.android.com/apk/res-auto"
+      class="mobi.parchment.widget.adapterview.AdapterViewEmptyViewTest$EmptyViewListView"
+      android:id="@+id/surface_empty_view_list_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      parchment:parchment_orientation="horizontal"
+      parchment:parchment_snapPosition="onScreen"/>
