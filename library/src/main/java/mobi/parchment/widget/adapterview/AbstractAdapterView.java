@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewConfiguration;
+import android.view.animation.LayoutAnimationController;
 import android.widget.Adapter;
 
 public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
@@ -25,6 +26,9 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
                 AdapterViewHandler,
                 AnimationFrameScheduler {
 
+    private static final int NO_ITEMS = 0;
+    private static final int FIRST_ADAPTER_POSITION = 0;
+
     private OnItemSelectedListener mOnItemSelectedListener;
     private ADAPTER mAdapter;
     private AdapterViewInitializer<Cell> mAdapterViewInitializer;
@@ -34,22 +38,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             new ScrollListenerDispatcher();
     private boolean mAnimationFrameRequested;
 
-    private final DataSetObserver mDataSetObserver =
-            new DataSetObserver() {
-                @Override
-                public void onChanged() {
-                    removeAllViewsInLayout();
-                    requestLayout();
-                    invalidate();
-                }
-
-                @Override
-                public void onInvalidated() {
-                    removeAllViewsInLayout();
-                    requestLayout();
-                    invalidate();
-                }
-            };
+    private final DataSetObserver mDataSetObserver = new AdapterDataSetObserver(this);
 
     public AbstractAdapterView(Context context) {
         super(context);
@@ -111,6 +100,53 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             final Context context, final AttributeSet attributeSet);
 
     @Override
+    public int getCount() {
+        final ADAPTER adapter = getAdapter();
+        if (adapter == null) {
+            return NO_ITEMS;
+        }
+        return adapter.getCount();
+    }
+
+    @Override
+    public int getFirstVisiblePosition() {
+        final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
+        final int drawnPosition = layoutManager.getFirstVisibleAdapterPosition();
+        final int position = positionTheAdapterHas(drawnPosition);
+        if (position == INVALID_POSITION) {
+            return FIRST_ADAPTER_POSITION;
+        }
+        return position;
+    }
+
+    @Override
+    public int getLastVisiblePosition() {
+        final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
+        final int drawnPosition = layoutManager.getLastVisibleAdapterPosition();
+        return positionTheAdapterHas(drawnPosition);
+    }
+
+    private int positionTheAdapterHas(final int position) {
+        final int count = getCount();
+        final boolean isAfterTheFirst = position >= FIRST_ADAPTER_POSITION;
+        final boolean isBeforeTheCount = position < count;
+        final boolean theAdapterHasIt = isAfterTheFirst && isBeforeTheCount;
+        if (theAdapterHasIt) {
+            return position;
+        }
+        return INVALID_POSITION;
+    }
+
+    @Override
+    protected boolean canAnimate() {
+        final LayoutAnimationController layoutAnimation = getLayoutAnimation();
+        final boolean hasALayoutAnimation = layoutAnimation != null;
+        final int count = getCount();
+        final boolean hasItems = count > NO_ITEMS;
+        return hasALayoutAnimation && hasItems;
+    }
+
+    @Override
     public int getSelectedItemPosition() {
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         return layoutManager.getSelectedPosition();
@@ -161,6 +197,7 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         final AdapterViewManager adapterViewManager =
                 mAdapterViewInitializer.getAdapterViewManager();
         adapterViewManager.registerDataSetObserver(mDataSetObserver);
+        updateTheEmptyViewVisibility();
     }
 
     @Override
@@ -198,7 +235,41 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
             adapterViewManager.setAdapter(adapter);
         }
 
+        updateTheEmptyViewVisibility();
         requestLayout();
+    }
+
+    private void onAdapterDataSetChanged() {
+        removeAllViewsInLayout();
+        updateTheEmptyViewVisibility();
+        requestLayout();
+        invalidate();
+    }
+
+    private void updateTheEmptyViewVisibility() {
+        final View emptyView = getEmptyView();
+        if (emptyView == null) {
+            return;
+        }
+
+        final ADAPTER adapter = getAdapter();
+        final boolean hasNoAdapter = adapter == null;
+        final boolean isEmpty = hasNoAdapter || adapter.isEmpty();
+        if (isEmpty) {
+            showTheEmptyView(emptyView);
+            return;
+        }
+        hideTheEmptyView(emptyView);
+    }
+
+    private void showTheEmptyView(final View emptyView) {
+        emptyView.setVisibility(View.VISIBLE);
+        setVisibility(View.GONE);
+    }
+
+    private void hideTheEmptyView(final View emptyView) {
+        emptyView.setVisibility(View.GONE);
+        setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -494,6 +565,24 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
     public boolean isVerticalScrollBarEnabled() {
         final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         return layoutManager.isVerticalScroll();
+    }
+
+    private static final class AdapterDataSetObserver extends DataSetObserver {
+        private final AbstractAdapterView<?, ?> mView;
+
+        private AdapterDataSetObserver(final AbstractAdapterView<?, ?> view) {
+            mView = view;
+        }
+
+        @Override
+        public void onChanged() {
+            mView.onAdapterDataSetChanged();
+        }
+
+        @Override
+        public void onInvalidated() {
+            mView.onAdapterDataSetChanged();
+        }
     }
 
     private static final class AnimationFrameRunnable implements Runnable {

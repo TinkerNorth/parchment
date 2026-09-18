@@ -60,6 +60,11 @@ public class ScrollDirectionManager {
         return ViewGroupUtilities.getViewGroupMeasuredWidth(viewGroup);
     }
 
+    public int getViewGroupLaidOutSize(final ViewGroup viewGroup) {
+        if (isVerticalScroll()) return viewGroup.getHeight();
+        return viewGroup.getWidth();
+    }
+
     public int getViewGroupBreadthPadding(final ViewGroup viewGroup) {
         if (isVerticalScroll()) return getHorizontalPadding(viewGroup);
         return getVerticalPadding(viewGroup);

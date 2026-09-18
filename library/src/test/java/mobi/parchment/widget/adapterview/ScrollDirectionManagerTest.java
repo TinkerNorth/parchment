@@ -133,6 +133,46 @@ public class ScrollDirectionManagerTest {
         assertThat(height).isEqualTo(BREADTH);
     }
 
+    @Test
+    public void getViewGroupLaidOutSize_scrollingVertically_isTheLaidOutHeight() {
+        final ScrollDirectionManager scrollDirectionManager = new ScrollDirectionManager(VERTICAL);
+        final FrameLayout viewGroup = laidOutViewGroup();
+
+        final int size = scrollDirectionManager.getViewGroupLaidOutSize(viewGroup);
+
+        assertThat(size).isEqualTo(HEIGHT);
+    }
+
+    @Test
+    public void getViewGroupLaidOutSize_scrollingHorizontally_isTheLaidOutWidth() {
+        final ScrollDirectionManager scrollDirectionManager =
+                new ScrollDirectionManager(HORIZONTAL);
+        final FrameLayout viewGroup = laidOutViewGroup();
+
+        final int size = scrollDirectionManager.getViewGroupLaidOutSize(viewGroup);
+
+        assertThat(size).isEqualTo(WIDTH);
+    }
+
+    @Test
+    public void getViewGroupLaidOutSize_isTheSizeTheLayoutGave_notTheMeasuredOne() {
+        final ScrollDirectionManager scrollDirectionManager =
+                new ScrollDirectionManager(HORIZONTAL);
+        final FrameLayout viewGroup = laidOutViewGroup();
+
+        final int measuredWidth = viewGroup.getMeasuredWidth();
+        final int size = scrollDirectionManager.getViewGroupLaidOutSize(viewGroup);
+
+        assertThat(measuredWidth).isEqualTo(0);
+        assertThat(size).isEqualTo(WIDTH);
+    }
+
+    private static FrameLayout laidOutViewGroup() {
+        final FrameLayout viewGroup = new FrameLayout(ApplicationProvider.getApplicationContext());
+        viewGroup.layout(0, 0, WIDTH, HEIGHT);
+        return viewGroup;
+    }
+
     private static FrameLayout paddedViewGroup() {
         final FrameLayout viewGroup = new FrameLayout(ApplicationProvider.getApplicationContext());
         viewGroup.setPadding(PADDING_LEFT, PADDING_TOP, PADDING_RIGHT, PADDING_BOTTOM);
