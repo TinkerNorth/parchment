@@ -354,6 +354,111 @@ last state reported on this view, and told nothing if it does not — so setting
 same listener twice mid-gesture does not repeat `dragging`. Setting a listener
 costs no extra animation frames.
 
+### The inherited `AdapterView` surface
+
+The three views extend `android.widget.AdapterView`, so they inherit its whole
+public API. These members answer from the layout engine's own cells and its
+view-to-position map rather than from state Parchment never maintained:
+
+| Member | What Parchment reports |
+|---|---|
+| `getCount()` | `getAdapter().getCount()`, or 0 with no adapter |
+| `getFirstVisiblePosition()` | the first adapter position with a cell on screen; 0 when nothing is on screen |
+| `getLastVisiblePosition()` | the last adapter position with a cell on screen; `INVALID_POSITION` when nothing is |
+| `canAnimate()` | true when an `android:layoutAnimation` is set and the adapter has items, so the animation runs |
+| `setEmptyView(View)`, `getEmptyView()` | the empty view is shown and the adapter view hidden whenever the adapter is null or empty, re-checked on every adapter change |
+| `getPositionForView(View)` | the adapter position of a child, or `INVALID_POSITION` |
+| `getItemAtPosition(int)`, `getItemIdAtPosition(int)` | read straight from the adapter, as on the platform widget |
+| `getSelectedItemPosition()`, `getSelectedItem()`, `getSelectedItemId()`, `getSelectedView()`, `setSelection(int)` | Parchment's own selection |
+| `setOnItemClickListener`, `performItemClick` and the three listener getters | unchanged framework behaviour |
+| `setOnItemLongClickListener`, `setOnItemSelectedListener` | the framework's, plus Parchment's own bookkeeping |
+
+**What "visible" means.** A cell counts as visible when it has at least one
+pixel inside the viewport measured inside `android:padding*`: its end is past
+the start edge and its start is before the end edge. Parchment attaches cells
+slightly outside that box — one starting exactly at the end edge, and one
+scrolled off the start whose `parchment_cellSpacing` gap still shows its
+divider — and those are not reported as visible, so the numbers describe what
+is on screen rather than what is attached.
+
+That rule is the platform `ListView`'s everywhere except one offset. A platform
+`ListView` keeps a row whose end is flush with the start edge, with none of it
+on screen, and counts it; but it only ever *adds* such a row when scrolling
+forward, so the same content scrolled to from the other direction reports a
+different first visible position. Parchment reports the same pair whichever way
+the content arrived, and therefore reports 1 where a platform `ListView`
+scrolled forward by exactly one row reports 0 — and the same one row out at
+that offset with padding, which is not separately tested. Everywhere else the
+two agree, pinned side by side on the first layout, on an empty adapter, with
+padding, with a viewport smaller than its padding, and one pixel past the start
+edge (`aCellOnePixelPastTheStartEdge_matchesThePlatformListView`,
+`withPadding_aCellEndingInsideTheStartPadding_isNotVisible`,
+`aCellWithItsEndOnTheStartEdge_isWhereParchmentAndThePlatformListViewDisagree`).
+
+**Positions, not cells.** A `GridView` cell holds
+`parchment_numberOfViewsPerCell` adapter positions and a `GridPatternView` cell
+holds one repeat of the pattern, so the first visible position is the first
+position inside the first visible cell and the last is the last position inside
+the last visible cell. A partly filled last cell reports only the positions the
+adapter really has. A `GridPatternView` group's items do not all span the
+group, so a group counted as visible can hold an item that is itself off
+screen; the pair always covers every item on screen.
+
+**Circular scrolling.** With `parchment_isCircularScroll` the reported
+positions are always real adapter positions, never the wrapped ones the engine
+uses internally. Across the wrap point the first visible position is greater
+than the last, so read them as two independent positions rather than as a range
+to iterate.
+
+**The empty view.** `setEmptyView(View)` works past the moment it is called.
+The view re-checks which of the two to show when an adapter is set, when the
+data set changes or is invalidated, and when it is attached after a change it
+missed while detached. Through `setAdapter` and data set changes it matches
+`android.widget.ListView` step for step; on the re-attach it does more, because
+a platform `ListView` unregisters its observer while detached and never
+re-evaluates on attach, so it comes back showing the wrong one of the two
+(`aDataSetChangeWhileDetached_isPickedUpWhereAPlatformListViewMissesIt`). With
+no empty view set nothing touches the view's visibility, which is the
+framework's own guard.
+
+**Accessibility.** `AdapterView` populates the collection information on an
+accessibility event from `getCount()`, `getFirstVisiblePosition()` and
+`getLastVisiblePosition()`, so a screen reader was previously told a Parchment
+view held no items and showed item 0 through `getChildCount() - 1`. It is now
+told what the view actually holds and shows. Nothing else about accessibility
+is implemented yet: there are no scroll actions and no per-item collection item
+information.
+
+**Not supported.** Three inherited getters — `getOnItemClickListener()`,
+`getOnItemLongClickListener()` and `getOnItemSelectedListener()` — are `final`
+in the SDK stubs and cannot be overridden; they answer from `AdapterView`'s own
+fields, which is correct here because Parchment sets those listeners through
+`super`.
+
+`AdapterView` refreshes its focusable state from its private
+`mDesiredFocusableState` and `mDesiredFocusableInTouchModeState` when the data
+set changes, and Parchment does not: a view made focusable while its adapter
+had items stays focusable when the adapter empties, where a platform `ListView`
+would not
+(`theFocusableState_isNotRefreshedOnADataSetChange_unlikeThePlatformListView`).
+Keeping Parchment's own copy of that desired state means overriding
+`setFocusable(int)`, which `AdapterView` declares only from API 26 while
+Parchment's `minSdk` is 21, so it is left alone rather than done behind an API
+check that nothing here can test.
+
+`setAdapter` does not tear the engine down — by design, so a scroll in flight
+is not thrown away — so the cells drawn from the previous adapter stay on
+screen until the next scroll or data set change. While that is true the view
+reports no visible positions rather than positions the new adapter does not
+have: `setAdapter(null)`, or an adapter shorter than the drawn cells, reports
+0 and `INVALID_POSITION`
+(`setAdapterToNull_reportsNothingVisibleEvenThoughTheEngineKeepsItsCells`,
+`replacingTheAdapterWithOneThatIsShorterThanTheDrawnCells_reportsNothingVisible`).
+
+A detached view reports nothing visible, because the engine drops its cells on
+detach; a platform `ListView` keeps its children and keeps reporting them
+(`aDetachedView_reportsNothingVisible_whereAPlatformListViewKeepsItsChildren`).
+
 ### XML attributes
 
 All views:

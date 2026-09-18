@@ -9,6 +9,70 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Fixed
 
+- The inherited `android.widget.AdapterView` members report what the view is
+  actually showing instead of state Parchment never maintained. `getCount()`
+  returned 0 for every adapter, because `AdapterView` fills its item count from
+  an observer only its own subclasses register; it now returns the adapter's
+  count, or 0 with no adapter. `getFirstVisiblePosition()` returned 0 whatever
+  the view was scrolled to, and `getLastVisiblePosition()` returned
+  `getChildCount() - 1`, which was right only while the content fitted the
+  viewport — Parchment attaches a cell starting exactly at the end edge, so at
+  the top of a ten-item list it answered 3 where the last visible position is
+  2 — and never right for a `GridView` or `GridPatternView`, where one cell
+  holds several adapter positions; both now come from the layout engine's own cells
+  and its view-to-position map, so they are adapter positions and not child
+  indices, and a partly filled last cell reports only the positions the adapter
+  has. Visible means a cell with at least one pixel inside the viewport
+  measured inside `android:padding*`, so a cell Parchment attaches past the end
+  edge, or holds off the start to keep its divider on screen, is not reported.
+  That is the platform `ListView`'s rule everywhere but one pixel: the platform
+  counts a row whose end is flush with the start edge, but only when the
+  content arrived from that direction, so its answer depends on how the content
+  got there and Parchment's does not. With `parchment_isCircularScroll` the
+  positions are real adapter positions, never the wrapped ones the engine uses,
+  so across the wrap point the first is greater than the last. With nothing on
+  screen the pair is 0 and `INVALID_POSITION`, as on the platform widget, which
+  keeps the usual `first..last` loop empty rather than running once at -1. A
+  position the current adapter does not have is never reported: `setAdapter`
+  leaves the previous adapter's cells drawn by design, so while a shorter or
+  null adapter is set the pair is the empty one rather than positions that
+  would make `getItemAtPosition` throw.
+
+- A data set change after a view was detached and re-attached reached the view
+  but not the layout engine. `LayoutManager` registers its data set observer in
+  its constructor and unregisters it in `destroy()`, which
+  `onDetachedFromWindow` calls, and nothing registered it again, so after one
+  detach a `notifyDataSetChanged` removed every child and redrew nothing while
+  the view went on reporting the old positions. `onAttachedToWindow` now
+  registers it again (`aDataSetChangeAfterAReAttach_reachesTheLayoutEngine`).
+
+- The collection information `AdapterView` puts on an accessibility event comes
+  from `getCount()`, `getFirstVisiblePosition()` and `getLastVisiblePosition()`,
+  so a screen reader was told a Parchment view held no items and showed item 0
+  through `getChildCount() - 1`. It is now told what the view holds and shows.
+
+- `setEmptyView(View)` works past the moment it is called. `AdapterView`
+  evaluates emptiness inside `setEmptyView` and then only from a package
+  private `checkFocus`, which Parchment cannot call, so the empty view was
+  decided once and never revisited: setting an empty view and then an adapter
+  left the empty view up and the Parchment view `GONE` for good, and a
+  `notifyDataSetChanged` that emptied or refilled the adapter changed nothing.
+  The view now re-checks which of the two to show when an adapter is set, when
+  the data set changes or is invalidated, and when it is attached after a
+  change it missed while detached, so it matches `android.widget.ListView`
+  through the same sequence. With no empty view set nothing touches the view's
+  visibility, which is what the framework's own guard does.
+
+- `canAnimate()` answered `AdapterView`'s own item count, which Parchment never
+  filled, so an `android:layoutAnimation` on any of the three views never ran.
+  It now answers from `getLayoutAnimation()` and `getCount()`, and the
+  animation runs on the cells the engine drew
+  (`aLayoutAnimation_runsOnTheCellsTheEngineDrew`).
+
+- `ContentBound` and its `getAbsoluteSnapPosition` were package private, the
+  only such type and member left in the library. Both are `public` like the
+  rest of `snapposition/`.
+
 - `parchment_selectOnSnap` under `parchment_isCircularScroll` overrode a tap.
   Circular scrolling forces the `onScreen` snap, under which every cell fully
   inside the view is at the snap position, so the stop after a tap ranked them
