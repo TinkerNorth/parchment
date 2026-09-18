@@ -657,6 +657,39 @@ public class AdapterViewSurfaceTest {
     }
 
     @Test
+    public void aDataSetChangeAfterAReAttach_reachesTheLayoutEngine() {
+        final ResizableAdapter adapter = new ResizableAdapter(mActivity, 10);
+        final SurfaceListView listView = listView(R.layout.surface_list_view, adapter);
+        mContent.removeView(listView);
+        attach(listView);
+        layOut(listView);
+
+        adapter.setCount(2);
+        layOut(listView);
+
+        assertThat(listView.getCount()).isEqualTo(2);
+        assertThat(listView.getFirstVisiblePosition()).isEqualTo(0);
+        assertThat(listView.getLastVisiblePosition()).isEqualTo(1);
+    }
+
+    @Test
+    public void aDataSetChangeThatEmptiesTheAdapterAfterAReAttach_reachesTheLayoutEngine() {
+        final ResizableAdapter adapter = new ResizableAdapter(mActivity, 10);
+        final SurfaceListView listView = listView(R.layout.surface_list_view, adapter);
+        mContent.removeView(listView);
+        attach(listView);
+        layOut(listView);
+
+        adapter.setCount(0);
+        layOut(listView);
+
+        assertThat(listView.getCount()).isEqualTo(NO_ITEMS);
+        assertThat(listView.getChildCount()).isEqualTo(NO_CHILDREN);
+        assertThat(listView.getFirstVisiblePosition()).isEqualTo(0);
+        assertThat(listView.getLastVisiblePosition()).isEqualTo(INVALID_POSITION);
+    }
+
+    @Test
     public void aDetachedView_reportsNothingVisible_whereAPlatformListViewKeepsItsChildren() {
         final SurfaceListView listView = listView(R.layout.surface_list_view, 10);
         final android.widget.ListView platformListView = platformListView(10);

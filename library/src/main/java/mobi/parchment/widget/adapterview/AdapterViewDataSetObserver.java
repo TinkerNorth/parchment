@@ -14,6 +14,10 @@ public abstract class AdapterViewDataSetObserver extends DataSetObserver {
         mAdapterViewManager.registerDataSetObserver(this);
     }
 
+    public void listenForDataSetChanges() {
+        mAdapterViewManager.registerDataSetObserver(this);
+    }
+
     protected abstract void onDataSetChanged();
 
     public void destroy() {

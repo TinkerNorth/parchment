@@ -196,7 +196,9 @@ public abstract class AbstractAdapterView<ADAPTER extends Adapter, Cell>
         super.onAttachedToWindow();
         final AdapterViewManager adapterViewManager =
                 mAdapterViewInitializer.getAdapterViewManager();
+        final LayoutManager<Cell> layoutManager = mAdapterViewInitializer.getLayoutManager();
         adapterViewManager.registerDataSetObserver(mDataSetObserver);
+        layoutManager.listenForDataSetChanges();
         updateTheEmptyViewVisibility();
     }
 
