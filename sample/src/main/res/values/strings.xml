@@ -76,7 +76,7 @@
     <string name="playground_view_pager_hint_settles">Only a fling turns a page. Snapping to a position other than onScreen is on, so a drag released slowly settles on a cell too.</string>
     <string name="playground_view_pager_hint_needs_snapping">Only a fling turns a page; a drag released slowly stops where it is. To always rest on a page, also snap to a position other than onScreen.</string>
     <string name="playground_view_pager_interval_hint">How far one fling pages: every cell that fits the viewport whole, or a fixed number of cells. Needs ViewPager.</string>
-    <string name="playground_select_on_snap_hint">Selects the cell a snap lands on. Needs snapping; with onScreen a snap only lands when the content is pushed against an end, which circular scroll has none of.</string>
+    <string name="playground_select_on_snap_hint">Selects the cell a snap lands on. Needs snapping; with onScreen, which circular scroll forces, a snap lands only on a cell alone at the snap position: the one pushed against an end, or the only one fully on screen.</string>
     <string name="playground_select_while_scrolling_hint">Moves the selection to the cell nearest the snap position while the content is still moving. Needs a snap position other than onScreen; snapping itself is not needed.</string>
     <string name="playground_views_per_cell_hint">How many views share a row (vertical) or a column (horizontal).</string>
     <string name="playground_gravity_hint_vertical">top and bottom place a view shorter than its row, such as one whose caption wraps. left and right place a row narrower than the width: the short last row.</string>

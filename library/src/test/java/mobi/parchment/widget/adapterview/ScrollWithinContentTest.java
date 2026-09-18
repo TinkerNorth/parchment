@@ -207,6 +207,22 @@ public class ScrollWithinContentTest {
     }
 
     @Test
+    public void
+            startSnap_scrollWithinContent_heldAtTheEndBetweenCellStarts_snapToStillSelectsTheCellNearestTheStart() {
+        setupWithUnevenCells(SnapPosition.start, SELECT_ON_SNAP);
+        scrollInFrames(FRAMES_TO_THE_UNEVEN_CONTENT_END, FRAME_DISPLACEMENT);
+        scrollBy(PAST_THE_CONTENT_END);
+        final View tappedView = mListLayoutManager.getViewForPosition(LAST_POSITION);
+        mListLayoutManager.setSelected(tappedView);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(LAST_POSITION);
+
+        final int snapDistance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(snapDistance).isEqualTo(NO_MOVEMENT);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(SECOND_LAST_POSITION);
+    }
+
+    @Test
     public void startSnap_scrollWithinContent_heldAtTheEnd_selectsTheCellAtTheStart() {
         setup(
                 SnapPosition.start,

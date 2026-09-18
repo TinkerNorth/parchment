@@ -1,0 +1,228 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2014 Emir Hasanbegovic and Parchment contributors.
+
+package mobi.parchment.widget.adapterview;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import androidx.test.core.app.ApplicationProvider;
+import java.util.ArrayList;
+import java.util.List;
+import mobi.parchment.widget.adapterview.listview.ListLayoutManager;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+
+/**
+ * A stop selects the cell the snap lands on. Circular scrolling forces the onScreen strategy, under
+ * which every cell fully inside the view is at the snap position, so when more than one is there
+ * the snap lands on none of them and the stop leaves the selection alone (#62).
+ */
+@RunWith(RobolectricTestRunner.class)
+public class CircularScrollSelectOnSnapTest {
+
+    private static final int VIEWPORT_SIZE = 300;
+    private static final int CELL_SIZE_TWO_FIT = 110;
+    private static final int CELL_SIZE_ONE_FITS = 200;
+    private static final int CELL_SIZE_OF_THE_VIEW = VIEWPORT_SIZE;
+    private static final int ADAPTER_SIZE = 10;
+    private static final int FIRST_CELL = 0;
+    private static final int SECOND_CELL = 1;
+    private static final int NOTHING_SELECTED = -1;
+    private static final int NO_MOVEMENT = 0;
+    private static final int DRAG_OFF_THE_START = -45;
+    private static final int DRAG_TOWARDS_THE_END = 30;
+    private static final int DRAG_HALF_A_CELL_OFF_THE_CENTRE = -(CELL_SIZE_TWO_FIT / 2);
+    private static final int NO_CELL_SPACING = 0;
+    private static final boolean CIRCULAR = true;
+    private static final boolean NOT_CIRCULAR = false;
+    private static final boolean SNAP_TO_POSITION = true;
+    private static final boolean NOT_VIEW_PAGER = false;
+    private static final int VIEWPORT_PAGING = 0;
+    private static final boolean SELECT_ON_SNAP = true;
+    private static final boolean NO_SELECT_WHILE_SCROLLING = false;
+    private static final boolean HORIZONTAL = false;
+    private static final boolean SCROLL_PAST_CONTENT = false;
+
+    private final MyViewGroup mViewGroup =
+            new MyViewGroup(ApplicationProvider.getApplicationContext());
+    private final AdapterViewManager mAdapterViewManager = new AdapterViewManager();
+    private final RecordingSelectedListener mSelections = new RecordingSelectedListener();
+    private final Animation mAnimation = new Animation();
+    private ListLayoutManager mListLayoutManager;
+
+    @Test
+    public void
+            circularScroll_selectOnSnap_snapToWithSeveralCellsFullyOnScreen_keepsTheSelection() {
+        setup(CIRCULAR, SnapPosition.start, CELL_SIZE_TWO_FIT);
+        final View tappedView = mListLayoutManager.getViewForPosition(SECOND_CELL);
+        mListLayoutManager.setSelected(tappedView);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(NO_MOVEMENT);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(SECOND_CELL);
+        mListLayoutManager.reportTheSelectionAtRest();
+        assertThat(mSelections.mPositions).containsExactly(SECOND_CELL);
+    }
+
+    @Test
+    public void circularScroll_selectOnSnap_snapToWithNoSelection_selectsNothing() {
+        setup(CIRCULAR, SnapPosition.start, CELL_SIZE_TWO_FIT);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(NO_MOVEMENT);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(NOTHING_SELECTED);
+        mListLayoutManager.reportTheSelectionAtRest();
+        assertThat(mSelections.mPositions).isEmpty();
+    }
+
+    @Test
+    public void circularScroll_selectOnSnap_snapToWithOneCellFullyOnScreen_selectsIt() {
+        setup(CIRCULAR, SnapPosition.start, CELL_SIZE_ONE_FITS);
+        dragBy(DRAG_TOWARDS_THE_END);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(NO_MOVEMENT);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(FIRST_CELL);
+    }
+
+    @Test
+    public void circularScroll_selectOnSnap_snapToWithNoCellFullyOnScreen_selectsTheCellItSnaps() {
+        setup(CIRCULAR, SnapPosition.start, CELL_SIZE_OF_THE_VIEW);
+        dragBy(DRAG_OFF_THE_START);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(-DRAG_OFF_THE_START);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(FIRST_CELL);
+    }
+
+    @Test
+    public void startSnap_selectOnSnap_snapTo_selectsTheCellItSnaps() {
+        setup(NOT_CIRCULAR, SnapPosition.start, CELL_SIZE_TWO_FIT);
+        dragBy(DRAG_OFF_THE_START);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(-DRAG_OFF_THE_START);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(FIRST_CELL);
+    }
+
+    @Test
+    public void
+            centerSnap_selectOnSnap_twoCellsEquidistantFromTheCentre_selectsTheFirstAndSnapsIt() {
+        setup(NOT_CIRCULAR, SnapPosition.center, CELL_SIZE_TWO_FIT);
+        dragBy(DRAG_HALF_A_CELL_OFF_THE_CENTRE);
+
+        final int distance = mListLayoutManager.snapTo(mViewGroup);
+
+        assertThat(distance).isEqualTo(-DRAG_HALF_A_CELL_OFF_THE_CENTRE);
+        assertThat(mListLayoutManager.getSelectedPosition()).isEqualTo(FIRST_CELL);
+    }
+
+    private void setup(
+            final boolean isCircularScroll, final SnapPosition snapPosition, final int cellSize) {
+        final LayoutManagerAttributes attributes =
+                new LayoutManagerAttributes(
+                        isCircularScroll,
+                        SNAP_TO_POSITION,
+                        NOT_VIEW_PAGER,
+                        VIEWPORT_PAGING,
+                        snapPosition,
+                        SCROLL_PAST_CONTENT,
+                        NO_CELL_SPACING,
+                        SELECT_ON_SNAP,
+                        NO_SELECT_WHILE_SCROLLING,
+                        HORIZONTAL);
+        mListLayoutManager =
+                new ListLayoutManager(mViewGroup, mSelections, mAdapterViewManager, attributes);
+        mAdapterViewManager.setAdapter(new CellAdapter(cellSize));
+
+        final int measureSpec =
+                View.MeasureSpec.makeMeasureSpec(VIEWPORT_SIZE, View.MeasureSpec.EXACTLY);
+        mViewGroup.measure(measureSpec, measureSpec);
+        mViewGroup.layout(0, 0, VIEWPORT_SIZE, VIEWPORT_SIZE);
+
+        mAnimation.newAnimation();
+        layout();
+    }
+
+    private void layout() {
+        mListLayoutManager.layout(mViewGroup, mAnimation, 0, 0, VIEWPORT_SIZE, VIEWPORT_SIZE);
+    }
+
+    private void dragBy(final int displacement) {
+        mAnimation.setDisplacement(displacement);
+        layout();
+    }
+
+    private static final class RecordingSelectedListener implements OnSelectedListener {
+        private final List<Integer> mPositions = new ArrayList<Integer>();
+
+        @Override
+        public void onSelected(final View view) {
+            final Integer position = (Integer) view.getTag();
+            mPositions.add(position);
+        }
+    }
+
+    private static final class MyViewGroup extends LinearLayout implements AdapterViewHandler {
+        private final List<View> mViews = new ArrayList<View>();
+
+        private MyViewGroup(final Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean addViewInAdapterView(
+                final View view, final int index, final ViewGroup.LayoutParams layoutParams) {
+            mViews.add(index, view);
+            return true;
+        }
+
+        @Override
+        public void removeViewInAdapterView(final View view) {
+            mViews.remove(view);
+        }
+    }
+
+    private static final class CellAdapter extends BaseAdapter {
+        private final int mCellSize;
+
+        private CellAdapter(final int cellSize) {
+            mCellSize = cellSize;
+        }
+
+        @Override
+        public int getCount() {
+            return ADAPTER_SIZE;
+        }
+
+        @Override
+        public Object getItem(final int position) {
+            return position;
+        }
+
+        @Override
+        public long getItemId(final int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final FrameLayout view = new FrameLayout(ApplicationProvider.getApplicationContext());
+            view.setTag(position);
+            view.setLayoutParams(new ViewGroup.LayoutParams(mCellSize, mCellSize));
+            return view;
+        }
+    }
+}

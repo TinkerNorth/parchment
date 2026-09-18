@@ -1150,6 +1150,40 @@ public class AnimationFrameSchedulingTest {
     }
 
     @Test
+    public void
+            aTapUnderCircularScroll_withSelectOnSnap_reportsTheTappedCellOnceInTheFrameThatRests() {
+        final CountingListView listView = circularSelectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        listView.setOnItemSelectedListener(selections);
+        final View tappedCell = listView.mLayoutManager.getViewForPosition(SECOND_CELL);
+        listView.reset();
+
+        tap(listView, tappedCell);
+        idleMainLooper();
+
+        assertThat(listView.mGestureListener.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(selections.mPositions).containsExactly(SECOND_CELL);
+
+        layOut(listView);
+        idleMainLooper();
+
+        assertThat(selections.mPositions).containsExactly(SECOND_CELL);
+    }
+
+    @Test
+    public void aFlingUnderCircularScroll_withSelectOnSnap_reportsNoSelection() {
+        final CountingListView listView = circularSelectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        listView.setOnItemSelectedListener(selections);
+
+        fling(listView);
+        idleMainLooper();
+
+        assertThat(listView.mGestureListener.getState()).isEqualTo(AdapterAnimator.State.notMoving);
+        assertThat(selections.mPositions).isEmpty();
+    }
+
+    @Test
     public void reattachingMidSeekAfterAStall_neverStepsBackAndLandsExactly() {
         final ResizableAdapter adapter = new ResizableAdapter(mListView.getContext());
         adapter.setCount(A_LONG_ADAPTER);
@@ -1247,6 +1281,19 @@ public class AnimationFrameSchedulingTest {
         return listView;
     }
 
+    private CountingListView circularSelectOnSnapListView() {
+        return countingListView(R.layout.counting_circular_select_on_snap_list_view);
+    }
+
+    private static void tap(final CountingListView listView, final View cell) {
+        final int cellStart = cell.getLeft();
+        final int cellEnd = cell.getRight();
+        final float cellCentre = (cellStart + cellEnd) / 2f;
+        listView.mGestureListener.onDown(downAt(cellCentre));
+        listView.mGestureListener.onSingleTapUp(upAt(cellCentre));
+        listView.mGestureListener.onUp();
+    }
+
     private static void fling(final CountingListView listView) {
         listView.mGestureListener.onDown(down());
         listView.mGestureListener.onFling(down(), moveTo(100f), FLING_VELOCITY, 0f);
@@ -1284,12 +1331,20 @@ public class AnimationFrameSchedulingTest {
         return MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, 200f, 150f, 0);
     }
 
+    private static MotionEvent upAt(final float x) {
+        return MotionEvent.obtain(0, 50, MotionEvent.ACTION_UP, x, 150f, 0);
+    }
+
     private static MotionEvent moveDownTo(final float y) {
         return MotionEvent.obtain(0, 10, MotionEvent.ACTION_MOVE, 200f, y, 0);
     }
 
     private static MotionEvent down() {
         return MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 200f, 150f, 0);
+    }
+
+    private static MotionEvent downAt(final float x) {
+        return MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, x, 150f, 0);
     }
 
     private static MotionEvent moveTo(final float x) {

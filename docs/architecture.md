@@ -521,6 +521,29 @@ first layout already selects the cell at the snap position, as `onScreen` has
 always done for short content
 (`endSnap_scrollWithinContent_contentShorterThanTheView_selectsOnTheFirstLayout`).
 
+A stop that is not held selects the cell the snap lands on, in `LayoutManager.snapTo`,
+and only when the snap position is not shared. `isTheSnapPositionShared` counts
+the drawn cells that are already at the snap position, a settle distance of zero
+and a distance from the snap position of zero, the same two answers the ranking
+uses; when more than one is there the snap lands on none of them and the stop
+leaves the selection as it is. Under `start`, `end` and `center` at most one cell
+can be at the snap position, so nothing changes. Under `onScreen`, which circular
+scrolling forces, every cell fully inside the view is at the snap position, so a
+stop selects only when one cell alone is there, the only cell that fits the view,
+and a tap's selection survives its own snap; without the guard the first drawn
+cell won the tie and overrode the tap (#62). A settle distance of zero alone
+does not put a cell at the snap position: at a `parchment_scrollWithinContent`
+bound the cells held short of their snap point settle where they are, but each
+is still some distance from its snap point, so none of them is at the snap
+position, nothing is shared, and a stop selects the nearest of them as before
+(`startSnap_scrollWithinContent_heldAtTheEndBetweenCellStarts_snapToStillSelectsTheCellNearestTheStart`).
+The predicate runs at stops and on a layout pass at rest, never on an animation
+frame, and touches neither the snap geometry nor the clamp path
+(`circularScroll_selectOnSnap_snapToWithSeveralCellsFullyOnScreen_keepsTheSelection`,
+`circularScroll_selectOnSnap_snapToWithOneCellFullyOnScreen_selectsIt`,
+`circularScroll_withSelectOnSnap_aTapOnACellPartlyOffScreen_snapsItOnAndKeepsItSelected`,
+`circularScroll_withSelectOnSnap_cellsTheSizeOfTheView_aFlingSelectsTheCellItSnapsOn`).
+
 Tapping a cell snaps that cell, not the view that was tapped:
 `LayoutManagerBridge.onSingleTapUp` finds the cell holding the tapped view
 and asks for that cell's distance, so a tap and the settle that follows it
@@ -742,7 +765,10 @@ lands, since the target is still the target
 `parchment_isCircularScroll` is handled entirely in `LayoutManager`: adapter positions
 are wrapped modulo `getCount()` when cells are fetched, and the start/end
 bounds that stop a normal scroll are disabled. The adapter sees only real
-positions. `GridLayoutManagerCircularScrollTest` covers the wrap points.
+positions. The snap strategy is `onScreen` whatever `parchment_snapPosition` declares,
+so under `parchment_selectOnSnap` a stop selects only when one cell alone is fully
+inside the view (`CircularScrollSelectOnSnapTest`). `GridLayoutManagerCircularScrollTest`
+covers the wrap points.
 
 ## ViewPager mode
 
@@ -851,3 +877,4 @@ same content position without the adapter's help.
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |
 | Why did the scroll listener report that? | `ScrollListenerDispatcher`, `ScrollState.from`, `LayoutManager.getFrameDisplacement` |
 | Why did a programmatic scroll stop short / land elsewhere? | `AdapterAnimator.continueTheSeek`, `LayoutManager.getScrollToPositionDistance`, `SnapSettleTest` |
+| Why did a stop change (or keep) the selection? | `LayoutManager.snapTo`, `isTheSnapPositionShared`; `CircularScrollSelectOnSnapTest`, `SnapAndSelectionInstrumentedTest` |

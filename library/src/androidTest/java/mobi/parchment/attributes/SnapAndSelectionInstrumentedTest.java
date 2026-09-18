@@ -52,6 +52,8 @@ public final class SnapAndSelectionInstrumentedTest {
     private static final int DRAG_ROUNDING_TOLERANCE = 20;
     private static final int DRAG_STEPS = 8;
     private static final int FIRST_CELL = 0;
+    private static final int SECOND_CELL = 1;
+    private static final int HALF_A_CELL = ITEM_HEIGHT / 2;
     private static final int NEAREST_CELL_AFTER_THE_DRAG = 2;
     private static final int NOTHING_SELECTED = AdapterView.INVALID_POSITION;
 
@@ -211,6 +213,33 @@ public final class SnapAndSelectionInstrumentedTest {
                 "the content should still snap onto the centre: " + after,
                 after.hasChildWithTop(CENTRED_TOP));
         assertEquals(NOTHING_SELECTED, harness.selectedItemPosition());
+    }
+
+    /**
+     * Circular scrolling forces the onScreen snap, under which every cell fully inside the view is
+     * at the snap position, so the stop after the tap has no single cell to land on and leaves the
+     * tapped cell selected (#62).
+     */
+    @Test
+    public void selectOnSnapInXml_underCircularScroll_aTapKeepsTheTappedCellSelected() {
+        final ParchmentViewHarness<ListView<BaseAdapter>> harness =
+                attach(R.layout.instrumented_select_on_snap_circular);
+        final LaidOutChildren before = harness.children();
+        final int tappedCellTop = before.topOfAdapterPosition(SECOND_CELL);
+        final int cellAboveTop = tappedCellTop - ITEM_HEIGHT;
+        assertTrue(
+                "the first two cells should both be fully on screen: " + before,
+                before.isAdapterPositionAtTop(FIRST_CELL, cellAboveTop));
+        final int tapY = tappedCellTop + HALF_A_CELL;
+
+        harness.tap(GESTURE_X, tapY);
+        final LaidOutChildren after = harness.settle();
+
+        assertEquals(
+                "a tap on a cell already on screen should move nothing: " + after,
+                tappedCellTop,
+                after.topOfAdapterPosition(SECOND_CELL));
+        assertEquals(SECOND_CELL, harness.selectedItemPosition());
     }
 
     private static void drag(final ParchmentViewHarness<ListView<BaseAdapter>> harness) {

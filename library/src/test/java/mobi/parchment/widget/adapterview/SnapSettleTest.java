@@ -111,6 +111,26 @@ public class SnapSettleTest {
     private static final int NARROW_CELL_BREADTH = 100;
     private static final int WIDE_CELL_BREADTH = 200;
     private static final int FIRST_WIDE_CELL = 6;
+    private static final int PATTERN_CELL_SPACING = 10;
+    private static final int PATTERN_COLUMNS = 2;
+    private static final int PATTERN_ROWS_PER_GROUP = 2;
+    private static final float PATTERN_RATIO = 0.5f;
+    private static final int PATTERN_COLUMN_BREADTH =
+            (VIEW_BREADTH - PATTERN_CELL_SPACING) / PATTERN_COLUMNS;
+    private static final int PATTERN_ROW_SIZE = (int) (PATTERN_COLUMN_BREADTH * PATTERN_RATIO);
+    private static final int PATTERN_GROUP_SIZE =
+            PATTERN_ROWS_PER_GROUP * PATTERN_ROW_SIZE + PATTERN_CELL_SPACING;
+    private static final int SECOND_PATTERN_GROUP_START = PATTERN_GROUP_SIZE + PATTERN_CELL_SPACING;
+    private static final int SECOND_PATTERN_GROUP_SNAPPED_START = VIEW_SIZE - PATTERN_GROUP_SIZE;
+    private static final int FIRST_PATTERN_GROUP_PUSHED_START =
+            SECOND_PATTERN_GROUP_SNAPPED_START - SECOND_PATTERN_GROUP_START;
+    private static final float SHORT_PATTERN_RATIO = 0.25f;
+    private static final int SHORT_PATTERN_ROW_SIZE =
+            (int) (PATTERN_COLUMN_BREADTH * SHORT_PATTERN_RATIO);
+    private static final int SHORT_PATTERN_GROUP_SIZE =
+            PATTERN_ROWS_PER_GROUP * SHORT_PATTERN_ROW_SIZE + PATTERN_CELL_SPACING;
+    private static final int SECOND_SHORT_PATTERN_GROUP_START =
+            SHORT_PATTERN_GROUP_SIZE + PATTERN_CELL_SPACING;
     // Recorded on main at a0688d7, before smoothScrollToPosition, with a scroll listener attached:
     // a
     // change to any of them is a change to a gesture. They count requests, not frames; the
@@ -1047,6 +1067,115 @@ public class SnapSettleTest {
     }
 
     @Test
+    public void circularScroll_withSelectOnSnap_aTapOnACellFullyOnScreen_keepsThatCellSelected() {
+        final SettleListView view = circularSelectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+        final View cellFullyOnScreen = childAtTop(view, SECOND_UNEVEN_ROW_START);
+
+        tap(view, cellFullyOnScreen);
+
+        assertSettled(view);
+        assertThat(cellFullyOnScreen.getTop()).isEqualTo(SECOND_UNEVEN_ROW_START);
+        assertThat(selections.mPositions).containsExactly(SECOND_CELL);
+    }
+
+    @Test
+    public void
+            circularScroll_withSelectOnSnap_aTapOnACellPartlyOffScreen_snapsItOnAndKeepsItSelected() {
+        final SettleListView view = circularSelectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+        final View cellPartlyOffScreen = childAtTop(view, THIRD_UNEVEN_ROW_START);
+
+        tap(view, cellPartlyOffScreen);
+
+        assertSettled(view);
+        assertThat(cellPartlyOffScreen.getTop()).isEqualTo(LAST_UNEVEN_ROW_START);
+        assertThat(selections.mPositions).containsExactly(THIRD_CELL);
+    }
+
+    @Test
+    public void
+            circularScroll_withSelectOnSnap_aFlingWithSeveralCellsFullyOnScreen_selectsNothing() {
+        final SettleListView view = circularSelectOnSnapListView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+
+        fling(view, FLING_VELOCITY);
+
+        assertSettled(view);
+        assertThat(selections.mPositions).isEmpty();
+    }
+
+    @Test
+    public void
+            circularScroll_withSelectOnSnap_cellsTheSizeOfTheView_aFlingSelectsTheCellItSnapsOn() {
+        final SettleListView view =
+                listView(
+                        R.layout.settle_list_circular_start_select_on_snap,
+                        VIEW_SIZE,
+                        ADAPTER_SIZE);
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+
+        fling(view, FLING_VELOCITY);
+
+        assertSettled(view);
+        assertThat(topOfPosition(view, SECOND_CELL)).isEqualTo(FIRST_ROW_START);
+        assertThat(selections.mPositions).containsExactly(FIRST_CELL, SECOND_CELL);
+    }
+
+    @Test
+    public void
+            gridPatternCircularScroll_withSelectOnSnap_aTapOnAGroupPartlyOffScreen_snapsItOnAndKeepsItSelected() {
+        final SettleGridPatternView view =
+                gridPatternView(
+                        R.layout.settle_grid_pattern_circular_select_on_snap, ADAPTER_SIZE, true);
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+        final View firstViewOfTheSecondGroup = childOfPosition(view, FIRST_VIEW_OF_SECOND_CELL);
+        assertThat(cellStarts(view)).containsExactly(FIRST_ROW_START, SECOND_PATTERN_GROUP_START);
+
+        tap(view, firstViewOfTheSecondGroup);
+
+        assertSettled(view);
+        assertThat(cellStarts(view))
+                .containsExactly(
+                        FIRST_PATTERN_GROUP_PUSHED_START, SECOND_PATTERN_GROUP_SNAPPED_START);
+        assertThat(selections.mPositions).containsExactly(FIRST_VIEW_OF_SECOND_CELL);
+    }
+
+    @Test
+    public void
+            gridPatternCircularScroll_withSelectOnSnap_aTapOnAGroupFullyOnScreen_keepsThatGroupSelected() {
+        final SettleGridPatternView view = shortGroupsCircularSelectOnSnapGridPatternView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+        final View firstViewOfTheSecondGroup = childOfPosition(view, FIRST_VIEW_OF_SECOND_CELL);
+        assertThat(firstViewOfTheSecondGroup.getTop()).isEqualTo(SECOND_SHORT_PATTERN_GROUP_START);
+
+        tap(view, firstViewOfTheSecondGroup);
+
+        assertSettled(view);
+        assertThat(firstViewOfTheSecondGroup.getTop()).isEqualTo(SECOND_SHORT_PATTERN_GROUP_START);
+        assertThat(selections.mPositions).containsExactly(FIRST_VIEW_OF_SECOND_CELL);
+    }
+
+    @Test
+    public void
+            gridPatternCircularScroll_withSelectOnSnap_aFlingWithSeveralGroupsFullyOnScreen_selectsNothing() {
+        final SettleGridPatternView view = shortGroupsCircularSelectOnSnapGridPatternView();
+        final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
+        view.setOnItemSelectedListener(selections);
+
+        fling(view, FLING_VELOCITY);
+
+        assertSettled(view);
+        assertThat(selections.mPositions).isEmpty();
+    }
+
+    @Test
     public void smoothScroll_toTheCellAlreadyAtTheSnapPosition_requestsNoFrame() {
         final SettleListView view = listView();
         assertThat(topOfPosition(view, FIRST_CELL)).isEqualTo(CENTRED_LIST_CELL_START);
@@ -1240,6 +1369,18 @@ public class SnapSettleTest {
         view.layout(0, 0, measuredBreadth, VIEW_SIZE);
     }
 
+    private SettleGridPatternView shortGroupsCircularSelectOnSnapGridPatternView() {
+        return gridPatternView(
+                R.layout.settle_grid_pattern_circular_select_on_snap_short_groups,
+                ADAPTER_SIZE,
+                true);
+    }
+
+    private SettleListView circularSelectOnSnapListView() {
+        return listView(
+                R.layout.settle_list_circular_start_select_on_snap, UNEVEN_CELL_SIZE, ADAPTER_SIZE);
+    }
+
     private SettleListView listView() {
         return listView(R.layout.settle_list_center, LIST_CELL_SIZE, ADAPTER_SIZE);
     }
@@ -1421,6 +1562,7 @@ public class SnapSettleTest {
 
     private static final class RecordingItemSelectedListener
             implements AdapterView.OnItemSelectedListener {
+        private final List<Integer> mPositions = new ArrayList<Integer>();
         private int mSelectionCount;
         private int mLastPosition = AdapterView.INVALID_POSITION;
 
@@ -1429,6 +1571,7 @@ public class SnapSettleTest {
                 final AdapterView<?> parent, final View view, final int position, final long id) {
             mSelectionCount++;
             mLastPosition = position;
+            mPositions.add(position);
         }
 
         @Override
