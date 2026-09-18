@@ -324,8 +324,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
         final int startSizePadding = getStartSizePadding();
         final int endSizePadding = getEndSizePadding();
 
-        final int newSize =
-                size - startSizePadding - endSizePadding; // Todo: consider padding for newSize
+        final int newSize = size - startSizePadding - endSizePadding;
 
         if (!continuedAnimation && !mCells.isEmpty()) {
             mAnimationId = animationId;
