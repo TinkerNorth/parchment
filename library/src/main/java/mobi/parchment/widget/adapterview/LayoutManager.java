@@ -20,6 +20,7 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
     public static final int INVALID_POSITION = -1;
     private static final int NO_BREADTH = 0;
     private static final int NOT_WRAPPING = -1;
+    private static final int FIRST_VIEW_IN_CELL = 0;
 
     private final Map<View, Integer> mPositions = new HashMap<View, Integer>();
 
@@ -794,6 +795,44 @@ public abstract class LayoutManager<Cell> extends AdapterViewDataSetObserver {
 
     protected final int getDrawnCellCount() {
         return mCells.size();
+    }
+
+    protected final int getFirstVisibleAdapterPosition() {
+        final int drawnCellCount = mCells.size();
+        for (int cellIndex = 0; cellIndex < drawnCellCount; cellIndex++) {
+            final Cell cell = mCells.get(cellIndex);
+            final boolean isOnScreen = isCellOnScreen(cell);
+            if (isOnScreen) {
+                final View firstView = getCellView(cell, FIRST_VIEW_IN_CELL);
+                return getPosition(firstView);
+            }
+        }
+        return INVALID_POSITION;
+    }
+
+    protected final int getLastVisibleAdapterPosition() {
+        final int lastCellIndex = mCells.size() - 1;
+        for (int cellIndex = lastCellIndex; cellIndex >= 0; cellIndex--) {
+            final Cell cell = mCells.get(cellIndex);
+            final boolean isOnScreen = isCellOnScreen(cell);
+            if (isOnScreen) {
+                final int viewCount = getCellViewCount(cell);
+                final View lastView = getCellView(cell, viewCount - 1);
+                return getPosition(lastView);
+            }
+        }
+        return INVALID_POSITION;
+    }
+
+    private boolean isCellOnScreen(final Cell cell) {
+        final int visibleStart = getStartSizePadding();
+        final int laidOutSize = mScrollDirectionManager.getViewGroupLaidOutSize(mViewGroup);
+        final int visibleEnd = laidOutSize - getEndSizePadding();
+        final int cellStart = getCellStart(cell);
+        final int cellEnd = getCellEnd(cell);
+        final boolean endsAfterTheStartEdge = cellEnd > visibleStart;
+        final boolean startsBeforeTheEndEdge = cellStart < visibleEnd;
+        return endsAfterTheStartEdge && startsBeforeTheEndEdge;
     }
 
     protected final int getDrawnCellViewCount(final int cellIndex) {

@@ -237,6 +237,87 @@ listener again does not repeat it
 the listener field again between the two callbacks, so a listener that removes or
 replaces itself from inside `onScrolled` is not called again in that frame.
 
+## Reporting the visible range
+
+`LayoutManager.getFirstVisibleAdapterPosition` and
+`getLastVisibleAdapterPosition` are what `AbstractAdapterView` answers
+`getFirstVisiblePosition()` and `getLastVisiblePosition()` with. They walk
+`mCells` inward from each end until they find a cell on screen, then read that
+cell's first or last view through `getCellView`, the indexed accessor the
+divider already uses, and look it up in `mPositions` — the same map
+`getPositionForView` reads — so the numbers are adapter positions and cannot
+drift from what was laid out. Reading the cell's own first and last view is
+what makes a `GridView` or `GridPatternView` report the positions inside a cell
+rather than the cell, and what keeps a partly filled last cell from reporting a
+position the adapter does not have; going through `getCellView` rather than
+`getViews(cell)` is what keeps it off the copy `Group.getViews` and
+`ListLayoutManager.getViews` make on every call. Nothing is cached: the pair is
+computed from the drawn cells each time it is asked for and allocates nothing.
+Parchment itself never asks — the callers are consumers and the framework, which
+reads both when it populates an accessibility event.
+
+`AbstractAdapterView` then drops any answer the current adapter does not have.
+`setAdapter` deliberately does not tear the engine down, so cells drawn from the
+previous adapter stay on screen; rather than report a position that would make
+`getItemAtPosition` throw, the pair becomes the empty one until the next scroll
+or data set change
+(`replacingTheAdapterWithOneThatIsShorterThanTheDrawnCells_reportsNothingVisible`).
+
+`isCellOnScreen` is the whole definition of visible. The viewport is
+`getStartSizePadding()` to the laid-out size less `getEndSizePadding()`, and a
+cell is on screen when `getCellEnd` is past the start and `getCellStart` is
+before the end — at least one pixel inside. The size comes from
+`ScrollDirectionManager.getViewGroupLaidOutSize`, the view's own width or
+height, because that is the size `layout` positioned the cells against; the
+measured size is the same number in every ordinary pass and a different one in
+a pass that laid the view out at a size it was not measured at
+(`aViewLaidOutLargerThanItWasMeasured_readsItsViewportFromTheLayout`).
+
+That box is deliberately narrower than the set of cells `layoutCells` attaches,
+which runs from 0 to the whole view group size and so keeps a cell starting
+exactly at the end edge, and keeps a cell scrolled off the start while its
+spacing gap still shows a divider. Both edges are strict, which is what makes
+the answer a function of the geometry alone. The engine's attach box is
+asymmetric at a boundary — `layoutCells` keeps a cell whose end is exactly 0
+but its backward pass never prepends one, so the same offset reached forwards
+and backwards draws a different number of cells — and a rule that counted a
+cell with no pixel on screen would inherit that asymmetry and report a
+different first visible position for the same content
+(`aCellWithItsEndOnTheStartEdge_readsTheSameWhicheverWayTheContentArrived`).
+The platform `ListView` does inherit it: `fillUp` prepends while the next
+bottom is past the padding, `trackMotionScroll` recycles only once a bottom is
+behind it, so a row flush with the start edge is kept but never added.
+
+Wrapped positions still never leave the engine: `mPositions` is filled from
+`getFirstAdapterPositionInCell`, which takes an already-wrapped cell position
+and returns a real adapter position, so circular scrolling reports first 2 and
+last 1 across the wrap point rather than 2 and 5.
+
+## The empty view
+
+`AbstractAdapterView` re-checks which of the adapter view and the empty view to
+show whenever the adapter can have changed: on `setAdapter`, on the data set
+observer's `onChanged` and `onInvalidated`, and on `onAttachedToWindow`, which
+covers a change the view missed because it unregisters its observer while
+detached. `AdapterView.updateEmptyStatus` is private and `checkFocus` is
+package private in another package, so the decision is made here rather than
+delegated: empty means a null adapter or `Adapter.isEmpty()`, and with no empty
+view set nothing touches the view's visibility, which is the framework's own
+guard. `setEmptyView` is never called again from inside the view, so a
+consumer's override of it is not re-entered
+(`reEvaluatingTheEmptyView_neverCallsSetEmptyViewAgain`).
+
+The data set observer that drives this is `AdapterDataSetObserver`, a named
+static class holding the view, rather than the anonymous one it replaced.
+
+There are two observers on the adapter, not one: the view's, and the
+`LayoutManager` itself, which extends `AdapterViewDataSetObserver` and registers
+in its constructor. `onDetachedFromWindow` unregisters both — the view's
+directly, the manager's through `destroy()` — and `onAttachedToWindow` now
+registers both again. It used to register only the view's, so after one detach a
+`notifyDataSetChanged` emptied the view and redrew nothing
+(`aDataSetChangeAfterAReAttach_reachesTheLayoutEngine`).
+
 ## The draw pass
 
 `AbstractAdapterView.dispatchDraw` draws the cells through `super`, then
@@ -877,4 +958,6 @@ same content position without the adapter's help.
 | Why did a ViewPager gesture land where it did? | `LayoutManager.setViewPageDistances` and the strategy in `pageinterval/` + `ViewPagerTest`, with each method it is built from in `LayoutManagerPagingMethodsTest` |
 | Why did the scroll listener report that? | `ScrollListenerDispatcher`, `ScrollState.from`, `LayoutManager.getFrameDisplacement` |
 | Why did a programmatic scroll stop short / land elsewhere? | `AdapterAnimator.continueTheSeek`, `LayoutManager.getScrollToPositionDistance`, `SnapSettleTest` |
+| Why is `getFirstVisiblePosition` that number? | `LayoutManager.isCellOnScreen`, `AdapterViewSurfaceTest`, `AdapterViewSurfaceInstrumentedTest` |
+| Why is the empty view up (or not)? | `AbstractAdapterView.updateTheEmptyViewVisibility`, `AdapterViewEmptyViewTest` |
 | Why did a stop change (or keep) the selection? | `LayoutManager.snapTo`, `isTheSnapPositionShared`; `CircularScrollSelectOnSnapTest`, `SnapAndSelectionInstrumentedTest` |

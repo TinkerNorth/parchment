@@ -142,6 +142,23 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
         return drawToBitmap.paintedPixels();
     }
 
+    /**
+     * Reads the inherited {@code android.widget.AdapterView} surface on the main thread: the count,
+     * the first and last visible positions, and the view's own visibility.
+     */
+    public VisibleSurface surface() {
+        final ReadSurface<VIEW> readSurface = new ReadSurface<>(mView);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(readSurface);
+        return readSurface.surface();
+    }
+
+    /** Reads the visibility of another view in the same inflated layout, on the main thread. */
+    public int visibilityOf(final int viewId) {
+        final ReadVisibility<VIEW> readVisibility = new ReadVisibility<>(mView, viewId);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(readVisibility);
+        return readVisibility.visibility();
+    }
+
     /** Reads every child's bounds and adapter position on the main thread. */
     public LaidOutChildren children() {
         final ReadChildren<VIEW> readChildren = new ReadChildren<>(mView);
@@ -581,8 +598,18 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
             return mIsLaidOut;
         }
 
+        /**
+         * A hidden view counts as settled. The framework lays out nothing that is {@code GONE}, so
+         * a view an empty view has hidden keeps its layout request forever and waiting for one
+         * would never return.
+         */
         @Override
         public void run() {
+            final boolean isHidden = mView.getVisibility() == View.GONE;
+            if (isHidden) {
+                mIsLaidOut = true;
+                return;
+            }
             final boolean hasBeenLaidOut = mView.isLaidOut();
             final boolean layoutIsPending = mView.isLayoutRequested();
             mIsLaidOut = hasBeenLaidOut && !layoutIsPending;
@@ -649,6 +676,57 @@ public final class ParchmentViewHarness<VIEW extends AbstractAdapterView<BaseAda
                             adapterPositions,
                             mView.getWidth(),
                             mView.getHeight());
+        }
+    }
+
+    private static final class ReadSurface<VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            implements Runnable {
+
+        private final VIEW mView;
+        private VisibleSurface mSurface;
+
+        private ReadSurface(final VIEW view) {
+            mView = view;
+        }
+
+        private VisibleSurface surface() {
+            return mSurface;
+        }
+
+        @Override
+        public void run() {
+            mSurface =
+                    new VisibleSurface(
+                            mView.getCount(),
+                            mView.getFirstVisiblePosition(),
+                            mView.getLastVisiblePosition(),
+                            mView.getVisibility());
+        }
+    }
+
+    private static final class ReadVisibility<VIEW extends AbstractAdapterView<BaseAdapter, ?>>
+            implements Runnable {
+
+        private final VIEW mView;
+        private final int mViewId;
+        private int mVisibility;
+
+        private ReadVisibility(final VIEW view, final int viewId) {
+            mView = view;
+            mViewId = viewId;
+        }
+
+        private int visibility() {
+            return mVisibility;
+        }
+
+        @Override
+        public void run() {
+            final View found = mView.getRootView().findViewById(mViewId);
+            if (found == null) {
+                throw new AssertionError("no view with that id is in the layout");
+            }
+            mVisibility = found.getVisibility();
         }
     }
 

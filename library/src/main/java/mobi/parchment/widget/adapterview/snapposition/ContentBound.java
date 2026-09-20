@@ -6,11 +6,11 @@ package mobi.parchment.widget.adapterview.snapposition;
 import mobi.parchment.widget.adapterview.LayoutManager;
 import mobi.parchment.widget.adapterview.Move;
 
-final class ContentBound {
+public final class ContentBound {
 
     private ContentBound() {}
 
-    static <Cell> int getAbsoluteSnapPosition(
+    public static <Cell> int getAbsoluteSnapPosition(
             final LayoutManager<Cell> layoutManager,
             final int size,
             final int cellSize,
