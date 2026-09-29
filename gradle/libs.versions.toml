@@ -1,15 +1,15 @@
 [versions]
-agp = "9.4.0"
+agp = "9.4.1"
 compileSdk = "37"
 minSdk = "21"
 targetSdk = "37"
 java = "17"
-spotless = "8.10.2"
+spotless = "8.10.3"
 mavenPublish = "0.37.0"
 googleJavaFormat = "1.36.1"
 
 # Library
-androidxAnnotation = "1.10.0"
+androidxAnnotation = "1.11.0"
 
 # Test
 junit = "4.13.2"
