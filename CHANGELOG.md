@@ -9,6 +9,24 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Fixed
 
+- A `GridPatternView` with no group definition, which lays its items out as a
+  plain list, threw `ArithmeticException: / by zero` from any jump that had to
+  measure an item it had not drawn. Two jumps did: `setSelection` to a
+  position off screen with `parchment_snapToPosition`, under every snap
+  position and under `parchment_isCircularScroll`, in both orientations; and
+  a data set change that left the item nearest the snap position past the new
+  end of the adapter while the new last item was not drawn, snapping or not.
+  A view whose definitions were removed with `clear()` before its first layout
+  did the same. Its cells were laid out from a stand-in one-by-one definition,
+  but the measure specs a jump gives the incoming item divided its cell
+  position by the number of definitions, which was zero. Both now come from
+  one one-by-one definition the layout manager builds when it is constructed,
+  so the view lands, redraws and restores exactly where the same view given
+  that definition does
+  (`noDefinition_verticalCenterSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`,
+  `noDefinition_horizontalDefault_dataSetShrinksBelowTheNearestDrawnPositionToAnUndrawnEnd_redrawsLikeOneOneByOneDefinition`),
+  and a new cell no longer builds a definition of its own.
+
 - The inherited `android.widget.AdapterView` members report what the view is
   actually showing instead of state Parchment never maintained. `getCount()`
   returned 0 for every adapter, because `AdapterView` fills its item count from
