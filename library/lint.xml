@@ -6,4 +6,6 @@
     <!-- Queries the network as it runs, so an Android Gradle plugin release fails a build that
          changed nothing, the same way NewerVersionAvailable used to. Dependabot owns upgrades. -->
     <issue id="AndroidGradlePluginVersion" severity="informational" />
+    <!-- Also queries the network as it runs, so a library release fails an unchanged build. -->
+    <issue id="GradleDependency" severity="informational" />
 </lint>
