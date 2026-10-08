@@ -3,14 +3,13 @@
 
 package mobi.parchment.widget.adapterview;
 
+import static mobi.parchment.harness.PatternState.assertSameState;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.os.Parcelable;
 import android.util.SparseArray;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import androidx.test.core.app.ApplicationProvider;
@@ -18,10 +17,15 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import java.util.ArrayList;
 import java.util.List;
-import mobi.parchment.harness.FixedSizeAdapter;
+import mobi.parchment.harness.ChangeTheCount;
 import mobi.parchment.harness.HarnessActivity;
 import mobi.parchment.harness.LaidOutChildren;
+import mobi.parchment.harness.ListenForSelections;
 import mobi.parchment.harness.ParchmentViewHarness;
+import mobi.parchment.harness.PatternState;
+import mobi.parchment.harness.RecordingItemSelectedListener;
+import mobi.parchment.harness.ResizableAdapter;
+import mobi.parchment.harness.Viewport;
 import mobi.parchment.harness.VisibleSurface;
 import mobi.parchment.test.R;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
@@ -44,7 +48,6 @@ public final class GridPatternNoDefinitionInstrumentedTest {
     private static final int LAST_POSITION = ITEM_COUNT - 1;
     private static final int NOTHING_SELECTED = AdapterView.INVALID_POSITION;
     private static final int NOT_LAID_OUT = -1;
-    private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int FIRST_ROW = 0;
     private static final int FIRST_COLUMN = 0;
     private static final int SECOND_COLUMN = 1;
@@ -505,7 +508,8 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         final PatternState fallback =
                 restoreAfterSelectingOffScreen(layoutResource, viewport, new AddNoDefinition());
 
-        final int indexOfTheTarget = oracle.mChildren.indexOfAdapterPosition(OFF_SCREEN_POSITION);
+        final LaidOutChildren oracleChildren = oracle.children();
+        final int indexOfTheTarget = oracleChildren.indexOfAdapterPosition(OFF_SCREEN_POSITION);
         assertTrue(oracle.toString(), indexOfTheTarget != NOT_LAID_OUT);
         assertSameState(fallback, oracle);
     }
@@ -519,7 +523,7 @@ public final class GridPatternNoDefinitionInstrumentedTest {
                 attach(layoutResource, viewport);
         final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
         harness.apply(definitions);
-        harness.apply(new ListenForSelections(selections));
+        harness.apply(new ListenForSelections<>(selections));
         final ResizableAdapter adapter = resizableAdapter();
         harness.setAdapter(adapter);
         scenario.runOn(harness, adapter, viewport);
@@ -545,7 +549,7 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         final RecordingItemSelectedListener selections = new RecordingItemSelectedListener();
         restored.apply(definitions);
         restored.apply(new RestoreState(savedState));
-        restored.apply(new ListenForSelections(selections));
+        restored.apply(new ListenForSelections<>(selections));
         restored.setAdapter(resizableAdapter());
         restored.settle();
         return PatternState.of(restored, selections);
@@ -553,8 +557,10 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
     private ParchmentViewHarness<GridPatternView<BaseAdapter>> attach(
             final int layoutResource, final Viewport viewport) {
+        final int width = viewport.width();
+        final int height = viewport.height();
         return ParchmentViewHarness.attach(
-                mActivityRule.getScenario(), layoutResource, viewport.mWidth, viewport.mHeight);
+                mActivityRule.getScenario(), layoutResource, width, height);
     }
 
     private static LaidOutChildren scrollToTheLatePosition(
@@ -571,7 +577,7 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         final int lastPosition = itemCount - 1;
         final int indexOfTheNewLastPosition = scrolled.indexOfAdapterPosition(lastPosition);
         assertEquals(scrolled.toString(), NOT_LAID_OUT, indexOfTheNewLastPosition);
-        harness.apply(new ChangeTheCount(adapter, itemCount));
+        harness.apply(new ChangeTheCount<>(adapter, itemCount));
     }
 
     private static ResizableAdapter resizableAdapter() {
@@ -581,30 +587,18 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
     private static void assertRestsForwardOnTheStartSnapPosition(
             final PatternState state, final Viewport viewport) {
-        final int firstVisiblePosition = state.mSurface.firstVisiblePosition();
-        final int indexOfTheFirstVisible =
-                state.mChildren.indexOfAdapterPosition(firstVisiblePosition);
-        final int startOfTheFirstVisible =
-                viewport.startOf(state.mChildren, indexOfTheFirstVisible);
-        final boolean reportedTheFirstVisible = state.mSelections.contains(firstVisiblePosition);
+        final VisibleSurface surface = state.surface();
+        final LaidOutChildren children = state.children();
+        final List<Integer> selections = state.selections();
+        final int selectedPosition = state.selectedPosition();
+        final int firstVisiblePosition = surface.firstVisiblePosition();
+        final int indexOfTheFirstVisible = children.indexOfAdapterPosition(firstVisiblePosition);
+        final int startOfTheFirstVisible = viewport.startOf(children, indexOfTheFirstVisible);
+        final boolean reportedTheFirstVisible = selections.contains(firstVisiblePosition);
         assertTrue(state.toString(), firstVisiblePosition > FIRST_POSITION);
         assertEquals(state.toString(), START_EDGE, startOfTheFirstVisible);
-        assertEquals(state.toString(), firstVisiblePosition, state.mSelectedPosition);
+        assertEquals(state.toString(), firstVisiblePosition, selectedPosition);
         assertTrue(state.toString(), reportedTheFirstVisible);
-    }
-
-    private static void assertSameState(final PatternState actual, final PatternState oracle) {
-        final String both = "\nwithout a definition: " + actual + "\nwith one 1x1: " + oracle;
-        final boolean sameChildren = actual.mChildren.sameGeometryAs(oracle.mChildren);
-        final VisibleSurface actualSurface = actual.mSurface;
-        final VisibleSurface oracleSurface = oracle.mSurface;
-        assertTrue(both, sameChildren);
-        assertEquals(both, oracle.mSelectedPosition, actual.mSelectedPosition);
-        assertEquals(
-                both, oracleSurface.firstVisiblePosition(), actualSurface.firstVisiblePosition());
-        assertEquals(
-                both, oracleSurface.lastVisiblePosition(), actualSurface.lastVisiblePosition());
-        assertEquals(both, oracle.mSelections, actual.mSelections);
     }
 
     private interface Scenario {
@@ -625,8 +619,10 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int firstVisiblePosition = oracle.mSurface.firstVisiblePosition();
-            assertTrue(oracle.toString(), oracle.mChildren.count() > NO_ITEMS);
+            final VisibleSurface surface = oracle.surface();
+            final LaidOutChildren children = oracle.children();
+            final int firstVisiblePosition = surface.firstVisiblePosition();
+            assertTrue(oracle.toString(), children.count() > NO_ITEMS);
             assertEquals(oracle.toString(), FIRST_POSITION, firstVisiblePosition);
         }
     }
@@ -648,9 +644,11 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int indexOfTheTarget = oracle.mChildren.indexOfAdapterPosition(mPosition);
+            final LaidOutChildren children = oracle.children();
+            final int selectedPosition = oracle.selectedPosition();
+            final int indexOfTheTarget = children.indexOfAdapterPosition(mPosition);
             assertTrue(oracle.toString(), indexOfTheTarget != NOT_LAID_OUT);
-            assertEquals(oracle.toString(), mPosition, oracle.mSelectedPosition);
+            assertEquals(oracle.toString(), mPosition, selectedPosition);
         }
     }
 
@@ -665,8 +663,10 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int firstVisiblePosition = oracle.mSurface.firstVisiblePosition();
-            assertEquals(oracle.toString(), NOTHING_SELECTED, oracle.mSelectedPosition);
+            final VisibleSurface surface = oracle.surface();
+            final int selectedPosition = oracle.selectedPosition();
+            final int firstVisiblePosition = surface.firstVisiblePosition();
+            assertEquals(oracle.toString(), NOTHING_SELECTED, selectedPosition);
             assertEquals(oracle.toString(), FIRST_POSITION, firstVisiblePosition);
         }
     }
@@ -689,7 +689,8 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
             final int lastPosition = mItemCount - 1;
-            final int lastVisiblePosition = oracle.mSurface.lastVisiblePosition();
+            final VisibleSurface surface = oracle.surface();
+            final int lastVisiblePosition = surface.lastVisiblePosition();
             assertEquals(oracle.toString(), lastPosition, lastVisiblePosition);
         }
     }
@@ -712,8 +713,8 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
             final int lastPosition = mItemCount - 1;
-            final int indexOfTheLastPosition =
-                    oracle.mChildren.indexOfAdapterPosition(lastPosition);
+            final LaidOutChildren children = oracle.children();
+            final int indexOfTheLastPosition = children.indexOfAdapterPosition(lastPosition);
             assertTrue(oracle.toString(), indexOfTheLastPosition != NOT_LAID_OUT);
         }
     }
@@ -731,13 +732,13 @@ public final class GridPatternNoDefinitionInstrumentedTest {
                 final ResizableAdapter adapter,
                 final Viewport viewport) {
             scrollToTheLatePosition(harness);
-            harness.apply(new ChangeTheCount(adapter, mItemCount));
+            harness.apply(new ChangeTheCount<>(adapter, mItemCount));
         }
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int indexOfTheLatePosition =
-                    oracle.mChildren.indexOfAdapterPosition(LATE_POSITION);
+            final LaidOutChildren children = oracle.children();
+            final int indexOfTheLatePosition = children.indexOfAdapterPosition(LATE_POSITION);
             assertTrue(oracle.toString(), indexOfTheLatePosition != NOT_LAID_OUT);
         }
     }
@@ -759,7 +760,8 @@ public final class GridPatternNoDefinitionInstrumentedTest {
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int indexOfTheTarget = oracle.mChildren.indexOfAdapterPosition(mPosition);
+            final LaidOutChildren children = oracle.children();
+            final int indexOfTheTarget = children.indexOfAdapterPosition(mPosition);
             assertTrue(oracle.toString(), indexOfTheTarget != NOT_LAID_OUT);
         }
     }
@@ -770,12 +772,7 @@ public final class GridPatternNoDefinitionInstrumentedTest {
                 final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness,
                 final ResizableAdapter adapter,
                 final Viewport viewport) {
-            harness.fling(
-                    viewport.mForwardFromX,
-                    viewport.mForwardFromY,
-                    viewport.mForwardToX,
-                    viewport.mForwardToY,
-                    FLING_STEPS);
+            viewport.flingForward(harness, FLING_STEPS);
         }
 
         @Override
@@ -790,89 +787,14 @@ public final class GridPatternNoDefinitionInstrumentedTest {
                 final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness,
                 final ResizableAdapter adapter,
                 final Viewport viewport) {
-            harness.dragAndRelease(
-                    viewport.mForwardToX,
-                    viewport.mForwardToY,
-                    viewport.mForwardFromX,
-                    viewport.mForwardFromY,
-                    DRAG_STEPS);
+            viewport.dragBack(harness, DRAG_STEPS);
         }
 
         @Override
         public void assertTheOracleShowsIt(final PatternState oracle, final Viewport viewport) {
-            final int indexOfTheLast = oracle.mChildren.indexOfAdapterPosition(LAST_POSITION);
+            final LaidOutChildren children = oracle.children();
+            final int indexOfTheLast = children.indexOfAdapterPosition(LAST_POSITION);
             assertTrue(oracle.toString(), indexOfTheLast != NOT_LAID_OUT);
-        }
-    }
-
-    private static final class PatternState {
-        private final LaidOutChildren mChildren;
-        private final int mSelectedPosition;
-        private final VisibleSurface mSurface;
-        private final List<Integer> mSelections;
-
-        private PatternState(
-                final LaidOutChildren children,
-                final int selectedPosition,
-                final VisibleSurface surface,
-                final List<Integer> selections) {
-            mChildren = children;
-            mSelectedPosition = selectedPosition;
-            mSurface = surface;
-            mSelections = selections;
-        }
-
-        private static PatternState of(
-                final ParchmentViewHarness<GridPatternView<BaseAdapter>> harness,
-                final RecordingItemSelectedListener selections) {
-            final LaidOutChildren children = harness.children();
-            final int selectedPosition = harness.selectedItemPosition();
-            final VisibleSurface surface = harness.surface();
-            final List<Integer> selectedPositions = selections.positions();
-            return new PatternState(children, selectedPosition, surface, selectedPositions);
-        }
-
-        @Override
-        public String toString() {
-            return mChildren
-                    + "\n  selected "
-                    + mSelectedPosition
-                    + ", "
-                    + mSurface
-                    + ", selections reported "
-                    + mSelections;
-        }
-    }
-
-    private static final class Viewport {
-        private final boolean mIsVertical;
-        private final int mWidth;
-        private final int mHeight;
-        private final int mForwardFromX;
-        private final int mForwardFromY;
-        private final int mForwardToX;
-        private final int mForwardToY;
-
-        private Viewport(
-                final boolean isVertical,
-                final int width,
-                final int height,
-                final int forwardFromX,
-                final int forwardFromY,
-                final int forwardToX,
-                final int forwardToY) {
-            mIsVertical = isVertical;
-            mWidth = width;
-            mHeight = height;
-            mForwardFromX = forwardFromX;
-            mForwardFromY = forwardFromY;
-            mForwardToX = forwardToX;
-            mForwardToY = forwardToY;
-        }
-
-        private int startOf(final LaidOutChildren children, final int index) {
-            if (mIsVertical) return children.top(index);
-            return children.left(index);
         }
     }
 
@@ -915,36 +837,6 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         }
     }
 
-    private static final class ListenForSelections
-            implements ParchmentViewHarness.ViewSetup<GridPatternView<BaseAdapter>> {
-        private final RecordingItemSelectedListener mSelections;
-
-        private ListenForSelections(final RecordingItemSelectedListener selections) {
-            mSelections = selections;
-        }
-
-        @Override
-        public void setUp(final GridPatternView<BaseAdapter> view) {
-            view.setOnItemSelectedListener(mSelections);
-        }
-    }
-
-    private static final class ChangeTheCount
-            implements ParchmentViewHarness.ViewSetup<GridPatternView<BaseAdapter>> {
-        private final ResizableAdapter mAdapter;
-        private final int mItemCount;
-
-        private ChangeTheCount(final ResizableAdapter adapter, final int itemCount) {
-            mAdapter = adapter;
-            mItemCount = itemCount;
-        }
-
-        @Override
-        public void setUp(final GridPatternView<BaseAdapter> view) {
-            mAdapter.setCount(mItemCount);
-        }
-    }
-
     private static final class SaveState
             implements ParchmentViewHarness.ViewSetup<GridPatternView<BaseAdapter>> {
         private final SparseArray<Parcelable> mSavedState;
@@ -970,61 +862,6 @@ public final class GridPatternNoDefinitionInstrumentedTest {
         @Override
         public void setUp(final GridPatternView<BaseAdapter> view) {
             view.restoreHierarchyState(mSavedState);
-        }
-    }
-
-    private static final class RecordingItemSelectedListener
-            implements AdapterView.OnItemSelectedListener {
-        private final List<Integer> mPositions = new ArrayList<Integer>();
-
-        @Override
-        public synchronized void onItemSelected(
-                final AdapterView<?> parent, final View view, final int position, final long id) {
-            mPositions.add(position);
-        }
-
-        @Override
-        public synchronized void onNothingSelected(final AdapterView<?> parent) {
-            mPositions.add(NOTHING_SELECTED);
-        }
-
-        private synchronized List<Integer> positions() {
-            return new ArrayList<Integer>(mPositions);
-        }
-    }
-
-    private static final class ResizableAdapter extends BaseAdapter {
-        private final FixedSizeAdapter mItems;
-        private int mCount;
-
-        private ResizableAdapter(final Context context, final int count) {
-            mItems = new FixedSizeAdapter(context, GROWN_ITEM_COUNT, MATCH_PARENT, MATCH_PARENT);
-            mCount = count;
-        }
-
-        private void setCount(final int count) {
-            mCount = count;
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public int getCount() {
-            return mCount;
-        }
-
-        @Override
-        public Object getItem(final int position) {
-            return mItems.getItem(position);
-        }
-
-        @Override
-        public long getItemId(final int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(final int position, final View convertView, final ViewGroup parent) {
-            return mItems.getView(position, convertView, parent);
         }
     }
 }
