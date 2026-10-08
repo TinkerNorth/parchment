@@ -14,10 +14,16 @@ import mobi.parchment.widget.adapterview.OnSelectedListener;
 
 public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
+    private static final int FALLBACK_ITEM_TOP = 0;
+    private static final int FALLBACK_ITEM_LEFT = 0;
+    private static final int FALLBACK_ITEM_HEIGHT = 1;
+    private static final int FALLBACK_ITEM_WIDTH = 1;
+
     private List<GridPatternGroupDefinition> mGridPatternGroupDefinitions =
             new ArrayList<GridPatternGroupDefinition>();
+    private final GridPatternGroupDefinition mFallbackGridPatternGroupDefinition;
     private int mNumberOfGridItemsPerRepetition;
-    private GridPatternLayoutManagerAttributes mGridPatternLayoutManagerAttributes;
+    private final GridPatternLayoutManagerAttributes mGridPatternLayoutManagerAttributes;
     private boolean mGridPatternsSet = false;
 
     public GridPatternLayoutManager(
@@ -28,6 +34,23 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         super(viewGroup, onSelectedListener, adapterViewManager, layoutManagerAttributes);
         mGridPatternLayoutManagerAttributes =
                 (GridPatternLayoutManagerAttributes) layoutManagerAttributes;
+        final boolean isVerticalScroll = layoutManagerAttributes.isVertical();
+        mFallbackGridPatternGroupDefinition =
+                createFallbackGridPatternGroupDefinition(isVerticalScroll);
+    }
+
+    private static GridPatternGroupDefinition createFallbackGridPatternGroupDefinition(
+            final boolean isVerticalScroll) {
+        final GridPatternItemDefinition gridPatternItemDefinition =
+                new GridPatternItemDefinition(
+                        FALLBACK_ITEM_TOP,
+                        FALLBACK_ITEM_LEFT,
+                        FALLBACK_ITEM_HEIGHT,
+                        FALLBACK_ITEM_WIDTH);
+        final List<GridPatternItemDefinition> gridPatternItemDefinitions =
+                new ArrayList<GridPatternItemDefinition>();
+        gridPatternItemDefinitions.add(gridPatternItemDefinition);
+        return new GridPatternGroupDefinition(isVerticalScroll, gridPatternItemDefinitions);
     }
 
     public void addGridPatternGroupDefinition(
@@ -131,7 +154,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     @Override
     protected GridPatternGroup getCell(final int adapterPosition) {
         final GridPatternGroupDefinition gridPatternGroupDefinition =
-                getGridPatternGroupDefinition(adapterPosition);
+                getGridPatternGroupDefinitionForAdapterPosition(adapterPosition);
         final ViewGroup viewGroup = getViewGroup();
         final int cellSpacing = getCellSpacing();
         final float ratio = mGridPatternLayoutManagerAttributes.getRatio();
@@ -334,9 +357,8 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     @Override
     protected int getChildHeightMeasureSpecSize(final int adapterPosition) {
         final int cellPosition = getCellPosition(adapterPosition);
-        final int cellPositionOffset = cellPosition % mGridPatternGroupDefinitions.size();
         final GridPatternGroupDefinition gridPatternGroupDefinition =
-                mGridPatternGroupDefinitions.get(cellPositionOffset);
+                getGridPatternGroupDefinitionForCellPosition(cellPosition);
         final int firstAdapterPosition = getFirstAdapterPositionInCell(cellPosition);
         final int gridItemPosition = adapterPosition - firstAdapterPosition;
         final GridPatternItemDefinition gridPatternItemDefinition =
@@ -349,9 +371,8 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     @Override
     protected int getChildWidthMeasureSpecSize(final int adapterPosition) {
         final int cellPosition = getCellPosition(adapterPosition);
-        final int cellPositionOffset = cellPosition % mGridPatternGroupDefinitions.size();
         final GridPatternGroupDefinition gridPatternGroupDefinition =
-                mGridPatternGroupDefinitions.get(cellPositionOffset);
+                getGridPatternGroupDefinitionForCellPosition(cellPosition);
         final int firstAdapterPosition = getFirstAdapterPositionInCell(cellPosition);
         final int gridItemPosition = adapterPosition - firstAdapterPosition;
         final GridPatternItemDefinition gridPatternItemDefinition =
@@ -359,6 +380,17 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         final int cellSpacing = mGridPatternLayoutManagerAttributes.getCellSpacing();
         return getMaxMeasuredWidth(
                 gridPatternGroupDefinition, gridPatternItemDefinition, cellSpacing);
+    }
+
+    private GridPatternGroupDefinition getGridPatternGroupDefinitionForCellPosition(
+            final int cellPosition) {
+        if (!mGridPatternsSet) {
+            return mFallbackGridPatternGroupDefinition;
+        }
+        final int gridPatternGroupDefinitionCount = mGridPatternGroupDefinitions.size();
+        final int gridPatternGroupDefinitionPosition =
+                cellPosition % gridPatternGroupDefinitionCount;
+        return mGridPatternGroupDefinitions.get(gridPatternGroupDefinitionPosition);
     }
 
     private int getMaxMeasuredHeight(
@@ -540,12 +572,10 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         return cellPosition;
     }
 
-    private GridPatternGroupDefinition getGridPatternGroupDefinition(final int adapterPosition) {
+    private GridPatternGroupDefinition getGridPatternGroupDefinitionForAdapterPosition(
+            final int adapterPosition) {
         if (!mGridPatternsSet) {
-            final List<GridPatternItemDefinition> gridPatternItemDefinitions =
-                    new ArrayList<GridPatternItemDefinition>();
-            gridPatternItemDefinitions.add(new GridPatternItemDefinition(0, 0, 1, 1));
-            return new GridPatternGroupDefinition(isVerticalScroll(), gridPatternItemDefinitions);
+            return mFallbackGridPatternGroupDefinition;
         }
         int views = 0;
 

@@ -501,11 +501,19 @@ The `Cell` type parameter is what differs between the three views:
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
-"three small" repeats every five items. With no definitions it degrades to
-a plain list (`GridPatternLayoutManagerNoDefinitionTest`). A cell's views sit
-at the grid offsets their item definitions give, measured from the cell's
-start; the start already carries the view's start padding, so the pattern
-adds nothing for padding of its own
+"three small" repeats every five items. With no definitions it degrades to a
+plain list: the manager builds one group of a single one-by-one item when it
+is constructed, in the orientation its attributes give, and resolves every
+cell through it, the cells a layout draws and the item a jump measures before
+it is drawn alike. The view then behaves exactly as it would given that one
+definition (`noDefinition_vertical_firstLayout_isTheLayoutOfOneOneByOneDefinition`,
+`noDefinition_vertical_everyDrawnCell_isBuiltFromTheOneHeldDefinition`,
+`noDefinition_verticalCenterSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`),
+and so does a view whose definitions were cleared before its first layout
+(`clearedDefinitions_verticalStartSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`).
+A cell's views sit at the grid offsets their item definitions give, measured
+from the cell's start; the start already carries the view's start padding, so
+the pattern adds nothing for padding of its own
 (`gridPatternCenterSnap_withPadding_centresTheCellInsideThePadding`).
 
 ## Snapping
