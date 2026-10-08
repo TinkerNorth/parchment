@@ -18,8 +18,6 @@ import android.widget.LinearLayout;
 import androidx.test.core.app.ApplicationProvider;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroup;
@@ -27,7 +25,6 @@ import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroupDefinit
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManagerAttributes;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -36,15 +33,14 @@ import org.robolectric.shadows.ShadowSystemClock;
 @RunWith(RobolectricTestRunner.class)
 public class GridPatternLayoutManagerNoDefinitionTest {
 
-    public static final int VIEW_GROUP_HEIGHT = 300;
-    public static final int VIEW_GROUP_WIDTH = 145;
-    public static final int VIEW_SIZE = 145;
-    public static final int CELL_SPACING = 10;
+    private static final int CELL_SPACING = 10;
     private static final int PATTERN_BREADTH = 400;
     private static final int PATTERN_SIZE = 300;
     private static final float PATTERN_RATIO = 0.25f;
     private static final int ADAPTER_SIZE = 20;
     private static final int FIRST_LAYOUT_CELLS = 3;
+    private static final int LIST_ITEM_BREADTH_IN_PIXELS = 400;
+    private static final int LIST_ITEM_LENGTH_IN_PIXELS = 100;
     private static final int FIRST_CELL_INDEX = 0;
     private static final int FIRST_POSITION = 0;
     private static final int ON_SCREEN_POSITION = 1;
@@ -112,49 +108,20 @@ public class GridPatternLayoutManagerNoDefinitionTest {
             new Configuration(HORIZONTAL, SnapPosition.onScreen, SNAPS, NOT_CIRCULAR);
     private static final Configuration HORIZONTAL_CIRCULAR =
             new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, CIRCULAR);
-    final MyViewGroup mViewGroup = new MyViewGroup(ApplicationProvider.getApplicationContext());
-    final AdapterViewManager adapterViewManager = new AdapterViewManager();
-    TestAdapter mTestAdapter;
-    GridPatternLayoutManagerAttributes attributes;
-    GridPatternLayoutManager listLayoutManager;
-
-    @Before
-    public void setup() {
-        attributes =
-                new GridPatternLayoutManagerAttributes(
-                        false,
-                        true,
-                        false,
-                        0,
-                        SnapPosition.onScreen,
-                        false,
-                        CELL_SPACING,
-                        true,
-                        true,
-                        true,
-                        1f);
-        listLayoutManager =
-                new GridPatternLayoutManager(mViewGroup, null, adapterViewManager, attributes);
-        mTestAdapter = new TestAdapter(VIEW_SIZE);
-        adapterViewManager.setAdapter(mTestAdapter);
-        doFirstLayout();
-    }
 
     @Test
-    public void shouldDefaultToNormalListView() {
-        mTestAdapter.setAdapterSize(3);
-        doLayout();
+    public void noDefinition_vertical_firstLayout_listsFullBreadthItemsOneGridUnitLong() {
+        final PatternFixture fallback = PatternFixture.withNoDefinition(VERTICAL_ON_SCREEN_SNAP);
+        final List<ItemSize> listSizes = new ArrayList<ItemSize>();
+        for (int position = FIRST_POSITION; position < FIRST_LAYOUT_CELLS; position++) {
+            final ItemSize listSize =
+                    new ItemSize(position, LIST_ITEM_BREADTH_IN_PIXELS, LIST_ITEM_LENGTH_IN_PIXELS);
+            listSizes.add(listSize);
+        }
 
-        final View firstView = mViewGroup.mViews.get(0);
-        final View secondView = mViewGroup.mViews.get(1);
+        final List<ItemSize> laidOutSizes = fallback.laidOutSizes();
 
-        assertThat(firstView.getWidth()).isEqualTo(145);
-        assertThat(firstView.getHeight()).isEqualTo(145);
-
-        assertThat(secondView.getWidth()).isEqualTo(145);
-        assertThat(secondView.getHeight()).isEqualTo(145);
-
-        assertThat(mViewGroup.mViews.size()).isEqualTo(2);
+        assertThat(laidOutSizes).isEqualTo(listSizes);
     }
 
     @Test
@@ -698,98 +665,6 @@ public class GridPatternLayoutManagerNoDefinitionTest {
         final LaidOutPattern oracleLayout = patterns.oracleLayout();
         assertThat(oracleLayout.isLaidOut(LAST_POSITION)).isTrue();
         assertThat(patterns.fallbackLayout()).isEqualTo(oracleLayout);
-    }
-
-    private void doLayout() {
-        doLayout(new Animation());
-    }
-
-    private void doLayout(Animation animation) {
-        listLayoutManager.layout(mViewGroup, animation, 0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
-    }
-
-    private void doFirstLayout() {
-        final int measureSpec =
-                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_HEIGHT, View.MeasureSpec.EXACTLY);
-        final int measureSpec2 =
-                View.MeasureSpec.makeMeasureSpec(VIEW_GROUP_WIDTH, View.MeasureSpec.EXACTLY);
-        mViewGroup.measure(measureSpec2, measureSpec);
-        mViewGroup.layout(0, 0, VIEW_GROUP_WIDTH, VIEW_GROUP_HEIGHT);
-    }
-
-    public class MyViewGroup extends LinearLayout implements AdapterViewHandler {
-        public final List<View> mViews = new ArrayList<View>();
-
-        public MyViewGroup(Context context) {
-            super(context);
-        }
-
-        public View forPosition(int position) {
-            Collections.sort(
-                    mViews,
-                    new Comparator<View>() {
-                        @Override
-                        public int compare(View lhs, View rhs) {
-                            return lhs.getLeft() - rhs.getLeft();
-                        }
-                    });
-
-            return mViews.get(position);
-        }
-
-        @Override
-        public boolean addViewInAdapterView(
-                View view, int index, ViewGroup.LayoutParams layoutParams) {
-            mViews.add(index, view);
-            return true;
-        }
-
-        @Override
-        public void removeViewInAdapterView(View view) {
-            mViews.remove(view);
-        }
-    }
-
-    public class TestAdapter extends BaseAdapter {
-        private int mAdapterSize;
-        private int mViewSize;
-
-        public TestAdapter(int viewSize) {
-            mViewSize = viewSize;
-        }
-
-        public void setAdapterSize(final int adapterSize) {
-            mAdapterSize = adapterSize;
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public int getCount() {
-            return mAdapterSize;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return position;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            FrameLayout outer = new FrameLayout(ApplicationProvider.getApplicationContext());
-            outer.setTag(position);
-            outer.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
-
-            // TODO: necessary to have an outer and an inner?
-            final FrameLayout inner = new FrameLayout(ApplicationProvider.getApplicationContext());
-            inner.setLayoutParams(new ViewGroup.LayoutParams(mViewSize, mViewSize));
-            outer.addView(inner);
-            return outer;
-        }
     }
 
     private static final class Configuration {
