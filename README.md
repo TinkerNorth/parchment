@@ -232,7 +232,7 @@ listView.setAdapter(adapter);
 
 `GridPatternView` takes its pattern in code. Each `GridPatternItemDefinition`
 is `(top, left, height, width)` in grid cells; every group you add repeats in
-sequence across the adapter:
+sequence across the adapter, and a group with no items is ignored:
 
 ```java
 GridPatternView<BaseAdapter> view = findViewById(R.id.parchment_view);

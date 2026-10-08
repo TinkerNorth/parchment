@@ -9,6 +9,32 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Fixed
 
+- A `GridPatternView` group definition with no items broke the layout (#71).
+  Alone, it threw `ArithmeticException: / by zero` on the first layout, with
+  or without items in the adapter, because the items in one repetition of the
+  pattern came to zero. Beside other groups, the outcome depended on its place,
+  the snap position, the spacing and circular scroll: the first layout, the
+  next jump or the next read of the visible range threw
+  `IndexOutOfBoundsException` reading a view of a cell that held none, or items
+  were never drawn. Two items then one, with an empty group between them, drew
+  positions 0, 1, 3, 4, 6 and 7 in a vertical view under `center` snap,
+  skipping every item of the second group; with the empty group last instead,
+  under `onScreen`, 0, 1, 2, 5, 8 and 11. Placed first with no
+  `parchment_cellSpacing`, it looped forever under `center` or `end` snap, in
+  the fill before the first cell, and in most patterns under
+  `parchment_isCircularScroll`, in the fill after it: each added cells of no
+  size without end. A group with no items is now ignored wherever one is
+  added, so a view given only empty groups lays out exactly like a view with no
+  definition (`anEmptyGroupAddedToTheView_verticalStartSnap_runsLikeNoDefinition`),
+  and among other groups it is as though it had never been added
+  (`anEmptyGroupBetweenTwoGroups_verticalStartSnap_runsLikeTheTwoGroups`,
+  `anEmptyGroupBeforeAGroup_verticalCenterSnapWithoutSpacing_laysOutInTimeAndRunsLikeTheGroupAlone`,
+  `anEmptyGroupBeforeAGroup_verticalCircularWithoutSpacing_laysOutInTimeAndRunsLikeTheGroupAlone`).
+  `GridPatternLayoutManager.setGridPatternGroupDefinitions` given an empty
+  list, or `null` after a group, went on treating the pattern as set and threw
+  the same `/ by zero`; it now falls back to the layout of a view with no
+  definition (`aNullListSetAfterAGroup_verticalStartSnap_runsLikeNoDefinition`).
+
 - A `GridPatternView` with no group definition, which lays its items out as a
   plain list, threw `ArithmeticException: / by zero` from any jump that had to
   measure an item it had not drawn. Two jumps did: `setSelection` to a
