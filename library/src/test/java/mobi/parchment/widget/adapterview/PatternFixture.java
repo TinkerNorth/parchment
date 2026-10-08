@@ -29,6 +29,7 @@ public final class PatternFixture {
 
     public static final int ADAPTER_SIZE = 20;
     private static final int CELL_SPACING = 10;
+    private static final int NO_CELL_SPACING = 0;
     private static final int PATTERN_BREADTH = 400;
     private static final int PATTERN_SIZE = 300;
     private static final float PATTERN_RATIO = 0.25f;
@@ -61,29 +62,40 @@ public final class PatternFixture {
     private static final boolean SELECT_ON_SNAP = true;
     private static final boolean NO_SELECT_WHILE_SCROLLING = false;
     public static final Configuration VERTICAL_DEFAULT =
-            new Configuration(VERTICAL, SnapPosition.onScreen, DOES_NOT_SNAP, NOT_CIRCULAR);
+            new Configuration(
+                    VERTICAL, SnapPosition.onScreen, DOES_NOT_SNAP, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration VERTICAL_START_SNAP =
-            new Configuration(VERTICAL, SnapPosition.start, SNAPS, NOT_CIRCULAR);
+            new Configuration(VERTICAL, SnapPosition.start, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration VERTICAL_CENTER_SNAP =
-            new Configuration(VERTICAL, SnapPosition.center, SNAPS, NOT_CIRCULAR);
+            new Configuration(VERTICAL, SnapPosition.center, SNAPS, NOT_CIRCULAR, CELL_SPACING);
+    public static final Configuration VERTICAL_CENTER_SNAP_WITHOUT_SPACING =
+            new Configuration(VERTICAL, SnapPosition.center, SNAPS, NOT_CIRCULAR, NO_CELL_SPACING);
     public static final Configuration VERTICAL_END_SNAP =
-            new Configuration(VERTICAL, SnapPosition.end, SNAPS, NOT_CIRCULAR);
+            new Configuration(VERTICAL, SnapPosition.end, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration VERTICAL_ON_SCREEN_SNAP =
-            new Configuration(VERTICAL, SnapPosition.onScreen, SNAPS, NOT_CIRCULAR);
+            new Configuration(VERTICAL, SnapPosition.onScreen, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration VERTICAL_CIRCULAR =
-            new Configuration(VERTICAL, SnapPosition.center, SNAPS, CIRCULAR);
+            new Configuration(VERTICAL, SnapPosition.center, SNAPS, CIRCULAR, CELL_SPACING);
+    public static final Configuration VERTICAL_CIRCULAR_WITHOUT_SPACING =
+            new Configuration(VERTICAL, SnapPosition.center, SNAPS, CIRCULAR, NO_CELL_SPACING);
     public static final Configuration HORIZONTAL_DEFAULT =
-            new Configuration(HORIZONTAL, SnapPosition.onScreen, DOES_NOT_SNAP, NOT_CIRCULAR);
+            new Configuration(
+                    HORIZONTAL, SnapPosition.onScreen, DOES_NOT_SNAP, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration HORIZONTAL_START_SNAP =
-            new Configuration(HORIZONTAL, SnapPosition.start, SNAPS, NOT_CIRCULAR);
+            new Configuration(HORIZONTAL, SnapPosition.start, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration HORIZONTAL_CENTER_SNAP =
-            new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, NOT_CIRCULAR);
+            new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, NOT_CIRCULAR, CELL_SPACING);
+    public static final Configuration HORIZONTAL_CENTER_SNAP_WITHOUT_SPACING =
+            new Configuration(
+                    HORIZONTAL, SnapPosition.center, SNAPS, NOT_CIRCULAR, NO_CELL_SPACING);
     public static final Configuration HORIZONTAL_END_SNAP =
-            new Configuration(HORIZONTAL, SnapPosition.end, SNAPS, NOT_CIRCULAR);
+            new Configuration(HORIZONTAL, SnapPosition.end, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration HORIZONTAL_ON_SCREEN_SNAP =
-            new Configuration(HORIZONTAL, SnapPosition.onScreen, SNAPS, NOT_CIRCULAR);
+            new Configuration(HORIZONTAL, SnapPosition.onScreen, SNAPS, NOT_CIRCULAR, CELL_SPACING);
     public static final Configuration HORIZONTAL_CIRCULAR =
-            new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, CIRCULAR);
+            new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, CIRCULAR, CELL_SPACING);
+    public static final Configuration HORIZONTAL_CIRCULAR_WITHOUT_SPACING =
+            new Configuration(HORIZONTAL, SnapPosition.center, SNAPS, CIRCULAR, NO_CELL_SPACING);
 
     private final Configuration mConfiguration;
     private final PatternViewGroup mViewGroup;
@@ -163,6 +175,10 @@ public final class PatternFixture {
         return fixture;
     }
 
+    public static List<GridPatternItemDefinition> noItems() {
+        return new ArrayList<GridPatternItemDefinition>();
+    }
+
     private static List<GridPatternItemDefinition> oneOneByOne() {
         final GridPatternItemDefinition oneByOne =
                 new GridPatternItemDefinition(
@@ -181,7 +197,7 @@ public final class PatternFixture {
         return items;
     }
 
-    private static List<GridPatternItemDefinition> twoOneByOnes(final boolean isVertical) {
+    public static List<GridPatternItemDefinition> twoOneByOnes(final boolean isVertical) {
         final GridPatternItemDefinition first =
                 new GridPatternItemDefinition(
                         FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
@@ -189,6 +205,13 @@ public final class PatternFixture {
         final List<GridPatternItemDefinition> items = new ArrayList<GridPatternItemDefinition>();
         items.add(first);
         items.add(second);
+        return items;
+    }
+
+    public static List<GridPatternItemDefinition> oneWideItem(final boolean isVertical) {
+        final GridPatternItemDefinition wide = oneItemAcrossTheBreadth(isVertical);
+        final List<GridPatternItemDefinition> items = new ArrayList<GridPatternItemDefinition>();
+        items.add(wide);
         return items;
     }
 
@@ -202,20 +225,33 @@ public final class PatternFixture {
                 SECOND_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
     }
 
-    private boolean isVertical() {
+    private static GridPatternItemDefinition oneItemAcrossTheBreadth(final boolean isVertical) {
+        if (isVertical) {
+            return new GridPatternItemDefinition(
+                    FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, TWO_GRID_UNITS);
+        }
+        return new GridPatternItemDefinition(
+                FIRST_ROW, FIRST_COLUMN, TWO_GRID_UNITS, ONE_GRID_UNIT);
+    }
+
+    public boolean isVertical() {
         return mConfiguration.mIsVertical;
     }
 
-    private GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
+    public GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
         return new GridPatternGroupDefinition(mConfiguration.mIsVertical, items);
     }
 
-    private void addGroup(final List<GridPatternItemDefinition> items) {
+    public void addGroup(final List<GridPatternItemDefinition> items) {
         final GridPatternGroupDefinition definition = group(items);
         mLayoutManager.addGridPatternGroupDefinition(definition);
     }
 
-    private void clearGroups() {
+    public void setGroups(final List<GridPatternGroupDefinition> groups) {
+        mLayoutManager.setGridPatternGroupDefinitions(groups);
+    }
+
+    public void clearGroups() {
         mLayoutManager.clearGridPatternGroupDefinition();
     }
 
@@ -378,11 +414,11 @@ public final class PatternFixture {
                 children, selectedPosition, selections, firstVisiblePosition, lastVisiblePosition);
     }
 
-    private interface Definitions {
+    public interface Definitions {
         public void defineOn(final PatternFixture pattern);
     }
 
-    private static final class NoGroup implements Definitions {
+    public static final class NoGroup implements Definitions {
         @Override
         public void defineOn(final PatternFixture pattern) {}
     }
@@ -421,16 +457,19 @@ public final class PatternFixture {
         private final SnapPosition mSnapPosition;
         private final boolean mSnapToPosition;
         private final boolean mIsCircularScroll;
+        private final int mCellSpacing;
 
         private Configuration(
                 final boolean isVertical,
                 final SnapPosition snapPosition,
                 final boolean snapToPosition,
-                final boolean isCircularScroll) {
+                final boolean isCircularScroll,
+                final int cellSpacing) {
             mIsVertical = isVertical;
             mSnapPosition = snapPosition;
             mSnapToPosition = snapToPosition;
             mIsCircularScroll = isCircularScroll;
+            mCellSpacing = cellSpacing;
         }
 
         private GridPatternLayoutManagerAttributes attributes() {
@@ -441,7 +480,7 @@ public final class PatternFixture {
                     VIEWPORT_PAGING,
                     mSnapPosition,
                     SCROLL_PAST_CONTENT,
-                    CELL_SPACING,
+                    mCellSpacing,
                     SELECT_ON_SNAP,
                     NO_SELECT_WHILE_SCROLLING,
                     mIsVertical,
@@ -482,7 +521,7 @@ public final class PatternFixture {
             return laidOut(configuration, noGroup, oneOneByOneGroup, ADAPTER_SIZE);
         }
 
-        private static PatternAndOracle laidOut(
+        public static PatternAndOracle laidOut(
                 final Configuration configuration,
                 final Definitions definitions,
                 final Definitions oracleDefinitions,
@@ -491,6 +530,21 @@ public final class PatternFixture {
                     PatternFixture.laidOut(configuration, oracleDefinitions, adapterSize);
             final PatternFixture pattern =
                     PatternFixture.laidOut(configuration, definitions, adapterSize);
+            return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
+        }
+
+        public static PatternAndOracle laidOutWithin(
+                final Configuration configuration,
+                final Definitions definitions,
+                final Definitions oracleDefinitions,
+                final long milliseconds)
+                throws InterruptedException {
+            final PatternFixture oracle =
+                    PatternFixture.laidOut(configuration, oracleDefinitions, ADAPTER_SIZE);
+            final PatternFixture pattern =
+                    PatternFixture.defined(configuration, definitions, ADAPTER_SIZE);
+            final TimeLimitedLayOut layOut = new TimeLimitedLayOut(pattern);
+            layOut.layOutWithin(milliseconds);
             return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
         }
 
@@ -534,6 +588,45 @@ public final class PatternFixture {
         }
     }
 
+    private static final class TimeLimitedLayOut implements Runnable {
+        private final PatternFixture mPattern;
+        private Throwable mFailure;
+
+        private TimeLimitedLayOut(final PatternFixture pattern) {
+            mPattern = pattern;
+        }
+
+        @Override
+        public void run() {
+            try {
+                mPattern.layOut();
+            } catch (final Throwable failure) {
+                mFailure = failure;
+            }
+        }
+
+        private void layOutWithin(final long milliseconds) throws InterruptedException {
+            final Thread layingOut = new Thread(this);
+            layingOut.setDaemon(true);
+            layingOut.start();
+            layingOut.join(milliseconds);
+            final boolean isStillLayingOut = layingOut.isAlive();
+            if (isStillLayingOut) throw stillLayingOut(layingOut, milliseconds);
+            final boolean failed = mFailure != null;
+            if (failed) throw new AssertionError("the first layout failed", mFailure);
+        }
+
+        private static AssertionError stillLayingOut(
+                final Thread layingOut, final long milliseconds) {
+            final StackTraceElement[] whereItIs = layingOut.getStackTrace();
+            final AssertionError stillLayingOut =
+                    new AssertionError(
+                            "the first layout was still running after " + milliseconds + " ms");
+            stillLayingOut.setStackTrace(whereItIs);
+            return stillLayingOut;
+        }
+    }
+
     public static final class ItemSize {
         private final int mPosition;
         private final int mWidth;
@@ -566,14 +659,14 @@ public final class PatternFixture {
         }
     }
 
-    private static final class LaidOutChild {
+    public static final class LaidOutChild {
         private final int mPosition;
         private final int mLeft;
         private final int mTop;
         private final int mRight;
         private final int mBottom;
 
-        private LaidOutChild(
+        public LaidOutChild(
                 final int position,
                 final int left,
                 final int top,
@@ -624,7 +717,7 @@ public final class PatternFixture {
         private final int mFirstVisiblePosition;
         private final int mLastVisiblePosition;
 
-        private LaidOutPattern(
+        public LaidOutPattern(
                 final List<LaidOutChild> children,
                 final int selectedPosition,
                 final List<Integer> selections,
@@ -698,16 +791,16 @@ public final class PatternFixture {
         }
     }
 
-    private static final class ResizableAdapter extends BaseAdapter {
+    public static final class ResizableAdapter extends BaseAdapter {
         private final Context mContext;
         private int mCount;
 
-        private ResizableAdapter(final Context context, final int count) {
+        public ResizableAdapter(final Context context, final int count) {
             mContext = context;
             mCount = count;
         }
 
-        private void setCount(final int count) {
+        public void setCount(final int count) {
             mCount = count;
             notifyDataSetChanged();
         }

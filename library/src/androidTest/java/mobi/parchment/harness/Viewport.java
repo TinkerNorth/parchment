@@ -30,6 +30,10 @@ public final class Viewport {
         mForwardToY = forwardToY;
     }
 
+    public boolean isVertical() {
+        return mIsVertical;
+    }
+
     public int width() {
         return mWidth;
     }
