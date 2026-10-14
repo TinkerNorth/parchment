@@ -1,4 +1,6 @@
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
 
 plugins {
     alias(libs.plugins.android.library)
@@ -38,8 +40,6 @@ android {
         abortOnError = true
         warningsAsErrors = true
         checkReleaseBuilds = true
-        xmlReport = true
-        htmlReport = true
     }
 }
 
@@ -94,7 +94,7 @@ tasks.withType<Test>().configureEach {
 // Signing needs the release key, which only the release workflow has; without it the artifacts
 // still publish to mavenLocal, and Maven Central rejects an unsigned upload on its own.
 mavenPublishing {
-    configure(AndroidSingleVariantLibrary("release", sourcesJar = true, publishJavadocJar = true))
+    configure(AndroidSingleVariantLibrary(JavadocJar.Javadoc(), SourcesJar.Sources(), "release"))
     publishToMavenCentral()
     if (providers.gradleProperty("signingInMemoryKey").isPresent) signAllPublications()
 }
