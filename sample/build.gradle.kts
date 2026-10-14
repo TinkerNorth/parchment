@@ -40,8 +40,6 @@ android {
         abortOnError = true
         warningsAsErrors = true
         checkReleaseBuilds = true
-        xmlReport = true
-        htmlReport = true
     }
 }
 
