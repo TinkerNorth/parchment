@@ -511,6 +511,32 @@ definition (`noDefinition_vertical_firstLayout_isTheLayoutOfOneOneByOneDefinitio
 `noDefinition_verticalCenterSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`),
 and so does a view whose definitions were cleared before its first layout
 (`clearedDefinitions_verticalStartSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`).
+
+A group definition with no items is never admitted. The layout manager's
+`addGridPatternGroupDefinition` and `setGridPatternGroupDefinitions` skip it,
+and `GridPatternView`'s `addGridPatternGroupDefinition` and `add` hand their
+groups to the first, so a view given only empty groups is a view with no
+definition (`anEmptyGroupAddedToTheView_verticalStartSnap_runsLikeNoDefinition`,
+`aListOfAnEmptyGroupSet_verticalStartSnap_runsLikeNoDefinition`), and an empty
+group among others is as though it had not been added
+(`anEmptyGroupBetweenTwoGroups_verticalStartSnap_runsLikeTheTwoGroups`). Every
+admitted group therefore holds at least one item, which every division by the
+items in one repetition and every walk through the groups relies on, and so do
+both fills in `layoutCells`: each stops when it runs out of room, out of
+positions, or into a position already drawn, and a cell of an empty group takes
+no room and draws no position. With an empty group first, before another group,
+and no cell spacing, the fill before the first cell under `center` or `end`
+snap never stopped, and in most patterns neither did the fill after it under
+circular scroll
+(`anEmptyGroupBeforeAGroup_verticalCenterSnapWithoutSpacing_laysOutInTimeAndRunsLikeTheGroupAlone`,
+`anEmptyGroupBeforeAGroup_verticalCircularWithoutSpacing_laysOutInTimeAndRunsLikeTheGroupAlone`).
+Whether the fallback is in use is read off the admitted list being empty rather
+than kept in a flag beside it, and the count of items in one repetition changes
+only where the list does, so the two cannot disagree:
+`setGridPatternGroupDefinitions` given an empty list, or `null`, empties both
+and the view falls back
+(`aNullListSetAfterAGroup_verticalStartSnap_runsLikeNoDefinition`).
+
 A cell's views sit at the grid offsets their item definitions give, measured
 from the cell's start; the start already carries the view's start padding, so
 the pattern adds nothing for padding of its own

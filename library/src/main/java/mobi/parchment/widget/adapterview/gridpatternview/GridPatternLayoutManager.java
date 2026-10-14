@@ -18,13 +18,13 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     private static final int FALLBACK_ITEM_LEFT = 0;
     private static final int FALLBACK_ITEM_HEIGHT = 1;
     private static final int FALLBACK_ITEM_WIDTH = 1;
+    private static final int NO_ITEMS = 0;
 
-    private List<GridPatternGroupDefinition> mGridPatternGroupDefinitions =
+    private final List<GridPatternGroupDefinition> mGridPatternGroupDefinitions =
             new ArrayList<GridPatternGroupDefinition>();
     private final GridPatternGroupDefinition mFallbackGridPatternGroupDefinition;
     private int mNumberOfGridItemsPerRepetition;
     private final GridPatternLayoutManagerAttributes mGridPatternLayoutManagerAttributes;
-    private boolean mGridPatternsSet = false;
 
     public GridPatternLayoutManager(
             final ViewGroup viewGroup,
@@ -58,29 +58,34 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         if (gridPatternGroupDefinition == null) {
             return;
         }
-        mGridPatternGroupDefinitions.add(gridPatternGroupDefinition);
-        mNumberOfGridItemsPerRepetition += gridPatternGroupDefinition.getNumberOfItems();
-        mGridPatternsSet = true;
+        admitGridPatternGroupDefinition(gridPatternGroupDefinition);
     }
 
     public void setGridPatternGroupDefinitions(
             final List<GridPatternGroupDefinition> gridPatternGroupDefinitions) {
-
+        removeAllGridPatternGroupDefinitions();
         if (gridPatternGroupDefinitions == null) {
-            mGridPatternGroupDefinitions.clear();
-            mNumberOfGridItemsPerRepetition = 0;
             return;
         }
-
-        mGridPatternGroupDefinitions =
-                new ArrayList<GridPatternGroupDefinition>(gridPatternGroupDefinitions);
-        int numberOfGridItemsPerRepetition = 0;
         for (final GridPatternGroupDefinition gridPatternGroupDefinition :
-                mGridPatternGroupDefinitions) {
-            numberOfGridItemsPerRepetition += gridPatternGroupDefinition.getNumberOfItems();
+                gridPatternGroupDefinitions) {
+            admitGridPatternGroupDefinition(gridPatternGroupDefinition);
         }
-        mNumberOfGridItemsPerRepetition = numberOfGridItemsPerRepetition;
-        mGridPatternsSet = true;
+    }
+
+    private void admitGridPatternGroupDefinition(
+            final GridPatternGroupDefinition gridPatternGroupDefinition) {
+        final int numberOfItems = gridPatternGroupDefinition.getNumberOfItems();
+        final boolean hasNoItems = numberOfItems == NO_ITEMS;
+        if (hasNoItems) {
+            return;
+        }
+        mGridPatternGroupDefinitions.add(gridPatternGroupDefinition);
+        mNumberOfGridItemsPerRepetition += numberOfItems;
+    }
+
+    private boolean hasNoGridPatternGroupDefinition() {
+        return mGridPatternGroupDefinitions.isEmpty();
     }
 
     @Override
@@ -384,7 +389,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     private GridPatternGroupDefinition getGridPatternGroupDefinitionForCellPosition(
             final int cellPosition) {
-        if (!mGridPatternsSet) {
+        if (hasNoGridPatternGroupDefinition()) {
             return mFallbackGridPatternGroupDefinition;
         }
         final int gridPatternGroupDefinitionCount = mGridPatternGroupDefinitions.size();
@@ -469,7 +474,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     @Override
     protected int getFirstAdapterPositionInCell(final int cellPosition) {
-        if (!mGridPatternsSet) {
+        if (hasNoGridPatternGroupDefinition()) {
             return cellPosition;
         }
         final int gridPatternGroupDefinitionSize = mGridPatternGroupDefinitions.size();
@@ -510,7 +515,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     @Override
     protected int getLastAdapterPositionInCell(final int cellPosition) {
-        if (!mGridPatternsSet) {
+        if (hasNoGridPatternGroupDefinition()) {
             return cellPosition;
         }
         final int gridPatternGroupDefinitionSize = mGridPatternGroupDefinitions.size();
@@ -549,7 +554,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     @Override
     public int getCellPosition(final int adapterPosition) {
-        if (!mGridPatternsSet) {
+        if (hasNoGridPatternGroupDefinition()) {
             return adapterPosition;
         }
         final int adapterPositionOffset = adapterPosition % mNumberOfGridItemsPerRepetition;
@@ -574,7 +579,7 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     private GridPatternGroupDefinition getGridPatternGroupDefinitionForAdapterPosition(
             final int adapterPosition) {
-        if (!mGridPatternsSet) {
+        if (hasNoGridPatternGroupDefinition()) {
             return mFallbackGridPatternGroupDefinition;
         }
         int views = 0;
@@ -593,8 +598,11 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
     }
 
     public void clearGridPatternGroupDefinition() {
+        removeAllGridPatternGroupDefinitions();
+    }
+
+    private void removeAllGridPatternGroupDefinitions() {
         mGridPatternGroupDefinitions.clear();
-        mNumberOfGridItemsPerRepetition = 0;
-        mGridPatternsSet = false;
+        mNumberOfGridItemsPerRepetition = NO_ITEMS;
     }
 }
