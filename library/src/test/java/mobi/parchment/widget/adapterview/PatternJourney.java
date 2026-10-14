@@ -20,7 +20,9 @@ public final class PatternJourney {
     private static final int LAST_SHRUNK_POSITION = SHRUNK_ADAPTER_SIZE - 1;
     private static final int GROWN_ADAPTER_SIZE = 30;
     private static final float BACKWARD_DRAG_TRAVEL = 150f;
+    private static final float FORWARD_DRAG_TRAVEL = -150f;
     private static final long LAYOUT_TIME_LIMIT_MILLISECONDS = 10000;
+    private static final long DRAG_TIME_LIMIT_MILLISECONDS = 10000;
 
     private PatternJourney() {}
 
@@ -66,6 +68,29 @@ public final class PatternJourney {
 
         assertLaysOutLikeTheOracle(patterns);
         assertRunsOnLikeTheOracle(patterns);
+    }
+
+    public static void assertDragsForwardInTimeLikeTheOracle(
+            final Configuration configuration,
+            final Definitions definitions,
+            final Definitions oracleDefinitions)
+            throws InterruptedException {
+        final PatternAndOracle patterns =
+                PatternAndOracle.bothLaidOutWithin(
+                        configuration,
+                        definitions,
+                        oracleDefinitions,
+                        LAYOUT_TIME_LIMIT_MILLISECONDS);
+        final LaidOutPattern oracleLayout = patterns.oracleLayout();
+        final LaidOutPattern patternLayout = patterns.patternLayout();
+
+        patterns.dragWithin(FORWARD_DRAG_TRAVEL, DRAG_TIME_LIMIT_MILLISECONDS);
+
+        final LaidOutPattern oracleDragged = patterns.oracleLayout();
+        assertThat(oracleLayout.childCount()).isGreaterThan(NO_ITEMS);
+        assertThat(patternLayout).isEqualTo(oracleLayout);
+        assertThat(oracleDragged).isNotEqualTo(oracleLayout);
+        assertThat(patterns.patternLayout()).isEqualTo(oracleDragged);
     }
 
     private static void assertLaysOutLikeTheOracle(final PatternAndOracle patterns) {

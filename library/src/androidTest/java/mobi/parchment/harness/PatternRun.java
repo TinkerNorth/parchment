@@ -14,6 +14,7 @@ import android.widget.BaseAdapter;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
+import mobi.parchment.widget.adapterview.gridpatternview.GridPatternLayoutManager;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternView;
 
 public final class PatternRun {
@@ -30,8 +31,15 @@ public final class PatternRun {
     private static final int REST_ATTEMPTS = 400;
     private static final long ONE_FRAME_MILLISECONDS = 16;
     private static final long START_TIME_LIMIT_MILLISECONDS = 60000;
-    private static final String STARTING =
+    private static final String STARTING_THE_PATTERN =
             "starting the pattern, from attaching it to its first layout coming to rest";
+    private static final String STARTING_THE_ORACLE =
+            "starting the oracle, from attaching it to its first layout coming to rest";
+    private static final long DRAG_TIME_LIMIT_MILLISECONDS = 60000;
+    private static final String DRAGGING_THE_PATTERN_FORWARD =
+            "dragging the pattern forward, from its first move to its coming to rest";
+    private static final String DRAGGING_THE_ORACLE_FORWARD =
+            "dragging the oracle forward, from its first move to its coming to rest";
     private static final boolean VERTICAL = true;
     private static final boolean HORIZONTAL = false;
     private static final int VIEWPORT_BREADTH = 600;
@@ -100,7 +108,16 @@ public final class PatternRun {
             final int layoutResource,
             final Viewport viewport,
             final Definitions definitions) {
-        final Watchdog watchdog = Watchdog.watchFor(STARTING, START_TIME_LIMIT_MILLISECONDS);
+        return startInTime(STARTING_THE_PATTERN, scenario, layoutResource, viewport, definitions);
+    }
+
+    private static PatternRun startInTime(
+            final String starting,
+            final ActivityScenario<HarnessActivity> scenario,
+            final int layoutResource,
+            final Viewport viewport,
+            final Definitions definitions) {
+        final Watchdog watchdog = Watchdog.watchFor(starting, START_TIME_LIMIT_MILLISECONDS);
         try {
             return start(scenario, layoutResource, viewport, definitions, ITEM_COUNT);
         } finally {
@@ -124,6 +141,33 @@ public final class PatternRun {
         final Journey pattern = patternRun.travelOn(patternLayout);
 
         assertTravelsLikeTheOracle(pattern, oracle);
+    }
+
+    public static void assertDragsForwardInTimeLikeTheOracle(
+            final ActivityScenario<HarnessActivity> scenario,
+            final int layoutResource,
+            final Viewport viewport,
+            final Definitions definitions,
+            final Definitions oracleDefinitions) {
+        final PatternRun oracleRun =
+                startInTime(
+                        STARTING_THE_ORACLE, scenario, layoutResource, viewport, oracleDefinitions);
+        final PatternState oracleLayout = oracleRun.state();
+        final PatternState oracleDragged = oracleRun.dragForwardInTime(DRAGGING_THE_ORACLE_FORWARD);
+        final PatternRun patternRun =
+                startInTime(STARTING_THE_PATTERN, scenario, layoutResource, viewport, definitions);
+        final PatternState patternLayout = patternRun.state();
+        final PatternState patternDragged =
+                patternRun.dragForwardInTime(DRAGGING_THE_PATTERN_FORWARD);
+
+        final LaidOutChildren oracleChildren = oracleLayout.children();
+        final LaidOutChildren oracleDraggedChildren = oracleDragged.children();
+        final boolean theDragMovedTheContent =
+                !oracleDraggedChildren.sameGeometryAs(oracleChildren);
+        assertTrue(oracleLayout.toString(), oracleChildren.count() > NO_ITEMS);
+        assertSameState(patternLayout, oracleLayout);
+        assertTrue(oracleDragged.toString(), theDragMovedTheContent);
+        assertSameState(patternDragged, oracleDragged);
     }
 
     public static void assertTravelsLikeTheOracle(final Journey pattern, final Journey oracle) {
@@ -239,6 +283,20 @@ public final class PatternRun {
         return stateAtRest();
     }
 
+    private PatternState dragForwardInTime(final String dragging) {
+        final Watchdog watchdog = Watchdog.watchFor(dragging, DRAG_TIME_LIMIT_MILLISECONDS);
+        try {
+            return dragForward();
+        } finally {
+            watchdog.standDown();
+        }
+    }
+
+    private PatternState dragForward() {
+        mViewport.dragForward(mHarness, DRAG_STEPS);
+        return stateAtRest();
+    }
+
     public PatternState changeTheCount(final int itemCount) {
         mHarness.apply(new ChangeTheCount<>(mAdapter, itemCount));
         return stateAtRest();
@@ -251,6 +309,13 @@ public final class PatternRun {
 
     public PatternState state() {
         return PatternState.of(mHarness, mSelections);
+    }
+
+    public int cellSpacing() {
+        final GridPatternView<BaseAdapter> view = mHarness.view();
+        final GridPatternLayoutManager layoutManager =
+                ReachableGridPatternView.layoutManagerOf(view);
+        return layoutManager.getCellSpacing();
     }
 
     private static final class Define

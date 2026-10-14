@@ -48,6 +48,47 @@ public final class PatternFixture {
     private static final int SECOND_COLUMN = 1;
     private static final int ONE_GRID_UNIT = 1;
     private static final int TWO_GRID_UNITS = 2;
+    private static final int NO_GRID_UNITS = 0;
+    private static final int NEGATIVE_GRID_UNITS = -1;
+    private static final int ROW_ABOVE_THE_GROUP = -1;
+    private static final int COLUMN_LEFT_OF_THE_GROUP = -1;
+    private static final int SECOND_ROW_ABOVE_THE_GROUP = -2;
+    private static final int SECOND_COLUMN_LEFT_OF_THE_GROUP = -2;
+    private static final String THE_PATTERNS_FIRST_LAYOUT = "the pattern's first layout";
+    private static final String THE_ORACLES_FIRST_LAYOUT = "the oracle's first layout";
+    private static final String THE_PATTERNS_DRAG = "the pattern's drag";
+    private static final String THE_ORACLES_DRAG = "the oracle's drag";
+    private static final long STOP_TIME_LIMIT_MILLISECONDS = 1000;
+    public static final GridPatternItemDefinition ITEM_AT_THE_ORIGIN =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_WITH_NO_HEIGHT =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, NO_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_WITH_A_NEGATIVE_HEIGHT =
+            new GridPatternItemDefinition(
+                    FIRST_ROW, FIRST_COLUMN, NEGATIVE_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_WITH_NO_WIDTH =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, NO_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_WITH_A_NEGATIVE_WIDTH =
+            new GridPatternItemDefinition(
+                    FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, NEGATIVE_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_WITH_A_NEGATIVE_TOP =
+            new GridPatternItemDefinition(
+                    ROW_ABOVE_THE_GROUP, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_WITH_A_NEGATIVE_LEFT =
+            new GridPatternItemDefinition(
+                    FIRST_ROW, COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_REACHING_ABOVE_THE_FIRST_ROW =
+            new GridPatternItemDefinition(
+                    ROW_ABOVE_THE_GROUP, FIRST_COLUMN, TWO_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_REACHING_LEFT_OF_THE_FIRST_COLUMN =
+            new GridPatternItemDefinition(
+                    FIRST_ROW, COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, TWO_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_TWO_ROWS_ABOVE_THE_FIRST_ROW =
+            new GridPatternItemDefinition(
+                    SECOND_ROW_ABOVE_THE_GROUP, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_TWO_COLUMNS_LEFT_OF_THE_FIRST_COLUMN =
+            new GridPatternItemDefinition(
+                    FIRST_ROW, SECOND_COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, ONE_GRID_UNIT);
     private static final int NOTHING_SELECTED = LayoutManager.INVALID_POSITION;
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final boolean VERTICAL = true;
@@ -148,6 +189,11 @@ public final class PatternFixture {
         return laidOut(configuration, clearedGroups, ADAPTER_SIZE);
     }
 
+    public static PatternFixture withDefinitions(
+            final Configuration configuration, final Definitions definitions) {
+        return laidOut(configuration, definitions, ADAPTER_SIZE);
+    }
+
     private static PatternFixture laidOut(
             final Configuration configuration,
             final Definitions definitions,
@@ -180,11 +226,8 @@ public final class PatternFixture {
     }
 
     private static List<GridPatternItemDefinition> oneOneByOne() {
-        final GridPatternItemDefinition oneByOne =
-                new GridPatternItemDefinition(
-                        FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
         final List<GridPatternItemDefinition> items = new ArrayList<GridPatternItemDefinition>();
-        items.add(oneByOne);
+        items.add(ITEM_AT_THE_ORIGIN);
         return items;
     }
 
@@ -198,12 +241,9 @@ public final class PatternFixture {
     }
 
     public static List<GridPatternItemDefinition> twoOneByOnes(final boolean isVertical) {
-        final GridPatternItemDefinition first =
-                new GridPatternItemDefinition(
-                        FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
         final GridPatternItemDefinition second = secondOneByOneAcrossTheBreadth(isVertical);
         final List<GridPatternItemDefinition> items = new ArrayList<GridPatternItemDefinition>();
-        items.add(first);
+        items.add(ITEM_AT_THE_ORIGIN);
         items.add(second);
         return items;
     }
@@ -234,8 +274,25 @@ public final class PatternFixture {
                 FIRST_ROW, FIRST_COLUMN, TWO_GRID_UNITS, ONE_GRID_UNIT);
     }
 
+    public static List<GridPatternItemDefinition> everyUndrawableItem() {
+        final List<GridPatternItemDefinition> items = new ArrayList<GridPatternItemDefinition>();
+        items.add(ITEM_WITH_NO_HEIGHT);
+        items.add(ITEM_WITH_A_NEGATIVE_HEIGHT);
+        items.add(ITEM_WITH_NO_WIDTH);
+        items.add(ITEM_WITH_A_NEGATIVE_WIDTH);
+        items.add(ITEM_WITH_A_NEGATIVE_TOP);
+        items.add(ITEM_WITH_A_NEGATIVE_LEFT);
+        items.add(ITEM_REACHING_ABOVE_THE_FIRST_ROW);
+        items.add(ITEM_REACHING_LEFT_OF_THE_FIRST_COLUMN);
+        return items;
+    }
+
     public boolean isVertical() {
         return mConfiguration.mIsVertical;
+    }
+
+    public int cellSpacing() {
+        return mLayoutManager.getCellSpacing();
     }
 
     public GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
@@ -244,6 +301,10 @@ public final class PatternFixture {
 
     public void addGroup(final List<GridPatternItemDefinition> items) {
         final GridPatternGroupDefinition definition = group(items);
+        addGroup(definition);
+    }
+
+    public void addGroup(final GridPatternGroupDefinition definition) {
         mLayoutManager.addGridPatternGroupDefinition(definition);
     }
 
@@ -349,6 +410,20 @@ public final class PatternFixture {
             sizes.add(size);
         }
         return sizes;
+    }
+
+    private void layOutWithin(final String stepName, final long milliseconds)
+            throws InterruptedException {
+        final LayOut layOut = new LayOut(this);
+        final TimeLimitedStep firstLayout = new TimeLimitedStep(layOut, stepName);
+        firstLayout.runWithin(milliseconds);
+    }
+
+    private void dragWithin(final float travel, final String stepName, final long milliseconds)
+            throws InterruptedException {
+        final Drag drag = new Drag(this, travel);
+        final TimeLimitedStep theDrag = new TimeLimitedStep(drag, stepName);
+        theDrag.runWithin(milliseconds);
     }
 
     private void layOut() {
@@ -543,8 +618,22 @@ public final class PatternFixture {
                     PatternFixture.laidOut(configuration, oracleDefinitions, ADAPTER_SIZE);
             final PatternFixture pattern =
                     PatternFixture.defined(configuration, definitions, ADAPTER_SIZE);
-            final TimeLimitedLayOut layOut = new TimeLimitedLayOut(pattern);
-            layOut.layOutWithin(milliseconds);
+            pattern.layOutWithin(THE_PATTERNS_FIRST_LAYOUT, milliseconds);
+            return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
+        }
+
+        public static PatternAndOracle bothLaidOutWithin(
+                final Configuration configuration,
+                final Definitions definitions,
+                final Definitions oracleDefinitions,
+                final long milliseconds)
+                throws InterruptedException {
+            final PatternFixture oracle =
+                    PatternFixture.defined(configuration, oracleDefinitions, ADAPTER_SIZE);
+            final PatternFixture pattern =
+                    PatternFixture.defined(configuration, definitions, ADAPTER_SIZE);
+            oracle.layOutWithin(THE_ORACLES_FIRST_LAYOUT, milliseconds);
+            pattern.layOutWithin(THE_PATTERNS_FIRST_LAYOUT, milliseconds);
             return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
         }
 
@@ -579,6 +668,12 @@ public final class PatternFixture {
             mPattern.drag(travel);
         }
 
+        public void dragWithin(final float travel, final long milliseconds)
+                throws InterruptedException {
+            mOracle.dragWithin(travel, THE_ORACLES_DRAG, milliseconds);
+            mPattern.dragWithin(travel, THE_PATTERNS_DRAG, milliseconds);
+        }
+
         public LaidOutPattern patternLayout() {
             return mPattern.snapshot();
         }
@@ -588,42 +683,90 @@ public final class PatternFixture {
         }
     }
 
-    private static final class TimeLimitedLayOut implements Runnable {
+    private static final class LayOut implements Runnable {
         private final PatternFixture mPattern;
-        private Throwable mFailure;
 
-        private TimeLimitedLayOut(final PatternFixture pattern) {
+        private LayOut(final PatternFixture pattern) {
             mPattern = pattern;
         }
 
         @Override
         public void run() {
+            mPattern.layOut();
+        }
+    }
+
+    private static final class Drag implements Runnable {
+        private final PatternFixture mPattern;
+        private final float mTravel;
+
+        private Drag(final PatternFixture pattern, final float travel) {
+            mPattern = pattern;
+            mTravel = travel;
+        }
+
+        @Override
+        public void run() {
+            mPattern.drag(mTravel);
+        }
+    }
+
+    private static final class TimeLimitedStep implements Runnable {
+        private final Runnable mStep;
+        private final String mStepName;
+        private Throwable mFailure;
+
+        private TimeLimitedStep(final Runnable step, final String stepName) {
+            mStep = step;
+            mStepName = stepName;
+        }
+
+        @Override
+        public void run() {
             try {
-                mPattern.layOut();
+                mStep.run();
             } catch (final Throwable failure) {
                 mFailure = failure;
             }
         }
 
-        private void layOutWithin(final long milliseconds) throws InterruptedException {
-            final Thread layingOut = new Thread(this);
-            layingOut.setDaemon(true);
-            layingOut.start();
-            layingOut.join(milliseconds);
-            final boolean isStillLayingOut = layingOut.isAlive();
-            if (isStillLayingOut) throw stillLayingOut(layingOut, milliseconds);
+        private void runWithin(final long milliseconds) throws InterruptedException {
+            final Thread running = new Thread(this);
+            running.setDaemon(true);
+            running.start();
+            running.join(milliseconds);
+            final boolean isStillRunning = running.isAlive();
+            if (isStillRunning) throw stopped(running, milliseconds);
             final boolean failed = mFailure != null;
-            if (failed) throw new AssertionError("the first layout failed", mFailure);
+            if (failed) throw new AssertionError(mStepName + " failed", mFailure);
         }
 
-        private static AssertionError stillLayingOut(
-                final Thread layingOut, final long milliseconds) {
-            final StackTraceElement[] whereItIs = layingOut.getStackTrace();
-            final AssertionError stillLayingOut =
+        private AssertionError stopped(final Thread running, final long milliseconds)
+                throws InterruptedException {
+            final AssertionError stillRunning = stillRunning(running, milliseconds);
+            running.interrupt();
+            running.join(STOP_TIME_LIMIT_MILLISECONDS);
+            final boolean outlivedItsInterrupt = running.isAlive();
+            if (outlivedItsInterrupt) return stillRunningAfterItsInterrupt(stillRunning);
+            return stillRunning;
+        }
+
+        private AssertionError stillRunning(final Thread running, final long milliseconds) {
+            final StackTraceElement[] whereItIs = running.getStackTrace();
+            final AssertionError stillRunning =
                     new AssertionError(
-                            "the first layout was still running after " + milliseconds + " ms");
-            stillLayingOut.setStackTrace(whereItIs);
-            return stillLayingOut;
+                            mStepName + " was still running after " + milliseconds + " ms");
+            stillRunning.setStackTrace(whereItIs);
+            return stillRunning;
+        }
+
+        private AssertionError stillRunningAfterItsInterrupt(final AssertionError stillRunning) {
+            return new AssertionError(
+                    mStepName
+                            + " was still running "
+                            + STOP_TIME_LIMIT_MILLISECONDS
+                            + " ms after its interrupt and runs on beside the tests that follow",
+                    stillRunning);
         }
     }
 
@@ -677,6 +820,22 @@ public final class PatternFixture {
             mTop = top;
             mRight = right;
             mBottom = bottom;
+        }
+
+        public int left() {
+            return mLeft;
+        }
+
+        public int top() {
+            return mTop;
+        }
+
+        public int width() {
+            return mRight - mLeft;
+        }
+
+        public int height() {
+            return mBottom - mTop;
         }
 
         @Override
@@ -740,6 +899,14 @@ public final class PatternFixture {
                 if (holdsThePosition) return true;
             }
             return false;
+        }
+
+        public LaidOutChild childHolding(final int position) {
+            for (final LaidOutChild child : mChildren) {
+                final boolean holdsThePosition = child.mPosition == position;
+                if (holdsThePosition) return child;
+            }
+            throw new AssertionError("position " + position + " is not laid out: " + this);
         }
 
         public int selectedPosition() {
@@ -807,6 +974,9 @@ public final class PatternFixture {
 
         @Override
         public int getCount() {
+            final Thread counting = Thread.currentThread();
+            final boolean isStopped = counting.isInterrupted();
+            if (isStopped) throw new IllegalStateException("stopped at its time limit");
             return mCount;
         }
 
