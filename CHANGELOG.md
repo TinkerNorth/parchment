@@ -9,6 +9,34 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Fixed
 
+- A `GridPatternItemDefinition` that starts outside its group or spans no
+  cell broke the layout of its group (#81). Nothing checked the
+  `(top, left, height, width)` an item gives in grid cells. An item of no
+  height or width, or a negative one, was laid out with no size or with
+  inverted bounds; an item with a negative top or left was drawn above or
+  before its group, even one reaching into it such as `(-1, 0, 2, 1)`; a
+  group whose extent across the breadth came to zero, such as one item of no
+  width in a vertical view or of no height in a horizontal one, threw
+  `ArithmeticException: / by zero` on the first layout; and under
+  `parchment_isCircularScroll` with no `parchment_cellSpacing`, a lone item
+  whose cells came to no size or a negative one along the scroll axis laid
+  out, then hung the first forward drag. An item that starts above or left
+  of its group, or spans less than one cell, is now ignored where an item
+  enters a `GridPatternGroupDefinition`, through its constructor or
+  `addGridPatternItemDefinition`, so the group holds and counts only the
+  items it keeps and lays out exactly as it would without them
+  (`anItemWithNoHeightBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
+  `anItemReachingAboveTheFirstRowBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
+  `anItemWithANegativeLeftAddedAfterTwoItems_horizontalStartSnap_runsLikeTheTwoItems`,
+  `aGroupOfAnItemWithNoHeight_verticalCircularWithoutSpacing_dragsForwardInTimeLikeNoDefinition`).
+  A group whose items are all ignored has none, so it is ignored like a group
+  with no items, and a view given only such groups lays out exactly like a
+  view with no definition
+  (`aGroupOfAnItemWithNoHeightAddedToTheView_horizontalStartSnap_runsLikeNoDefinition`).
+  An item one cell high or wide, on the first row or in the first column, is
+  still drawn on the cells it names
+  (`anItemOneCellHighBesideAnItemAtTheOrigin_verticalStartSnap_isDrawnOnTheGridCellsItNames`).
+
 - A `GridPatternView` group definition with no items broke the layout (#71).
   Alone, it threw `ArithmeticException: / by zero` on the first layout, with
   or without items in the adapter, because the items in one repetition of the

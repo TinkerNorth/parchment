@@ -497,7 +497,7 @@ The `Cell` type parameter is what differs between the three views:
 |---|---|---|
 | `ListView` | `View` | the view's measured size along the scroll axis |
 | `GridView` | `Group` | `parchment_numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `parchment_gravity` places the rest |
-| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units; `parchment_ratio` fixes the unit's aspect |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units, any that starts above or left of the group or spans less than one unit left out; `parchment_ratio` fixes the unit's aspect |
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
@@ -511,6 +511,33 @@ definition (`noDefinition_vertical_firstLayout_isTheLayoutOfOneOneByOneDefinitio
 `noDefinition_verticalCenterSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`),
 and so does a view whose definitions were cleared before its first layout
 (`clearedDefinitions_verticalStartSnap_setSelectionOffScreen_landsWhereOneOneByOneDefinitionLands`).
+
+An item definition that starts above or left of its group, or spans less than
+one unit, never enters a group.
+`GridPatternGroupDefinition.addGridPatternItemDefinition`, which the constructor
+calls for each item in turn, skips an item whose top or left is below zero, even
+one that reaches into the group such as `(-1, 0, 2, 1)`, and an item whose height
+or width is below one, so a group's items, its count of them and its extent in
+grid units are those of the items it keeps, and a group given such an item lays
+out exactly as it would without it
+(`anItemWithNoHeightBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
+`anItemReachingLeftOfTheFirstColumnBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
+`anItemWithANegativeLeftAddedAfterTwoItems_horizontalStartSnap_runsLikeTheTwoItems`).
+A grid unit across the breadth is the breadth, less the spacing between units,
+divided by the group's extent across it, so a group whose extent across the
+breadth came to zero used to divide by zero on the first layout; an item of no
+or negative height or width used to be drawn with no size or with inverted
+bounds, and one with a negative top or left above or before its group. Under
+circular scroll without cell spacing, a lone item whose cells came to no size or
+a negative one along the scroll axis used to hang the first forward drag, the
+fill in `layoutCells` never reaching the end of the view
+(`aGroupOfAnItemWithNoHeight_verticalCircularWithoutSpacing_dragsForwardInTimeLikeNoDefinition`).
+An item one unit high or wide, on the first row or in the first column, is
+drawn on the cells it names as before
+(`anItemOneCellHighBesideAnItemAtTheOrigin_verticalStartSnap_isDrawnOnTheGridCellsItNames`,
+`anItemInTheFirstColumnBesideAnItemAtTheOrigin_horizontalStartSnap_isDrawnOnTheGridCellsItNames`).
+A group whose items are all skipped has none, and is ignored like any group
+with none (`aGroupOfAnItemWithNoHeightAddedToTheView_horizontalStartSnap_runsLikeNoDefinition`).
 
 A group definition with no items is never admitted. The layout manager's
 `addGridPatternGroupDefinition` and `setGridPatternGroupDefinitions` skip it,
