@@ -54,4 +54,8 @@ public final class Viewport {
     public void dragBack(final ParchmentViewHarness<?> harness, final int steps) {
         harness.dragAndRelease(mForwardToX, mForwardToY, mForwardFromX, mForwardFromY, steps);
     }
+
+    public void dragForward(final ParchmentViewHarness<?> harness, final int steps) {
+        harness.dragAndRelease(mForwardFromX, mForwardFromY, mForwardToX, mForwardToY, steps);
+    }
 }

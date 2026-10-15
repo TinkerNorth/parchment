@@ -10,6 +10,11 @@ import mobi.parchment.widget.adapterview.utilities.ViewGroupUtilities;
 
 public class GridPatternGroupDefinition {
 
+    private static final int FIRST_ROW = 0;
+    private static final int FIRST_COLUMN = 0;
+    private static final int ONE_ROW = 1;
+    private static final int ONE_COLUMN = 1;
+
     private final boolean mIsVerticalScroll;
     private final List<GridPatternItemDefinition> mGridPatternItemDefinitions =
             new ArrayList<GridPatternItemDefinition>();
@@ -63,6 +68,10 @@ public class GridPatternGroupDefinition {
 
     public void addGridPatternItemDefinition(
             final GridPatternItemDefinition gridPatternItemDefinition) {
+        final boolean isUndrawable = isUndrawable(gridPatternItemDefinition);
+        if (isUndrawable) {
+            return;
+        }
         mGridPatternItemDefinitions.add(gridPatternItemDefinition);
         final int gridPosition = mGridPatternItemDefinitions.size() - 1;
 
@@ -124,6 +133,21 @@ public class GridPatternGroupDefinition {
                 }
             }
         }
+    }
+
+    private static boolean isUndrawable(final GridPatternItemDefinition gridPatternItemDefinition) {
+        final int top = gridPatternItemDefinition.getTop();
+        final int left = gridPatternItemDefinition.getLeft();
+        final int height = gridPatternItemDefinition.getHeight();
+        final int width = gridPatternItemDefinition.getWidth();
+        final boolean startsAboveTheFirstRow = top < FIRST_ROW;
+        final boolean startsLeftOfTheFirstColumn = left < FIRST_COLUMN;
+        final boolean spansLessThanARow = height < ONE_ROW;
+        final boolean spansLessThanAColumn = width < ONE_COLUMN;
+        return startsAboveTheFirstRow
+                || startsLeftOfTheFirstColumn
+                || spansLessThanARow
+                || spansLessThanAColumn;
     }
 
     public int getNumberOfItems() {

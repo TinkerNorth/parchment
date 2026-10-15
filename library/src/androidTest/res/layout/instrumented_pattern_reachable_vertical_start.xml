@@ -2,7 +2,7 @@
 <view
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:parchment="http://schemas.android.com/apk/res-auto"
-    class="mobi.parchment.widget.adapterview.GridPatternEmptyGroupInstrumentedTest$ReachableGridPatternView"
+    class="mobi.parchment.harness.ReachableGridPatternView"
     android:id="@+id/parchment_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
