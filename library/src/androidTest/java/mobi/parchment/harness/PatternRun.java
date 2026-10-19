@@ -103,14 +103,6 @@ public final class PatternRun {
         return new PatternRun(harness, adapter, selections, viewport);
     }
 
-    public static PatternRun startInTime(
-            final ActivityScenario<HarnessActivity> scenario,
-            final int layoutResource,
-            final Viewport viewport,
-            final Definitions definitions) {
-        return startInTime(STARTING_THE_PATTERN, scenario, layoutResource, viewport, definitions);
-    }
-
     private static PatternRun startInTime(
             final String starting,
             final ActivityScenario<HarnessActivity> scenario,
@@ -137,6 +129,25 @@ public final class PatternRun {
         final Journey oracle = oracleRun.travelOn(oracleLayout);
         final PatternRun patternRun =
                 start(scenario, layoutResource, viewport, definitions, ITEM_COUNT);
+        final PatternState patternLayout = patternRun.state();
+        final Journey pattern = patternRun.travelOn(patternLayout);
+
+        assertTravelsLikeTheOracle(pattern, oracle);
+    }
+
+    public static void assertRunsLikeTheOracleOnceLaidOutInTime(
+            final ActivityScenario<HarnessActivity> scenario,
+            final int layoutResource,
+            final Viewport viewport,
+            final Definitions definitions,
+            final Definitions oracleDefinitions) {
+        final PatternRun oracleRun =
+                startInTime(
+                        STARTING_THE_ORACLE, scenario, layoutResource, viewport, oracleDefinitions);
+        final PatternState oracleLayout = oracleRun.state();
+        final Journey oracle = oracleRun.travelOn(oracleLayout);
+        final PatternRun patternRun =
+                startInTime(STARTING_THE_PATTERN, scenario, layoutResource, viewport, definitions);
         final PatternState patternLayout = patternRun.state();
         final Journey pattern = patternRun.travelOn(patternLayout);
 
