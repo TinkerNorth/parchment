@@ -60,7 +60,7 @@ public final class PatternJourney {
             final Definitions oracleDefinitions)
             throws InterruptedException {
         final PatternAndOracle patterns =
-                PatternAndOracle.laidOutWithin(
+                PatternAndOracle.bothLaidOutWithin(
                         configuration,
                         definitions,
                         oracleDefinitions,

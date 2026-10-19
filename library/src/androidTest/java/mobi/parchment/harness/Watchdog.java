@@ -19,7 +19,7 @@ public final class Watchdog implements Runnable {
 
     public static Watchdog watchFor(final String watched, final long timeLimitMilliseconds) {
         final Watchdog watchdog = new Watchdog(watched, timeLimitMilliseconds);
-        final Thread watching = new Thread(watchdog);
+        final Thread watching = new Thread(watchdog, watched);
         watching.setDaemon(true);
         watching.start();
         return watchdog;

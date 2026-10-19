@@ -483,14 +483,9 @@ public final class GridPatternEmptyGroupInstrumentedTest {
             final Viewport viewport,
             final Definitions definitions,
             final Definitions oracleDefinitions) {
-        final PatternRun oracleRun = start(layoutResource, viewport, oracleDefinitions, ITEM_COUNT);
-        final PatternState oracleLayout = oracleRun.state();
-        final Journey oracle = oracleRun.travelOn(oracleLayout);
-        final PatternRun patternRun = startInTime(layoutResource, viewport, definitions);
-        final PatternState patternLayout = patternRun.state();
-        final Journey pattern = patternRun.travelOn(patternLayout);
-
-        assertTravelsLikeTheOracle(pattern, oracle);
+        final ActivityScenario<HarnessActivity> scenario = mActivityRule.getScenario();
+        PatternRun.assertRunsLikeTheOracleOnceLaidOutInTime(
+                scenario, layoutResource, viewport, definitions, oracleDefinitions);
     }
 
     private void assertRunsLikeTheOracleFromAnEmptyAdapter(
@@ -512,12 +507,6 @@ public final class GridPatternEmptyGroupInstrumentedTest {
         assertEquals(emptyOracleLayout.toString(), NO_ITEMS, emptyChildCount);
         assertSameState(emptyPatternLayout, emptyOracleLayout);
         assertTravelsLikeTheOracle(pattern, oracle);
-    }
-
-    private PatternRun startInTime(
-            final int layoutResource, final Viewport viewport, final Definitions definitions) {
-        final ActivityScenario<HarnessActivity> scenario = mActivityRule.getScenario();
-        return PatternRun.startInTime(scenario, layoutResource, viewport, definitions);
     }
 
     private PatternRun start(

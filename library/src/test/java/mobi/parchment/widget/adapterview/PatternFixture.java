@@ -608,20 +608,6 @@ public final class PatternFixture {
             return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
         }
 
-        public static PatternAndOracle laidOutWithin(
-                final Configuration configuration,
-                final Definitions definitions,
-                final Definitions oracleDefinitions,
-                final long milliseconds)
-                throws InterruptedException {
-            final PatternFixture oracle =
-                    PatternFixture.laidOut(configuration, oracleDefinitions, ADAPTER_SIZE);
-            final PatternFixture pattern =
-                    PatternFixture.defined(configuration, definitions, ADAPTER_SIZE);
-            pattern.layOutWithin(THE_PATTERNS_FIRST_LAYOUT, milliseconds);
-            return new PatternAndOracle(pattern, oracle, definitions, oracleDefinitions);
-        }
-
         public static PatternAndOracle bothLaidOutWithin(
                 final Configuration configuration,
                 final Definitions definitions,

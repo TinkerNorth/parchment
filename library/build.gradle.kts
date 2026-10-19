@@ -1,6 +1,7 @@
 import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
+import java.time.Duration
 
 plugins {
     alias(libs.plugins.android.library)
@@ -66,6 +67,11 @@ tasks.withType<JavaCompile>().configureEach {
 }
 
 tasks.withType<Test>().configureEach {
+    timeout = Duration.ofMinutes(10)
+    testLogging { events("skipped", "failed") }
+    // A run stopped by the timeout writes no XML, so the previous run's would look current.
+    val junitXml = reports.junitXml.outputLocation
+    doFirst { junitXml.get().asFile.deleteRecursively() }
     maxHeapSize = "1g"
     jvmArgs("-XX:+ExitOnOutOfMemoryError")
     // Robolectric 4.17 reaches into these JDK internals and the module system refuses it otherwise.
