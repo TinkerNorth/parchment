@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroup;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroupDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
@@ -59,6 +60,9 @@ public final class PatternFixture {
     private static final String THE_PATTERNS_DRAG = "the pattern's drag";
     private static final String THE_ORACLES_DRAG = "the oracle's drag";
     private static final long STOP_TIME_LIMIT_MILLISECONDS = 1000;
+    private static final long HOLD_LIMIT_MILLISECONDS = 60000;
+    private static final String STOPPED = "stopped at its time limit";
+    private static final String NEVER_STOPPED = "the fill was never stopped";
     public static final GridPatternItemDefinition ITEM_AT_THE_ORIGIN =
             new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
     public static final GridPatternItemDefinition ITEM_WITH_NO_HEIGHT =
@@ -314,6 +318,10 @@ public final class PatternFixture {
 
     public void clearGroups() {
         mLayoutManager.clearGridPatternGroupDefinition();
+    }
+
+    public void holdTheFillFromNowOn() {
+        mAdapter.holdFromNowOn();
     }
 
     public void setSelection(final int position) {
@@ -946,6 +954,7 @@ public final class PatternFixture {
 
     public static final class ResizableAdapter extends BaseAdapter {
         private final Context mContext;
+        private final AtomicBoolean mIsHolding = new AtomicBoolean();
         private int mCount;
 
         public ResizableAdapter(final Context context, final int count) {
@@ -958,11 +967,15 @@ public final class PatternFixture {
             notifyDataSetChanged();
         }
 
+        private void holdFromNowOn() {
+            mIsHolding.set(true);
+        }
+
         @Override
         public int getCount() {
             final Thread counting = Thread.currentThread();
             final boolean isStopped = counting.isInterrupted();
-            if (isStopped) throw new IllegalStateException("stopped at its time limit");
+            if (isStopped) throw new IllegalStateException(STOPPED);
             return mCount;
         }
 
@@ -978,12 +991,23 @@ public final class PatternFixture {
 
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final boolean isHolding = mIsHolding.get();
+            if (isHolding) hold();
             final FrameLayout view = new FrameLayout(mContext);
             final ViewGroup.LayoutParams layoutParams =
                     new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT);
             view.setLayoutParams(layoutParams);
             view.setTag(position);
             return view;
+        }
+
+        private static void hold() {
+            try {
+                Thread.sleep(HOLD_LIMIT_MILLISECONDS);
+            } catch (final InterruptedException interrupt) {
+                throw new IllegalStateException(STOPPED, interrupt);
+            }
+            throw new IllegalStateException(NEVER_STOPPED);
         }
     }
 

@@ -10,6 +10,8 @@ import static mobi.parchment.harness.PatternRun.assertRunsLikeTheOracleOnceLaidO
 import static mobi.parchment.harness.ReachableGridPatternView.layoutManagerOf;
 import static org.junit.Assert.assertTrue;
 
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -89,28 +91,28 @@ public final class PatternJourneyInstrumentedTest {
         public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
             final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
             final List<GridPatternItemDefinition> twoOneByOnes = twoOneByOnes(isVertical);
-            final GridPatternGroupDefinition oneGroup =
-                    new LookingOutGroupDefinition(isVertical, twoOneByOnes, mLookout);
+            final GridPatternGroupDefinition oneGroup = group(isVertical, twoOneByOnes);
+            final LookOutOnTheFirstChild lookOut = new LookOutOnTheFirstChild(mLookout);
             layoutManager.addGridPatternGroupDefinition(oneGroup);
+            view.setOnHierarchyChangeListener(lookOut);
         }
     }
 
-    private static final class LookingOutGroupDefinition extends GridPatternGroupDefinition {
+    private static final class LookOutOnTheFirstChild
+            implements ViewGroup.OnHierarchyChangeListener {
         private final ThreadLookout mLookout;
 
-        private LookingOutGroupDefinition(
-                final boolean isVertical,
-                final List<GridPatternItemDefinition> items,
-                final ThreadLookout lookout) {
-            super(isVertical, items);
+        private LookOutOnTheFirstChild(final ThreadLookout lookout) {
             mLookout = lookout;
         }
 
         @Override
-        public List<GridPatternItemDefinition> getGridPatternItemDefinitions() {
+        public void onChildViewAdded(final View parent, final View child) {
             mLookout.lookOutOnce();
-            return super.getGridPatternItemDefinitions();
         }
+
+        @Override
+        public void onChildViewRemoved(final View parent, final View child) {}
     }
 
     private static final class ThreadLookout {
