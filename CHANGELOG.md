@@ -7,7 +7,62 @@ All notable changes to Parchment, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A protected `GridPatternGroupDefinition(GridPatternGroupDefinition)`
+  constructor, which copies a group the way `GridPatternLayoutManager` admits
+  it: the group's orientation and, for each item the group holds as the copy
+  begins, a plain `GridPatternItemDefinition` of the values the item gives as
+  the copy is made, each checked as `addGridPatternItemDefinition` checks an
+  item. A copy of `null` is an empty group for horizontal scroll (#82).
+
+### Changed
+
+- `GridPatternLayoutManager` no longer calls a `GridPatternGroupDefinition`
+  subclass's methods (#82): it lays out its own plain copy of each group, so
+  an override, of `getGridPatternItemDefinitions` or `getGridHeight` alike, no
+  longer reaches the layout
+  (`aGroupSubclassReturningOtherItems_verticalStartSnap_runsLikeTheItemsItHolds`).
+
 ### Fixed
+
+- A `GridPatternGroupDefinition` or one of its items changed after
+  `GridPatternLayoutManager` admitted it put the layout out of step with it,
+  and a `null` group in a list, a `null` list or a `null` item threw
+  `NullPointerException` (#82). The layout manager counted a group's items,
+  and the group its extent, when the group was added, but kept the caller's
+  definition and items and read them again on every fill. An item added to
+  the group afterwards stopped the fill after the first group (two
+  one-by-ones and an item added later drew positions 0 to 2 and nothing more
+  in a vertical view); clearing its item list afterwards threw
+  `IndexOutOfBoundsException` on the first layout; and an item whose getters
+  returned other values afterwards was laid out with them over the extent
+  counted before. Grown to three columns in a group two wide it drew
+  `[0, 0, 605, 48]` in a view 400 wide; moved to the second row it drew 6
+  positions where 12 fit; moved above the first row it was drawn above its
+  cell; and alone, having lost its height under `parchment_isCircularScroll`
+  with no `parchment_cellSpacing`, it hung the first forward drag. The layout
+  manager now keeps its own copy of each group it admits, made when
+  `addGridPatternGroupDefinition` or `setGridPatternGroupDefinitions` takes
+  it from the group's orientation and each item's values, read once, so later
+  changes to the definition, its item list or its items never reach the
+  layout; to change the pattern, add or set the group again
+  (`anItemAddedToAGroupAfterItIsAdded_verticalStartSnap_runsLikeTheGroupAsAdded`,
+  `theItemsOfAGroupClearedAfterItIsSet_horizontalStartSnap_runsLikeTheGroupAsSet`,
+  `anItemGrowingAcrossTheBreadthAfterTheViewTakesIt_verticalStartSnap_runsLikeTheItemAsAdded`,
+  `anItemLosingItsHeightAfterItIsAdded_verticalCircularWithoutSpacing_dragsForwardInTimeLikeTheItemAsAdded`,
+  `aGroupChangedAndThenSetAgain_verticalStartSnap_runsLikeTheChangedGroupSet`).
+  `null` now means absent: a `null` group in the list given to
+  `setGridPatternGroupDefinitions` is skipped
+  (`aListOfANullGroupBetweenTwoGroupsSet_verticalStartSnap_runsLikeAListOfTheTwoGroupsSet`);
+  a definition built from a `null` list is empty, so `GridPatternView`'s
+  `addGridPatternGroupDefinition(null)` and `add(null)` are ignored
+  (`aNullListAddedToTheView_verticalStartSnap_runsLikeNoDefinition`); and a
+  `null` item, in the list a group is built from or given to
+  `addGridPatternItemDefinition`, is ignored like an item that describes
+  nothing drawable
+  (`aNullItemBetweenTwoItemsAddedToTheView_verticalStartSnap_runsLikeTheTwoItems`,
+  `aGroupOfOnlyNullItemsAddedToTheViewWithAdd_horizontalStartSnap_runsLikeNoDefinition`).
 
 - A `GridPatternItemDefinition` that starts outside its group or spans no
   cell broke the layout of its group (#81). Nothing checked the

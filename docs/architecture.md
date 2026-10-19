@@ -497,7 +497,7 @@ The `Cell` type parameter is what differs between the three views:
 |---|---|---|
 | `ListView` | `View` | the view's measured size along the scroll axis |
 | `GridView` | `Group` | `parchment_numberOfViewsPerCell` views laid across the breadth; the tallest (or widest) view sets the cell size, `parchment_gravity` places the rest |
-| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units, any that starts above or left of the group or spans less than one unit left out; `parchment_ratio` fixes the unit's aspect |
+| `GridPatternView` | `GridPatternGroup` | one repeat of a `GridPatternGroupDefinition`: a list of `GridPatternItemDefinition(top, left, height, width)` in grid units, any that is `null`, starts above or left of the group or spans less than one unit left out; `parchment_ratio` fixes the unit's aspect |
 
 `GridPatternLayoutManager` walks the adapter through the group
 definitions in order, so a pattern of "one hero, two small" followed by
@@ -516,13 +516,17 @@ An item definition that starts above or left of its group, or spans less than
 one unit, never enters a group.
 `GridPatternGroupDefinition.addGridPatternItemDefinition`, which the constructor
 calls for each item in turn, skips an item whose top or left is below zero, even
-one that reaches into the group such as `(-1, 0, 2, 1)`, and an item whose height
-or width is below one, so a group's items, its count of them and its extent in
-grid units are those of the items it keeps, and a group given such an item lays
-out exactly as it would without it
+one that reaches into the group such as `(-1, 0, 2, 1)`, an item whose height
+or width is below one, and a `null` item, so a group's items, its count of them
+and its extent in grid units are those of the items it keeps, and a group given
+such an item lays out exactly as it would without it
 (`anItemWithNoHeightBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
 `anItemReachingLeftOfTheFirstColumnBeforeTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
-`anItemWithANegativeLeftAddedAfterTwoItems_horizontalStartSnap_runsLikeTheTwoItems`).
+`anItemWithANegativeLeftAddedAfterTwoItems_horizontalStartSnap_runsLikeTheTwoItems`,
+`aNullItemBetweenTwoItems_verticalStartSnap_runsLikeTheTwoItems`,
+`aGroupDefinitionBuiltFromAListWithANullItem_holdsOnlyTheOtherItems`). A
+definition built from a `null` list holds no items
+(`aGroupDefinitionBuiltFromANullList_vertical_holdsNoItems`).
 A grid unit across the breadth is the breadth, less the spacing between units,
 divided by the group's extent across it, so a group whose extent across the
 breadth came to zero used to divide by zero on the first layout; an item of no
@@ -563,6 +567,63 @@ only where the list does, so the two cannot disagree:
 `setGridPatternGroupDefinitions` given an empty list, or `null`, empties both
 and the view falls back
 (`aNullListSetAfterAGroup_verticalStartSnap_runsLikeNoDefinition`).
+
+The layout manager admits a copy, not the caller's definition or items. Both
+`addGridPatternGroupDefinition` and `setGridPatternGroupDefinitions` admit a
+copy made by a protected `GridPatternGroupDefinition` constructor, which keeps
+the group's orientation, reads the four values of each item in the group's own
+list once into a plain `GridPatternItemDefinition`, skipping a `null` put into
+that list directly, and replays the plain items through
+`addGridPatternItemDefinition`, so the copy is checked, counted and measured on
+the values as admitted, like any group
+(`anUndrawableItemPutIntoTheItemsOfAGroupBeforeItIsAdded_verticalStartSnap_runsLikeTheGroupWithoutIt`,
+`theSecondItemRemovedFromTheItemsOfAGroupBeforeItIsAdded_verticalStartSnap_runsLikeTheFirstItemAlone`).
+Admission runs the items' getters, so it walks a snapshot of each list: the
+copy, of the group's list as the copy begins, and
+`setGridPatternGroupDefinitions`, of the list of groups as it is called, so an
+item whose getter grows either list neither changes what is admitted nor makes
+admission throw
+(`anItemGrowingTheItemsOfItsGroupWhileTheGroupIsAdded_verticalStartSnap_runsLikeTheGroupAsAdded`,
+`anItemGrowingTheListOfGroupsWhileTheListIsSet_verticalStartSnap_runsLikeTheListAsSet`).
+The engine holds only its copies, so a later change to the definition, by
+`addGridPatternItemDefinition` or through the live list
+`getGridPatternItemDefinitions` returns, or to one of its items, through a
+`GridPatternItemDefinition` subclass whose getters change, changes nothing. Such
+a change used to put the layout out of step with what admission had counted:
+with an item added the fill stopped after the first group, with the list
+cleared the first layout threw from `getCellPosition`, an item grown across the
+breadth was drawn past the view, one moved out of its cell was drawn outside it,
+and a lone item that lost its height, under circular scroll without cell
+spacing, hung the first forward drag
+(`anItemAddedToAGroupAfterItIsAdded_verticalStartSnap_runsLikeTheGroupAsAdded`,
+`theItemsOfAGroupClearedAfterItIsAdded_verticalStartSnap_runsLikeTheGroupAsAdded`,
+`anItemGrowingAcrossTheBreadthAfterTheViewTakesIt_verticalStartSnap_runsLikeTheItemAsAdded`,
+`anItemMovingBeforeItsGroupAfterItIsAdded_verticalStartSnap_runsLikeTheItemAsAdded`,
+`anItemLosingItsHeightAfterItIsAdded_verticalCircularWithoutSpacing_dragsForwardInTimeLikeTheItemAsAdded`).
+The copy reads the group's own list, not its getter, so a subclass whose
+`getGridPatternItemDefinitions` returns other items is admitted with the items
+it holds
+(`aGroupSubclassReturningOtherItems_verticalStartSnap_runsLikeTheItemsItHolds`),
+and the engine calls no method of a subclass at all.
+A pattern changes only when its group is admitted again
+(`aGroupChangedAndThenSetAgain_verticalStartSnap_runsLikeTheChangedGroupSet`).
+A copy of `null` is an empty group for horizontal scroll
+(`aGroupDefinitionCopiedFromANullGroup_holdsNoItems`,
+`aGroupDefinitionCopiedFromANullGroup_ordersItsItemsForHorizontalScroll`),
+and admission ignores an empty copy whatever its orientation, so a `null`
+group is skipped by the same check as a group with no items
+(`aListOfANullGroupBetweenTwoGroupsSet_verticalStartSnap_runsLikeAListOfTheTwoGroupsSet`),
+and so is a group whose live list holds only a `null` put there directly
+(`aNullItemPutIntoTheItemsOfAnEmptyGroupBeforeItIsAdded_verticalStartSnap_runsLikeNoDefinition`).
+A subclass that passes `null` up and then adds items is a group for horizontal
+scroll, so in a vertical view it is a group built for the other orientation.
+The grid unit is computed in the definition's own orientation and the copy
+keeps it, so a group built for the other orientation takes its unit across its
+own breadth, which is the view's length along the scroll axis
+(`aGroupBuiltForTheOtherOrientation_verticalStartSnap_spansTheViewAlongTheScrollAxis`).
+That test records current behaviour, not a design; #93 tracks it.
+`GridPatternView` builds every group in its own orientation. The copy is made
+once, when the group is admitted; a fill reads its list in place.
 
 A cell's views sit at the grid offsets their item definitions give, measured
 from the cell's start; the start already carries the view's start padding, so
