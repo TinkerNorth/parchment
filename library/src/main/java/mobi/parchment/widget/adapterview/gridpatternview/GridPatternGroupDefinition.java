@@ -14,6 +14,7 @@ public class GridPatternGroupDefinition {
     private static final int FIRST_COLUMN = 0;
     private static final int ONE_ROW = 1;
     private static final int ONE_COLUMN = 1;
+    private static final boolean HORIZONTAL_SCROLL = false;
 
     private final boolean mIsVerticalScroll;
     private final List<GridPatternItemDefinition> mGridPatternItemDefinitions =
@@ -23,10 +24,46 @@ public class GridPatternGroupDefinition {
             final boolean isVerticalScroll,
             final List<GridPatternItemDefinition> gridPatternItemDefinitions) {
         mIsVerticalScroll = isVerticalScroll;
+        final boolean hasNoItemList = gridPatternItemDefinitions == null;
+        if (hasNoItemList) {
+            return;
+        }
         for (final GridPatternItemDefinition gridPatternItemDefinition :
                 gridPatternItemDefinitions) {
             addGridPatternItemDefinition(gridPatternItemDefinition);
         }
+    }
+
+    protected GridPatternGroupDefinition(
+            final GridPatternGroupDefinition gridPatternGroupDefinition) {
+        final boolean hasNoGroup = gridPatternGroupDefinition == null;
+        if (hasNoGroup) {
+            mIsVerticalScroll = HORIZONTAL_SCROLL;
+            return;
+        }
+        mIsVerticalScroll = gridPatternGroupDefinition.mIsVerticalScroll;
+        final List<GridPatternItemDefinition> gridPatternItemDefinitionsToCopy =
+                new ArrayList<GridPatternItemDefinition>(
+                        gridPatternGroupDefinition.mGridPatternItemDefinitions);
+        for (final GridPatternItemDefinition gridPatternItemDefinition :
+                gridPatternItemDefinitionsToCopy) {
+            final boolean isAbsent = gridPatternItemDefinition == null;
+            if (isAbsent) {
+                continue;
+            }
+            final GridPatternItemDefinition copiedGridPatternItemDefinition =
+                    valuesOf(gridPatternItemDefinition);
+            addGridPatternItemDefinition(copiedGridPatternItemDefinition);
+        }
+    }
+
+    private static GridPatternItemDefinition valuesOf(
+            final GridPatternItemDefinition gridPatternItemDefinition) {
+        final int top = gridPatternItemDefinition.getTop();
+        final int left = gridPatternItemDefinition.getLeft();
+        final int height = gridPatternItemDefinition.getHeight();
+        final int width = gridPatternItemDefinition.getWidth();
+        return new GridPatternItemDefinition(top, left, height, width);
     }
 
     private List<Integer> mFirstGridGroupPositions = new ArrayList<Integer>();
@@ -136,6 +173,10 @@ public class GridPatternGroupDefinition {
     }
 
     private static boolean isUndrawable(final GridPatternItemDefinition gridPatternItemDefinition) {
+        final boolean isAbsent = gridPatternItemDefinition == null;
+        if (isAbsent) {
+            return true;
+        }
         final int top = gridPatternItemDefinition.getTop();
         final int left = gridPatternItemDefinition.getLeft();
         final int height = gridPatternItemDefinition.getHeight();

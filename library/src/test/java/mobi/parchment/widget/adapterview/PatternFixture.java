@@ -49,6 +49,7 @@ public final class PatternFixture {
     private static final int SECOND_COLUMN = 1;
     private static final int ONE_GRID_UNIT = 1;
     private static final int TWO_GRID_UNITS = 2;
+    private static final int THREE_GRID_UNITS = 3;
     private static final int NO_GRID_UNITS = 0;
     private static final int NEGATIVE_GRID_UNITS = -1;
     private static final int ROW_ABOVE_THE_GROUP = -1;
@@ -93,6 +94,14 @@ public final class PatternFixture {
     public static final GridPatternItemDefinition ITEM_TWO_COLUMNS_LEFT_OF_THE_FIRST_COLUMN =
             new GridPatternItemDefinition(
                     FIRST_ROW, SECOND_COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_WIDE =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, THREE_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_HIGH =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, THREE_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_ON_THE_SECOND_ROW =
+            new GridPatternItemDefinition(SECOND_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_IN_THE_SECOND_COLUMN =
+            new GridPatternItemDefinition(FIRST_ROW, SECOND_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
     private static final int NOTHING_SELECTED = LayoutManager.INVALID_POSITION;
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final boolean VERTICAL = true;
@@ -297,6 +306,11 @@ public final class PatternFixture {
 
     public int cellSpacing() {
         return mLayoutManager.getCellSpacing();
+    }
+
+    public int lengthAlongTheScrollAxis() {
+        if (mConfiguration.mIsVertical) return mConfiguration.height();
+        return mConfiguration.width();
     }
 
     public GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
@@ -761,6 +775,49 @@ public final class PatternFixture {
                             + STOP_TIME_LIMIT_MILLISECONDS
                             + " ms after its interrupt and runs on beside the tests that follow",
                     stillRunning);
+        }
+    }
+
+    public static final class ChangingItemDefinition extends GridPatternItemDefinition {
+        private final GridPatternItemDefinition mChanged;
+        private final AtomicBoolean mHasChanged = new AtomicBoolean();
+
+        public ChangingItemDefinition(
+                final GridPatternItemDefinition asMade, final GridPatternItemDefinition changed) {
+            super(asMade.getTop(), asMade.getLeft(), asMade.getHeight(), asMade.getWidth());
+            mChanged = changed;
+        }
+
+        public void change() {
+            mHasChanged.set(true);
+        }
+
+        @Override
+        public int getTop() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getTop();
+            return super.getTop();
+        }
+
+        @Override
+        public int getLeft() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getLeft();
+            return super.getLeft();
+        }
+
+        @Override
+        public int getHeight() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getHeight();
+            return super.getHeight();
+        }
+
+        @Override
+        public int getWidth() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getWidth();
+            return super.getWidth();
         }
     }
 
