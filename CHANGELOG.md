@@ -9,12 +9,14 @@ All notable changes to Parchment, newest first. The format follows
 
 ### Added
 
-- A protected `GridPatternGroupDefinition(GridPatternGroupDefinition)`
+- A protected
+  `GridPatternGroupDefinition(GridPatternGroupDefinition, boolean)`
   constructor, which copies a group the way `GridPatternLayoutManager` admits
-  it: the group's orientation and, for each item the group holds as the copy
-  begins, a plain `GridPatternItemDefinition` of the values the item gives as
-  the copy is made, each checked as `addGridPatternItemDefinition` checks an
-  item. A copy of `null` is an empty group for horizontal scroll (#82).
+  it: in the orientation it is given and, for each item the group holds as
+  the copy begins, a plain `GridPatternItemDefinition` of the values the item
+  gives as the copy is made, each checked as `addGridPatternItemDefinition`
+  checks an item. A copy of `null` is an empty group in the orientation it is
+  given (#82, #93).
 
 ### Changed
 
@@ -25,6 +27,26 @@ All notable changes to Parchment, newest first. The format follows
   (`aGroupSubclassReturningOtherItems_verticalStartSnap_runsLikeTheItemsItHolds`).
 
 ### Fixed
+
+- A `GridPatternGroupDefinition` built for one orientation and given to a
+  `GridPatternLayoutManager` of the other was laid out in a mix of the two
+  (#93). The definition's own orientation set its grid unit, the spacing
+  before its items and the order of their first and last positions, and the
+  layout manager's set the group's cell and its items' sizes, so two
+  one-by-ones built for horizontal scroll, in a vertical view 400 by 300,
+  each took the view's length along the scroll axis, `[0, 0, 75, 300]` and
+  `[85, 0, 160, 300]`, where built for vertical scroll they draw
+  `[0, 0, 195, 48]`, `[205, 0, 400, 48]` and ten more; a horizontal view was
+  the mirror image. The layout manager now admits its copy of each group in
+  its own orientation, whatever orientation the group was built for, so such
+  a group lays out exactly like the same items built for the view, added or
+  set, wherever it stands among the groups
+  (`aGroupBuiltForTheOtherOrientationAdded_verticalStartSnap_runsLikeTheGroupBuiltForTheView`,
+  `aGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView_horizontalStartSnap_runsLikeTheTwoGroupsBuiltForTheViewSet`).
+  `GridPatternView` builds every group in its own orientation, so only a
+  group given to the layout manager directly, or by a `GridPatternView`
+  subclass that reaches it through `createAdapterViewInitializer`, was
+  affected.
 
 - A `GridPatternGroupDefinition` or one of its items changed after
   `GridPatternLayoutManager` admitted it put the layout out of step with it,
@@ -44,9 +66,9 @@ All notable changes to Parchment, newest first. The format follows
   with no `parchment_cellSpacing`, it hung the first forward drag. The layout
   manager now keeps its own copy of each group it admits, made when
   `addGridPatternGroupDefinition` or `setGridPatternGroupDefinitions` takes
-  it from the group's orientation and each item's values, read once, so later
-  changes to the definition, its item list or its items never reach the
-  layout; to change the pattern, add or set the group again
+  it from each item's values, read once, so later changes to the definition,
+  its item list or its items never reach the layout; to change the pattern,
+  add or set the group again
   (`anItemAddedToAGroupAfterItIsAdded_verticalStartSnap_runsLikeTheGroupAsAdded`,
   `theItemsOfAGroupClearedAfterItIsSet_horizontalStartSnap_runsLikeTheGroupAsSet`,
   `anItemGrowingAcrossTheBreadthAfterTheViewTakesIt_verticalStartSnap_runsLikeTheItemAsAdded`,

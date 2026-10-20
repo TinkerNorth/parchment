@@ -570,10 +570,10 @@ and the view falls back
 
 The layout manager admits a copy, not the caller's definition or items. Both
 `addGridPatternGroupDefinition` and `setGridPatternGroupDefinitions` admit a
-copy made by a protected `GridPatternGroupDefinition` constructor, which keeps
-the group's orientation, reads the four values of each item in the group's own
-list once into a plain `GridPatternItemDefinition`, skipping a `null` put into
-that list directly, and replays the plain items through
+copy made by a protected `GridPatternGroupDefinition` constructor, which takes
+the layout manager's orientation, reads the four values of each item in the
+group's own list once into a plain `GridPatternItemDefinition`, skipping a
+`null` put into that list directly, and replays the plain items through
 `addGridPatternItemDefinition`, so the copy is checked, counted and measured on
 the values as admitted, like any group
 (`anUndrawableItemPutIntoTheItemsOfAGroupBeforeItIsAdded_verticalStartSnap_runsLikeTheGroupWithoutIt`,
@@ -607,23 +607,34 @@ it holds
 and the engine calls no method of a subclass at all.
 A pattern changes only when its group is admitted again
 (`aGroupChangedAndThenSetAgain_verticalStartSnap_runsLikeTheChangedGroupSet`).
-A copy of `null` is an empty group for horizontal scroll
+A copy of `null` is an empty group in the orientation it is given
 (`aGroupDefinitionCopiedFromANullGroup_holdsNoItems`,
-`aGroupDefinitionCopiedFromANullGroup_ordersItsItemsForHorizontalScroll`),
-and admission ignores an empty copy whatever its orientation, so a `null`
-group is skipped by the same check as a group with no items
+`aGroupDefinitionCopiedFromANullGroup_vertical_ordersItsItemsForVerticalScroll`,
+`aGroupDefinitionCopiedFromANullGroup_horizontal_ordersItsItemsForHorizontalScroll`),
+and admission ignores an empty copy, so a `null` group is skipped by the same
+check as a group with no items
 (`aListOfANullGroupBetweenTwoGroupsSet_verticalStartSnap_runsLikeAListOfTheTwoGroupsSet`),
 and so is a group whose live list holds only a `null` put there directly
 (`aNullItemPutIntoTheItemsOfAnEmptyGroupBeforeItIsAdded_verticalStartSnap_runsLikeNoDefinition`).
-A subclass that passes `null` up and then adds items is a group for horizontal
-scroll, so in a vertical view it is a group built for the other orientation.
-The grid unit is computed in the definition's own orientation and the copy
-keeps it, so a group built for the other orientation takes its unit across its
-own breadth, which is the view's length along the scroll axis
-(`aGroupBuiltForTheOtherOrientation_verticalStartSnap_spansTheViewAlongTheScrollAxis`).
-That test records current behaviour, not a design; #93 tracks it.
-`GridPatternView` builds every group in its own orientation. The copy is made
-once, when the group is admitted; a fill reads its list in place.
+
+The copy is made in the layout manager's orientation whatever orientation the
+group was built for, and orders its items for that orientation
+(`aGroupDefinitionCopiedForVerticalScrollFromOneBuiltForHorizontal_ordersItsItemsForVerticalScroll`,
+`aGroupDefinitionCopiedForHorizontalScrollFromOneBuiltForVertical_ordersItsItemsForHorizontalScroll`),
+so every definition the engine holds is in the one orientation its cells are
+laid out in. A definition's orientation sets its grid unit, the spacing before
+its items and the order of their first and last positions, and the layout
+manager's sets the cell and the items' sizes, so while the copy kept the group's
+own orientation, a group built for the other one took its unit across its own
+breadth, the view's length along the scroll axis, and two one-by-ones each
+spanned the view along it. Such a group now lays out exactly like the same items
+built for the view, added or set, wherever it stands among the groups
+(`aGroupBuiltForTheOtherOrientationAdded_verticalStartSnap_runsLikeTheGroupBuiltForTheView`,
+`aGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView_horizontalStartSnap_runsLikeTheTwoGroupsBuiltForTheViewSet`).
+`GridPatternView` builds every group in its own orientation, so only a group
+given to the layout manager directly, or by a view subclass that reaches it,
+can be built for the other. The copy is made once, when the group is admitted;
+a fill reads its list in place.
 
 A cell's views sit at the grid offsets their item definitions give, measured
 from the cell's start; the start already carries the view's start padding, so
