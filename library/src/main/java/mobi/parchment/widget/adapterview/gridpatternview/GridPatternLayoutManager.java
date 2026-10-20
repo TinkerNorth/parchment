@@ -74,8 +74,9 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     private void admitGridPatternGroupDefinition(
             final GridPatternGroupDefinition gridPatternGroupDefinition) {
+        final boolean isVerticalScroll = isVerticalScroll();
         final GridPatternGroupDefinition admittedGridPatternGroupDefinition =
-                new GridPatternGroupDefinition(gridPatternGroupDefinition);
+                new GridPatternGroupDefinition(gridPatternGroupDefinition, isVerticalScroll);
         final int numberOfItems = admittedGridPatternGroupDefinition.getNumberOfItems();
         final boolean hasNoItems = numberOfItems == NO_ITEMS;
         if (hasNoItems) {
