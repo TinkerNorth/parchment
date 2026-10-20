@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroup;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroupDefinition;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternItemDefinition;
@@ -48,6 +49,7 @@ public final class PatternFixture {
     private static final int SECOND_COLUMN = 1;
     private static final int ONE_GRID_UNIT = 1;
     private static final int TWO_GRID_UNITS = 2;
+    private static final int THREE_GRID_UNITS = 3;
     private static final int NO_GRID_UNITS = 0;
     private static final int NEGATIVE_GRID_UNITS = -1;
     private static final int ROW_ABOVE_THE_GROUP = -1;
@@ -59,6 +61,9 @@ public final class PatternFixture {
     private static final String THE_PATTERNS_DRAG = "the pattern's drag";
     private static final String THE_ORACLES_DRAG = "the oracle's drag";
     private static final long STOP_TIME_LIMIT_MILLISECONDS = 1000;
+    private static final long HOLD_LIMIT_MILLISECONDS = 60000;
+    private static final String STOPPED = "stopped at its time limit";
+    private static final String NEVER_STOPPED = "the fill was never stopped";
     public static final GridPatternItemDefinition ITEM_AT_THE_ORIGIN =
             new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
     public static final GridPatternItemDefinition ITEM_WITH_NO_HEIGHT =
@@ -89,6 +94,14 @@ public final class PatternFixture {
     public static final GridPatternItemDefinition ITEM_TWO_COLUMNS_LEFT_OF_THE_FIRST_COLUMN =
             new GridPatternItemDefinition(
                     FIRST_ROW, SECOND_COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_WIDE =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, THREE_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_HIGH =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, THREE_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_ON_THE_SECOND_ROW =
+            new GridPatternItemDefinition(SECOND_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_IN_THE_SECOND_COLUMN =
+            new GridPatternItemDefinition(FIRST_ROW, SECOND_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
     private static final int NOTHING_SELECTED = LayoutManager.INVALID_POSITION;
     private static final int MATCH_PARENT = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final boolean VERTICAL = true;
@@ -295,6 +308,11 @@ public final class PatternFixture {
         return mLayoutManager.getCellSpacing();
     }
 
+    public int lengthAlongTheScrollAxis() {
+        if (mConfiguration.mIsVertical) return mConfiguration.height();
+        return mConfiguration.width();
+    }
+
     public GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
         return new GridPatternGroupDefinition(mConfiguration.mIsVertical, items);
     }
@@ -314,6 +332,10 @@ public final class PatternFixture {
 
     public void clearGroups() {
         mLayoutManager.clearGridPatternGroupDefinition();
+    }
+
+    public void holdTheFillFromNowOn() {
+        mAdapter.holdFromNowOn();
     }
 
     public void setSelection(final int position) {
@@ -756,6 +778,49 @@ public final class PatternFixture {
         }
     }
 
+    public static final class ChangingItemDefinition extends GridPatternItemDefinition {
+        private final GridPatternItemDefinition mChanged;
+        private final AtomicBoolean mHasChanged = new AtomicBoolean();
+
+        public ChangingItemDefinition(
+                final GridPatternItemDefinition asMade, final GridPatternItemDefinition changed) {
+            super(asMade.getTop(), asMade.getLeft(), asMade.getHeight(), asMade.getWidth());
+            mChanged = changed;
+        }
+
+        public void change() {
+            mHasChanged.set(true);
+        }
+
+        @Override
+        public int getTop() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getTop();
+            return super.getTop();
+        }
+
+        @Override
+        public int getLeft() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getLeft();
+            return super.getLeft();
+        }
+
+        @Override
+        public int getHeight() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getHeight();
+            return super.getHeight();
+        }
+
+        @Override
+        public int getWidth() {
+            final boolean hasChanged = mHasChanged.get();
+            if (hasChanged) return mChanged.getWidth();
+            return super.getWidth();
+        }
+    }
+
     public static final class ItemSize {
         private final int mPosition;
         private final int mWidth;
@@ -946,6 +1011,7 @@ public final class PatternFixture {
 
     public static final class ResizableAdapter extends BaseAdapter {
         private final Context mContext;
+        private final AtomicBoolean mIsHolding = new AtomicBoolean();
         private int mCount;
 
         public ResizableAdapter(final Context context, final int count) {
@@ -958,11 +1024,15 @@ public final class PatternFixture {
             notifyDataSetChanged();
         }
 
+        private void holdFromNowOn() {
+            mIsHolding.set(true);
+        }
+
         @Override
         public int getCount() {
             final Thread counting = Thread.currentThread();
             final boolean isStopped = counting.isInterrupted();
-            if (isStopped) throw new IllegalStateException("stopped at its time limit");
+            if (isStopped) throw new IllegalStateException(STOPPED);
             return mCount;
         }
 
@@ -978,12 +1048,23 @@ public final class PatternFixture {
 
         @Override
         public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final boolean isHolding = mIsHolding.get();
+            if (isHolding) hold();
             final FrameLayout view = new FrameLayout(mContext);
             final ViewGroup.LayoutParams layoutParams =
                     new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT);
             view.setLayoutParams(layoutParams);
             view.setTag(position);
             return view;
+        }
+
+        private static void hold() {
+            try {
+                Thread.sleep(HOLD_LIMIT_MILLISECONDS);
+            } catch (final InterruptedException interrupt) {
+                throw new IllegalStateException(STOPPED, interrupt);
+            }
+            throw new IllegalStateException(NEVER_STOPPED);
         }
     }
 

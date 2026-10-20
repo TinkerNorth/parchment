@@ -15,6 +15,7 @@ public final class PatternItems {
     private static final int SECOND_COLUMN = 1;
     private static final int ONE_GRID_UNIT = 1;
     private static final int TWO_GRID_UNITS = 2;
+    private static final int THREE_GRID_UNITS = 3;
     private static final int NO_GRID_UNITS = 0;
     private static final int NEGATIVE_GRID_UNITS = -1;
     private static final int ROW_ABOVE_THE_GROUP = -1;
@@ -51,6 +52,14 @@ public final class PatternItems {
     public static final GridPatternItemDefinition ITEM_TWO_COLUMNS_LEFT_OF_THE_FIRST_COLUMN =
             new GridPatternItemDefinition(
                     FIRST_ROW, SECOND_COLUMN_LEFT_OF_THE_GROUP, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_WIDE =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, ONE_GRID_UNIT, THREE_GRID_UNITS);
+    public static final GridPatternItemDefinition ITEM_THREE_UNITS_HIGH =
+            new GridPatternItemDefinition(FIRST_ROW, FIRST_COLUMN, THREE_GRID_UNITS, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_ON_THE_SECOND_ROW =
+            new GridPatternItemDefinition(SECOND_ROW, FIRST_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
+    public static final GridPatternItemDefinition ITEM_IN_THE_SECOND_COLUMN =
+            new GridPatternItemDefinition(FIRST_ROW, SECOND_COLUMN, ONE_GRID_UNIT, ONE_GRID_UNIT);
 
     private PatternItems() {}
 

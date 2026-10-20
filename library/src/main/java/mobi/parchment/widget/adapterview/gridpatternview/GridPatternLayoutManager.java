@@ -55,9 +55,6 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
 
     public void addGridPatternGroupDefinition(
             final GridPatternGroupDefinition gridPatternGroupDefinition) {
-        if (gridPatternGroupDefinition == null) {
-            return;
-        }
         admitGridPatternGroupDefinition(gridPatternGroupDefinition);
     }
 
@@ -67,20 +64,24 @@ public class GridPatternLayoutManager extends LayoutManager<GridPatternGroup> {
         if (gridPatternGroupDefinitions == null) {
             return;
         }
+        final List<GridPatternGroupDefinition> gridPatternGroupDefinitionsToAdmit =
+                new ArrayList<GridPatternGroupDefinition>(gridPatternGroupDefinitions);
         for (final GridPatternGroupDefinition gridPatternGroupDefinition :
-                gridPatternGroupDefinitions) {
+                gridPatternGroupDefinitionsToAdmit) {
             admitGridPatternGroupDefinition(gridPatternGroupDefinition);
         }
     }
 
     private void admitGridPatternGroupDefinition(
             final GridPatternGroupDefinition gridPatternGroupDefinition) {
-        final int numberOfItems = gridPatternGroupDefinition.getNumberOfItems();
+        final GridPatternGroupDefinition admittedGridPatternGroupDefinition =
+                new GridPatternGroupDefinition(gridPatternGroupDefinition);
+        final int numberOfItems = admittedGridPatternGroupDefinition.getNumberOfItems();
         final boolean hasNoItems = numberOfItems == NO_ITEMS;
         if (hasNoItems) {
             return;
         }
-        mGridPatternGroupDefinitions.add(gridPatternGroupDefinition);
+        mGridPatternGroupDefinitions.add(admittedGridPatternGroupDefinition);
         mNumberOfGridItemsPerRepetition += numberOfItems;
     }
 
