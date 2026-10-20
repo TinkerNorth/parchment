@@ -14,7 +14,6 @@ public class GridPatternGroupDefinition {
     private static final int FIRST_COLUMN = 0;
     private static final int ONE_ROW = 1;
     private static final int ONE_COLUMN = 1;
-    private static final boolean HORIZONTAL_SCROLL = false;
 
     private final boolean mIsVerticalScroll;
     private final List<GridPatternItemDefinition> mGridPatternItemDefinitions =
@@ -35,13 +34,13 @@ public class GridPatternGroupDefinition {
     }
 
     protected GridPatternGroupDefinition(
-            final GridPatternGroupDefinition gridPatternGroupDefinition) {
+            final GridPatternGroupDefinition gridPatternGroupDefinition,
+            final boolean isVerticalScroll) {
+        mIsVerticalScroll = isVerticalScroll;
         final boolean hasNoGroup = gridPatternGroupDefinition == null;
         if (hasNoGroup) {
-            mIsVerticalScroll = HORIZONTAL_SCROLL;
             return;
         }
-        mIsVerticalScroll = gridPatternGroupDefinition.mIsVerticalScroll;
         final List<GridPatternItemDefinition> gridPatternItemDefinitionsToCopy =
                 new ArrayList<GridPatternItemDefinition>(
                         gridPatternGroupDefinition.mGridPatternItemDefinitions);

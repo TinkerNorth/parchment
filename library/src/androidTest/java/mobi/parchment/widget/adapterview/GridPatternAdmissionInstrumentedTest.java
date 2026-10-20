@@ -17,7 +17,6 @@ import static mobi.parchment.harness.PatternItems.noItems;
 import static mobi.parchment.harness.PatternItems.oneWideItem;
 import static mobi.parchment.harness.PatternItems.twoOneByOnes;
 import static mobi.parchment.harness.PatternRun.HORIZONTAL_VIEWPORT;
-import static mobi.parchment.harness.PatternRun.ITEM_COUNT;
 import static mobi.parchment.harness.PatternRun.VERTICAL_VIEWPORT;
 import static mobi.parchment.harness.ReachableGridPatternView.layoutManagerOf;
 import static org.junit.Assert.assertEquals;
@@ -32,10 +31,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import mobi.parchment.harness.Definitions;
 import mobi.parchment.harness.HarnessActivity;
-import mobi.parchment.harness.LaidOutChildren;
 import mobi.parchment.harness.NoGroup;
 import mobi.parchment.harness.PatternRun;
-import mobi.parchment.harness.PatternState;
 import mobi.parchment.harness.Viewport;
 import mobi.parchment.test.R;
 import mobi.parchment.widget.adapterview.gridpatternview.GridPatternGroupDefinition;
@@ -57,8 +54,6 @@ public final class GridPatternAdmissionInstrumentedTest {
     private static final int AFTER_THE_FIRST_ITEM = 1;
     private static final int AFTER_THE_FIRST_GROUP = 1;
     private static final int NO_ITEMS = 0;
-    private static final int FIRST_POSITION = 0;
-    private static final int SECOND_POSITION = 1;
     private static final int FIRST_ROW = 0;
     private static final int SECOND_ROW = 1;
     private static final int FIRST_COLUMN = 0;
@@ -439,16 +434,82 @@ public final class GridPatternAdmissionInstrumentedTest {
 
     @Test
     public void
-            aGroupBuiltForTheOtherOrientation_verticalStartSnap_spansTheViewAlongTheScrollAxis() {
-        assertSpansTheViewAlongTheScrollAxis(
-                R.layout.instrumented_pattern_reachable_vertical_start, VERTICAL_VIEWPORT);
+            aGroupBuiltForTheOtherOrientationAdded_verticalStartSnap_runsLikeTheGroupBuiltForTheView() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_vertical_start,
+                VERTICAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationAdded(),
+                new TwoItemsAdded());
     }
 
     @Test
     public void
-            aGroupBuiltForTheOtherOrientation_horizontalStartSnap_spansTheViewAlongTheScrollAxis() {
-        assertSpansTheViewAlongTheScrollAxis(
-                R.layout.instrumented_pattern_reachable_horizontal_start, HORIZONTAL_VIEWPORT);
+            aGroupBuiltForTheOtherOrientationAdded_horizontalStartSnap_runsLikeTheGroupBuiltForTheView() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_horizontal_start,
+                HORIZONTAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationAdded(),
+                new TwoItemsAdded());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationSet_verticalStartSnap_runsLikeTheGroupBuiltForTheViewSet() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_vertical_start,
+                VERTICAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationSet(),
+                new AListOfTwoItemsSet());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationSet_horizontalStartSnap_runsLikeTheGroupBuiltForTheViewSet() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_horizontal_start,
+                HORIZONTAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationSet(),
+                new AListOfTwoItemsSet());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationAddedBeforeAGroupBuiltForTheView_verticalStartSnap_runsLikeTheTwoGroupsBuiltForTheView() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_vertical_start,
+                VERTICAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationAddedBeforeAGroupBuiltForTheView(),
+                new TwoGroupsAdded());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationAddedBeforeAGroupBuiltForTheView_horizontalStartSnap_runsLikeTheTwoGroupsBuiltForTheView() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_horizontal_start,
+                HORIZONTAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationAddedBeforeAGroupBuiltForTheView(),
+                new TwoGroupsAdded());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView_verticalStartSnap_runsLikeTheTwoGroupsBuiltForTheViewSet() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_vertical_start,
+                VERTICAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView(),
+                new AListOfTwoGroupsSet());
+    }
+
+    @Test
+    public void
+            aGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView_horizontalStartSnap_runsLikeTheTwoGroupsBuiltForTheViewSet() {
+        assertRunsLikeTheOracle(
+                R.layout.instrumented_pattern_reachable_horizontal_start,
+                HORIZONTAL_VIEWPORT,
+                new AGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView(),
+                new AListOfTwoGroupsSet());
     }
 
     @Test
@@ -527,18 +588,54 @@ public final class GridPatternAdmissionInstrumentedTest {
 
     @Test
     public void aGroupDefinitionCopiedFromANullGroup_holdsNoItems() {
-        final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup();
+        final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup(VERTICAL);
 
         assertHoldsNoItems(group);
     }
 
     @Test
-    public void aGroupDefinitionCopiedFromANullGroup_ordersItsItemsForHorizontalScroll() {
-        final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup();
+    public void aGroupDefinitionCopiedFromANullGroup_vertical_ordersItsItemsForVerticalScroll() {
+        final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup(VERTICAL);
         group.addGridPatternItemDefinition(ITEM_IN_THE_SECOND_COLUMN);
         group.addGridPatternItemDefinition(ITEM_ON_THE_SECOND_ROW);
 
         final int firstGridGroupPosition = group.getFirstGridGroupPosition();
+
+        assertEquals(THE_FIRST_ITEM, firstGridGroupPosition);
+    }
+
+    @Test
+    public void
+            aGroupDefinitionCopiedFromANullGroup_horizontal_ordersItsItemsForHorizontalScroll() {
+        final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup(HORIZONTAL);
+        group.addGridPatternItemDefinition(ITEM_IN_THE_SECOND_COLUMN);
+        group.addGridPatternItemDefinition(ITEM_ON_THE_SECOND_ROW);
+
+        final int firstGridGroupPosition = group.getFirstGridGroupPosition();
+
+        assertEquals(THE_SECOND_ITEM, firstGridGroupPosition);
+    }
+
+    @Test
+    public void
+            aGroupDefinitionCopiedForVerticalScrollFromOneBuiltForHorizontal_ordersItsItemsForVerticalScroll() {
+        final List<GridPatternItemDefinition> items = oneInTheSecondColumnThenOneOnTheSecondRow();
+        final GridPatternGroupDefinition source = group(HORIZONTAL, items);
+        final GridPatternGroupDefinition copy = new AGroupCopiedFromAnother(source, VERTICAL);
+
+        final int firstGridGroupPosition = copy.getFirstGridGroupPosition();
+
+        assertEquals(THE_FIRST_ITEM, firstGridGroupPosition);
+    }
+
+    @Test
+    public void
+            aGroupDefinitionCopiedForHorizontalScrollFromOneBuiltForVertical_ordersItsItemsForHorizontalScroll() {
+        final List<GridPatternItemDefinition> items = oneInTheSecondColumnThenOneOnTheSecondRow();
+        final GridPatternGroupDefinition source = group(VERTICAL, items);
+        final GridPatternGroupDefinition copy = new AGroupCopiedFromAnother(source, HORIZONTAL);
+
+        final int firstGridGroupPosition = copy.getFirstGridGroupPosition();
 
         assertEquals(THE_SECOND_ITEM, firstGridGroupPosition);
     }
@@ -835,39 +932,6 @@ public final class GridPatternAdmissionInstrumentedTest {
                 scenario, layoutResource, viewport, definitions, oracleDefinitions);
     }
 
-    private void assertSpansTheViewAlongTheScrollAxis(
-            final int layoutResource, final Viewport viewport) {
-        final ActivityScenario<HarnessActivity> scenario = mActivityRule.getScenario();
-        final Definitions definitions = new AGroupBuiltForTheOtherOrientationAdded();
-        final PatternRun run =
-                PatternRun.start(scenario, layoutResource, viewport, definitions, ITEM_COUNT);
-        final PatternState laidOut = run.state();
-        final String description = laidOut.toString();
-        final LaidOutChildren children = laidOut.children();
-        final boolean isVertical = viewport.isVertical();
-        final int viewLength = viewLengthAlongTheScrollAxis(children, isVertical);
-        final int firstIndex = children.indexOfAdapterPosition(FIRST_POSITION);
-        final int secondIndex = children.indexOfAdapterPosition(SECOND_POSITION);
-
-        final int firstLength = lengthAlongTheScrollAxis(children, firstIndex, isVertical);
-        final int secondLength = lengthAlongTheScrollAxis(children, secondIndex, isVertical);
-
-        assertEquals(description, viewLength, firstLength);
-        assertEquals(description, viewLength, secondLength);
-    }
-
-    private static int viewLengthAlongTheScrollAxis(
-            final LaidOutChildren children, final boolean isVertical) {
-        if (isVertical) return children.viewHeight();
-        return children.viewWidth();
-    }
-
-    private static int lengthAlongTheScrollAxis(
-            final LaidOutChildren children, final int index, final boolean isVertical) {
-        if (isVertical) return children.height(index);
-        return children.width(index);
-    }
-
     private static void assertHoldsNoItems(final GridPatternGroupDefinition group) {
         final int numberOfItems = group.getNumberOfItems();
         final List<GridPatternItemDefinition> items = group.getGridPatternItemDefinitions();
@@ -890,6 +954,19 @@ public final class GridPatternAdmissionInstrumentedTest {
         final List<GridPatternGroupDefinition> groups = new ArrayList<GridPatternGroupDefinition>();
         groups.add(group);
         return groups;
+    }
+
+    private static GridPatternGroupDefinition groupForTheOtherOrientation(
+            final boolean isVertical, final List<GridPatternItemDefinition> items) {
+        final boolean isTheOtherOrientationVertical = !isVertical;
+        return group(isTheOtherOrientationVertical, items);
+    }
+
+    private static List<GridPatternItemDefinition> oneInTheSecondColumnThenOneOnTheSecondRow() {
+        final List<GridPatternItemDefinition> items = noItems();
+        items.add(ITEM_IN_THE_SECOND_COLUMN);
+        items.add(ITEM_ON_THE_SECOND_ROW);
+        return items;
     }
 
     private static final class TwoItemsAdded implements Definitions {
@@ -1247,11 +1324,53 @@ public final class GridPatternAdmissionInstrumentedTest {
         @Override
         public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
             final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
-            final boolean isTheOtherOrientationVertical = !isVertical;
             final List<GridPatternItemDefinition> twoOneByOnes = twoOneByOnes(isVertical);
             final GridPatternGroupDefinition otherOrientationGroup =
-                    group(isTheOtherOrientationVertical, twoOneByOnes);
+                    groupForTheOtherOrientation(isVertical, twoOneByOnes);
             layoutManager.addGridPatternGroupDefinition(otherOrientationGroup);
+        }
+    }
+
+    private static final class AGroupBuiltForTheOtherOrientationSet implements Definitions {
+        @Override
+        public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
+            final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
+            final List<GridPatternItemDefinition> twoOneByOnes = twoOneByOnes(isVertical);
+            final GridPatternGroupDefinition otherOrientationGroup =
+                    groupForTheOtherOrientation(isVertical, twoOneByOnes);
+            final List<GridPatternGroupDefinition> groups = listOf(otherOrientationGroup);
+            layoutManager.setGridPatternGroupDefinitions(groups);
+        }
+    }
+
+    private static final class AGroupBuiltForTheOtherOrientationAddedBeforeAGroupBuiltForTheView
+            implements Definitions {
+        @Override
+        public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
+            final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
+            final List<GridPatternItemDefinition> twoOneByOnes = twoOneByOnes(isVertical);
+            final List<GridPatternItemDefinition> oneWideItem = oneWideItem(isVertical);
+            final GridPatternGroupDefinition otherOrientationGroup =
+                    groupForTheOtherOrientation(isVertical, twoOneByOnes);
+            final GridPatternGroupDefinition oneWideItemGroup = group(isVertical, oneWideItem);
+            layoutManager.addGridPatternGroupDefinition(otherOrientationGroup);
+            layoutManager.addGridPatternGroupDefinition(oneWideItemGroup);
+        }
+    }
+
+    private static final class AGroupBuiltForTheOtherOrientationSetBeforeAGroupBuiltForTheView
+            implements Definitions {
+        @Override
+        public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
+            final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
+            final List<GridPatternItemDefinition> twoOneByOnes = twoOneByOnes(isVertical);
+            final List<GridPatternItemDefinition> oneWideItem = oneWideItem(isVertical);
+            final GridPatternGroupDefinition otherOrientationGroup =
+                    groupForTheOtherOrientation(isVertical, twoOneByOnes);
+            final GridPatternGroupDefinition oneWideItemGroup = group(isVertical, oneWideItem);
+            final List<GridPatternGroupDefinition> groups = listOf(otherOrientationGroup);
+            groups.add(oneWideItemGroup);
+            layoutManager.setGridPatternGroupDefinitions(groups);
         }
     }
 
@@ -1297,14 +1416,21 @@ public final class GridPatternAdmissionInstrumentedTest {
         @Override
         public void defineOn(final GridPatternView<BaseAdapter> view, final boolean isVertical) {
             final GridPatternLayoutManager layoutManager = layoutManagerOf(view);
-            final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup();
+            final GridPatternGroupDefinition group = new AGroupCopiedFromANullGroup(isVertical);
             layoutManager.addGridPatternGroupDefinition(group);
         }
     }
 
     private static final class AGroupCopiedFromANullGroup extends GridPatternGroupDefinition {
-        private AGroupCopiedFromANullGroup() {
-            super(NULL_GROUP);
+        private AGroupCopiedFromANullGroup(final boolean isVertical) {
+            super(NULL_GROUP, isVertical);
+        }
+    }
+
+    private static final class AGroupCopiedFromAnother extends GridPatternGroupDefinition {
+        private AGroupCopiedFromAnother(
+                final GridPatternGroupDefinition source, final boolean isVertical) {
+            super(source, isVertical);
         }
     }
 

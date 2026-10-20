@@ -308,11 +308,6 @@ public final class PatternFixture {
         return mLayoutManager.getCellSpacing();
     }
 
-    public int lengthAlongTheScrollAxis() {
-        if (mConfiguration.mIsVertical) return mConfiguration.height();
-        return mConfiguration.width();
-    }
-
     public GridPatternGroupDefinition group(final List<GridPatternItemDefinition> items) {
         return new GridPatternGroupDefinition(mConfiguration.mIsVertical, items);
     }
