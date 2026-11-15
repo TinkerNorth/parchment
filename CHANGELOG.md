@@ -5,7 +5,7 @@ All notable changes to Parchment, newest first. The format follows
 
 ---
 
-## [Unreleased]
+## [2.3.0] - 2026-11-15
 
 ### Added
 
